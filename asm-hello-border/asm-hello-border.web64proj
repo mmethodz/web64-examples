@@ -1,0 +1,38 @@
+{
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-14T00:00:00.000Z",
+  "main": {
+    "fileName": "asm-hello-border.asm",
+    "origin": "$c000",
+    "source": "; Web64 IDE Example\n; Name: ASM Hello Border\n; Description: Writes VIC border and background colors from a tiny assembly program.\n\n* = $c000\n\nBORDER = $d020\nBACKGROUND = $d021\n\ninit:\n    sei\n    lda #6\n    sta BORDER\n    lda #0\n    sta BACKGROUND\nidle:\n    jmp idle\n",
+    "selectedEntryLabel": "init"
+  },
+  "c": {
+    "enabled": false,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native"
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "files": []
+}

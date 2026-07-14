@@ -1,0 +1,64 @@
+{
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-14T00:00:00.000Z",
+  "main": {
+    "fileName": "hybrid-asset-copy.asm",
+    "origin": "$c000",
+    "source": "; Web64 IDE Example\n; Name: Hybrid Asset Copy Shell\n; Description: C entry point calls assembly that uses an included binary asset label.\n",
+    "selectedEntryLabel": "_main"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native"
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "files": [
+    {
+      "path": "main.c",
+      "name": "main.c",
+      "kind": "source",
+      "source": "/*\n * Web64 IDE Example\n * Name: Hybrid Asset Copy\n * Description: Uses generated asset size metadata and calls assembly to copy asset bytes.\n */\n\n#include <stdint.h>\n#include <assets/generated.h>\n#include <copy.h>\n\nuint8_t status_color = 2;\n\nvoid main(void) {\n    if (tile_bytes_size != 0) { status_color = 7; }\n    copy_tile_bytes();\n    *(uint8_t*)0xd020 = status_color;\n    while (1) { }\n}\n"
+    },
+    {
+      "path": "copy.h",
+      "name": "copy.h",
+      "kind": "source",
+      "source": "/*\n * Web64 IDE Example\n * Name: Hybrid Asset Copy Header\n * Description: Declares the assembly asset-copy routine.\n */\n\n#ifndef HYBRID_ASSET_COPY_H\n#define HYBRID_ASSET_COPY_H\nvoid copy_tile_bytes(void);\n#endif\n"
+    },
+    {
+      "path": "copy.asm",
+      "name": "copy.asm",
+      "kind": "source",
+      "source": "; Web64 IDE Example\n; Name: Hybrid Asset Copy ASM\n; Description: Copies a small binary asset into screen RAM.\n\n_copy_tile_bytes:\n    ldx #0\ncopy_loop:\n    lda tile_bytes,x\n    sta $0400,x\n    inx\n    cpx #8\n    bne copy_loop\n    rts\n\ntile_bytes:\n    .byte 1,2,3,4,5,6,7,8\n"
+    },
+    {
+      "path": "assets/tile-bytes.bin",
+      "name": "tile-bytes.bin",
+      "kind": "asset",
+      "encoding": "base64",
+      "bytes": "AQIDBAUGBwg="
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-14T00:00:00.000Z",
+  "main": {
+    "fileName": "hybrid-asm-uses-c-data.asm",
+    "origin": "$c000",
+    "source": "; Web64 IDE Example\n; Name: Hybrid ASM Uses C Data\n; Description: Assembly start code reads a global variable emitted by Web64 C.\n\n* = $c000\n\ninit:\n    sei\n    lda _border_from_c\n    sta $d020\n    lda #0\n    sta $d021\nloop:\n    jmp loop\n",
+    "selectedEntryLabel": "init"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native"
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "files": [
+    {
+      "path": "main.c",
+      "name": "main.c",
+      "kind": "source",
+      "source": "/*\n * Web64 IDE Example\n * Name: Hybrid ASM Uses C Data\n * Description: Declares a C global consumed by the assembly entry point.\n */\n\n#include <stdint.h>\n\nuint8_t border_from_c = 4;\n\nvoid main(void) {\n    border_from_c = 4;\n}\n"
+    }
+  ]
+}

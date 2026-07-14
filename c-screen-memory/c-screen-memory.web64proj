@@ -1,0 +1,45 @@
+{
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-14T00:00:00.000Z",
+  "main": {
+    "fileName": "c-screen-memory.asm",
+    "origin": "$c000",
+    "source": "; Web64 IDE Example\n; Name: C Project Shell\n; Description: Assembly shell used by Web64 C projects; main.c is the entry source.\n",
+    "selectedEntryLabel": "_main"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native"
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "files": [
+    {
+      "path": "main.c",
+      "name": "main.c",
+      "kind": "source",
+      "source": "/*\n * Web64 IDE Example\n * Name: C Screen Memory\n * Description: Fills C64 screen RAM and color RAM using Web64 C loops.\n */\n\n#include <stdint.h>\n\nuint8_t index = 0;\n\nvoid main(void) {\n    *(uint8_t*)0xd020 = 0;\n    *(uint8_t*)0xd021 = 6;\n    index = 0;\n    while (index != 250) {\n        *(uint8_t*)(0x0400 + index) = 1;\n        *(uint8_t*)(0x04fa + index) = 2;\n        *(uint8_t*)(0xd800 + index) = 1;\n        *(uint8_t*)(0xd8fa + index) = 7;\n        index++;\n    }\n    while (1) { }\n}\n"
+    }
+  ]
+}

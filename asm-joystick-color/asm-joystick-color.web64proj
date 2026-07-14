@@ -1,0 +1,38 @@
+{
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-14T00:00:00.000Z",
+  "main": {
+    "fileName": "asm-joystick-color.asm",
+    "origin": "$c000",
+    "source": "; Web64 IDE Example\n; Name: ASM Joystick Color\n; Description: Uses active-low joystick port 2 bits to select a border color.\n\n* = $c000\n\nJOY2 = $dc00\nBORDER = $d020\nBACKGROUND = $d021\n\ninit:\n    sei\n    lda #0\n    sta BACKGROUND\nmainloop:\n    lda JOY2\n    and #1\n    beq up\n    lda JOY2\n    and #2\n    beq down\n    lda JOY2\n    and #4\n    beq left\n    lda JOY2\n    and #8\n    beq right\n    lda #0\n    jmp set_color\nup:\n    lda #1\n    jmp set_color\ndown:\n    lda #2\n    jmp set_color\nleft:\n    lda #5\n    jmp set_color\nright:\n    lda #7\nset_color:\n    sta BORDER\n    jmp mainloop\n",
+    "selectedEntryLabel": "init"
+  },
+  "c": {
+    "enabled": false,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native"
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "files": []
+}

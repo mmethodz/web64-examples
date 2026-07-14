@@ -1,0 +1,45 @@
+{
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-14T00:00:00.000Z",
+  "main": {
+    "fileName": "diagnostic-unsupported-c.asm",
+    "origin": "$c000",
+    "source": "; Web64 IDE Example\n; Name: Diagnostic Unsupported C Shell\n; Description: Loads a C project intended to produce clear unsupported-feature diagnostics.\n",
+    "selectedEntryLabel": "_main"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native"
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "files": [
+    {
+      "path": "main.c",
+      "name": "main.c",
+      "kind": "source",
+      "source": "/*\n * Web64 IDE Example\n * Name: Diagnostic Unsupported C\n * Description: Demonstrates unsupported Web64 C v0.1 features for diagnostics.\n */\n\n#include <stdint.h>\n\nuint8_t value = 0;\n\nvoid main(void) {\n    value = 1;\n    value += 1;\n    switch (value) {\n        case 1:\n            value = 2;\n            break;\n        default:\n            value = 3;\n            break;\n    }\n    while (1) { }\n}\n"
+    }
+  ]
+}

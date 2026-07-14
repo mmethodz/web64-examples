@@ -1,0 +1,45 @@
+{
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-14T00:00:00.000Z",
+  "main": {
+    "fileName": "c-joystick-registers.asm",
+    "origin": "$c000",
+    "source": "; Web64 IDE Example\n; Name: C Project Shell\n; Description: Assembly shell used by Web64 C projects; main.c is the entry source.\n",
+    "selectedEntryLabel": "_main"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native"
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "files": [
+    {
+      "path": "main.c",
+      "name": "main.c",
+      "kind": "source",
+      "source": "/*\n * Web64 IDE Example\n * Name: C Joystick Registers\n * Description: Reads joystick port 2 and maps directions to border colors.\n */\n\n#include <stdint.h>\n\nuint8_t joy = 0xff;\nuint8_t color = 0;\n\nvoid main(void) {\n    *(uint8_t*)0xdc02 = 0;\n    *(uint8_t*)0xdc03 = 0;\n    while (1) {\n        joy = *(uint8_t*)0xdc00;\n        color = 0;\n        if (!(joy & 1)) { color = 1; }\n        if (!(joy & 2)) { color = 2; }\n        if (!(joy & 4)) { color = 5; }\n        if (!(joy & 8)) { color = 7; }\n        if (!(joy & 16)) { color = 10; }\n        *(uint8_t*)0xd020 = color;\n    }\n}\n"
+    }
+  ]
+}

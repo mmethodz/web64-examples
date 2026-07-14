@@ -1,0 +1,38 @@
+{
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-14T00:00:00.000Z",
+  "main": {
+    "fileName": "asm-single-sprite.asm",
+    "origin": "$c000",
+    "source": "; Web64 IDE Example\n; Name: ASM Single Sprite\n; Description: Copies one sprite to $3000, enables sprite 0, and moves it horizontally.\n\n* = $c000\n\nSPR0_X = $d000\nSPR0_Y = $d001\nSPR_ENABLE = $d015\nSPR_PTR0 = $07f8\nSPR_COLOR0 = $d027\nBORDER = $d020\nBACKGROUND = $d021\n\ninit:\n    sei\n    lda #0\n    sta BORDER\n    sta BACKGROUND\n    ldx #0\ncopy_sprite:\n    lda sprite_data,x\n    sta $3000,x\n    inx\n    cpx #64\n    bne copy_sprite\n    lda #$c0\n    sta SPR_PTR0\n    lda #1\n    sta SPR_ENABLE\n    lda #7\n    sta SPR_COLOR0\n    lda #100\n    sta SPR0_Y\nloop:\n    inc SPR0_X\n    jmp loop\nsprite_data:\n    .byte 0,0,0,0,24,0,0,60,0,0,126,0,0,255,0,1,255,128,3,255,192,7,255,224\n    .byte 15,255,240,31,255,248,63,255,252,31,255,248,15,255,240,7,255,224,3,255,192\n    .byte 1,255,128,0,255,0,0,126,0,0,60,0,0,24,0,0,0,0,0\n",
+    "selectedEntryLabel": "init"
+  },
+  "c": {
+    "enabled": false,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native"
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "files": []
+}

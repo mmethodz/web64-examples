@@ -1,0 +1,45 @@
+{
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-14T00:00:00.000Z",
+  "main": {
+    "fileName": "c-screen-colors.asm",
+    "origin": "$c000",
+    "source": "; Web64 IDE Example\n; Name: C Project Shell\n; Description: Assembly shell used by Web64 C projects; main.c is the entry source.\n",
+    "selectedEntryLabel": "_main"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native"
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "files": [
+    {
+      "path": "main.c",
+      "name": "main.c",
+      "kind": "source",
+      "source": "/*\n * Web64 IDE Example\n * Name: C Screen Colors\n * Description: Writes VIC border and background registers from Web64 C.\n */\n\n#include <stdint.h>\n\nvoid main(void) {\n    *(uint8_t*)0xd020 = 6;\n    *(uint8_t*)0xd021 = 0;\n    while (1) {\n        *(uint8_t*)0xd020 = 6;\n    }\n}\n"
+    }
+  ]
+}

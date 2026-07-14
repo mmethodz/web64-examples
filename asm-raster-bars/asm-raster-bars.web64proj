@@ -1,0 +1,38 @@
+{
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-14T00:00:00.000Z",
+  "main": {
+    "fileName": "asm-raster-bars.asm",
+    "origin": "$c000",
+    "source": "; Web64 IDE Example\n; Name: ASM Raster Bars\n; Description: Polls the raster register and changes border colors on selected scanlines.\n\n* = $c000\n\nRASTER = $d012\nBORDER = $d020\nBACKGROUND = $d021\n\ninit:\n    sei\n    lda #0\n    sta BACKGROUND\nmainloop:\n    jsr wait_48\n    lda #2\n    sta BORDER\n    jsr wait_96\n    lda #5\n    sta BORDER\n    jsr wait_144\n    lda #7\n    sta BORDER\n    jsr wait_192\n    lda #0\n    sta BORDER\n    jmp mainloop\nwait_48:\n    lda RASTER\n    cmp #48\n    bne wait_48\n    rts\nwait_96:\n    lda RASTER\n    cmp #96\n    bne wait_96\n    rts\nwait_144:\n    lda RASTER\n    cmp #144\n    bne wait_144\n    rts\nwait_192:\n    lda RASTER\n    cmp #192\n    bne wait_192\n    rts\n",
+    "selectedEntryLabel": "init"
+  },
+  "c": {
+    "enabled": false,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native"
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "files": []
+}

@@ -1,0 +1,57 @@
+{
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-14T00:00:00.000Z",
+  "main": {
+    "fileName": "hybrid-c-calls-asm.asm",
+    "origin": "$c000",
+    "source": "; Web64 IDE Example\n; Name: Hybrid C Calls ASM Shell\n; Description: C entry point plus hand-written assembly routine in project files.\n",
+    "selectedEntryLabel": "_main"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native"
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "files": [
+    {
+      "path": "main.c",
+      "name": "main.c",
+      "kind": "source",
+      "source": "/*\n * Web64 IDE Example\n * Name: Hybrid C Calls ASM\n * Description: Calls an assembly subroutine from Web64 C.\n */\n\n#include <stdint.h>\n#include <game.h>\n\nuint8_t border_color = 2;\n\nvoid main(void) {\n    asm_flash_border();\n    while (1) { }\n}\n"
+    },
+    {
+      "path": "game.h",
+      "name": "game.h",
+      "kind": "source",
+      "source": "/*\n * Web64 IDE Example\n * Name: Hybrid C Calls ASM Header\n * Description: Declares hand-written assembly routines callable from C.\n */\n\n#ifndef HYBRID_C_CALLS_ASM_GAME_H\n#define HYBRID_C_CALLS_ASM_GAME_H\nvoid asm_flash_border(void);\n#endif\n"
+    },
+    {
+      "path": "routines.asm",
+      "name": "routines.asm",
+      "kind": "source",
+      "source": "; Web64 IDE Example\n; Name: Hybrid C Calls ASM Routines\n; Description: Exports asm_flash_border for the C entry point.\n\nasm_flash_border:\n    lda _border_color\n    sta $d020\n    lda #0\n    sta $d021\n    rts\n"
+    }
+  ]
+}

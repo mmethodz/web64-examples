@@ -1,0 +1,52 @@
+{
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-14T00:00:00.000Z",
+  "main": {
+    "fileName": "c-asset-header.asm",
+    "origin": "$c000",
+    "source": "; Web64 IDE Example\n; Name: C Asset Header Shell\n; Description: Assembly shell for a C project that reads generated asset symbols.\n",
+    "selectedEntryLabel": "_main"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native"
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "files": [
+    {
+      "path": "main.c",
+      "name": "main.c",
+      "kind": "source",
+      "source": "/*\n * Web64 IDE Example\n * Name: C Asset Header\n * Description: Includes assets/generated.h and uses generated asset size symbols.\n */\n\n#include <stdint.h>\n#include <assets/generated.h>\n\nuint8_t color = 0;\n\nvoid main(void) {\n    color = 3;\n    if (example_blob_size != 0) { color = 5; }\n    *(uint8_t*)0xd020 = color;\n    *(uint8_t*)0xd021 = 0;\n    while (1) { }\n}\n"
+    },
+    {
+      "path": "assets/example-blob.bin",
+      "name": "example-blob.bin",
+      "kind": "asset",
+      "encoding": "base64",
+      "bytes": "AQIDBAUGBwgJ"
+    }
+  ]
+}
