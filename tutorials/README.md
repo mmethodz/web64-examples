@@ -11,6 +11,7 @@ Each tutorial entry links prose to a runnable `.web64proj` project. The projects
 | Screen memory | `../c-screen-memory/c-screen-memory.web64proj` | C writes to C64 screen memory. |
 | Joystick registers | `../c-joystick-registers/c-joystick-registers.web64proj` | C64 register aliases and joystick helpers. |
 | Sprite joystick | `../c-sprite-joy/c-sprite-joy.web64proj` | Sprite helper declarations and C64 sprite registers. |
+| Sprite joy SID bumps C | `../sprite-joy-sid-bumps-c/sprite-joy-sid-bumps-c.web64proj` | C-first sprite, joystick acceleration, SID, 16-bit X wrap, and charset asset copy. |
 | Asset header | `../c-asset-header/c-asset-header.web64proj` | Generated `assets/generated.h` metadata. |
 | Mixed C calls ASM | `../hybrid-c-calls-asm/hybrid-c-calls-asm.web64proj` | C symbols and direct `asm_` label calls. |
 | ASM uses C data | `../hybrid-asm-uses-c-data/hybrid-asm-uses-c-data.web64proj` | Mixed C/ASM symbol visibility. |
