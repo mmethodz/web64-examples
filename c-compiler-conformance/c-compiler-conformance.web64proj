@@ -1,0 +1,45 @@
+{
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-15T00:00:00.000Z",
+  "main": {
+    "fileName": "c-compiler-conformance.asm",
+    "origin": "$c000",
+    "source": "; Web64 IDE Example\n; Name: C Compiler Conformance\n; Description: Browser-run Web64 C v1 conformance checks; main.c is the entry source.\n",
+    "selectedEntryLabel": "_main"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "screen",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native"
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "files": [
+    {
+      "path": "main.c",
+      "name": "main.c",
+      "kind": "source",
+      "source": "/*\n * Web64 IDE Example\n * Name: C Compiler Conformance\n * Description: Prints PASS/FAIL for implemented Web64 C v1 expression and ABI paths.\n */\n\n#include <stdint.h>\n#include <stdio.h>\n#include <stdlib.h>\n#include <libc.h>\n\nuint16_t failures;\nuint16_t value;\n\nuint8_t foo(void) { return 5; }\nuint8_t bar(void) { return 7; }\nuint8_t baz(void) { return 3; }\n\nvoid main(void) {\n    puts(\"WEB64 C V1\");\n    failures = 0;\n\n    value = 5 + 3;\n    if (value != 8) { puts(\"FAIL 1\"); failures = failures + 1; }\n    value = (5 + 3) << 1;\n    if (value != 16) { puts(\"FAIL 2\"); failures = failures + 1; }\n    value = (5 << 1) ^ 3;\n    if (value != 9) { puts(\"FAIL 3\"); failures = failures + 1; }\n    value = (5 ^ 3) + (2 << 2);\n    if (value != 14) { puts(\"FAIL 4\"); failures = failures + 1; }\n    value = (uint16_t)((uint8_t)1 << 8);\n    if (value != 256) { puts(\"FAIL 5\"); failures = failures + 1; }\n    value = (uint16_t)((uint16_t)0x1234 >> 4);\n    if (value != 0x0123) { puts(\"FAIL 6\"); failures = failures + 1; }\n    value = foo() + bar();\n    if (value != 12) { puts(\"FAIL 7\"); failures = failures + 1; }\n    value = foo() + bar() + baz();\n    if (value != 15) { puts(\"FAIL 8\"); failures = failures + 1; }\n    value = (foo() << 8) | bar();\n    if (value != 1287) { puts(\"FAIL 9\"); failures = failures + 1; }\n    value = (5 + 3) * (2 + 1);\n    if (value != 24) { puts(\"FAIL 10\"); failures = failures + 1; }\n    value = 100 / 5;\n    if (value != 20) { puts(\"FAIL 11\"); failures = failures + 1; }\n    value = 100 % 7;\n    if (value != 2) { puts(\"FAIL 12\"); failures = failures + 1; }\n\n    srand(1);\n    value = (uint16_t)((rand() << 8) + rand());\n    printf(\"RAND %d\\n\", value);\n    printf(\"SUM %d\\n\", foo() + bar());\n\n    if (failures == 0) {\n        puts(\"PASS\");\n    } else {\n        puts(\"FAIL\");\n    }\n\n    while (1) {\n    }\n}\n"
+    }
+  ]
+}
