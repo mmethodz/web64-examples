@@ -1,0 +1,42 @@
+{
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-18T00:00:00.000Z",
+  "main": {
+    "fileName": "c-fixed-subpixel-scroll.asm",
+    "origin": "$c000",
+    "source": "; Web64 IDE Example\n; Name: C Fixed Subpixel Scroll\n; Description: 8.8 fixed-point sprite and fine-scroll accumulation; main.c is the entry source.\n",
+    "selectedEntryLabel": "_main"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": ["include", "assets"],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native"
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "files": [
+    {
+      "path": "main.c",
+      "name": "main.c",
+      "kind": "source",
+      "source": "/*\n * Web64 IDE Example\n * Name: C Fixed Subpixel Scroll\n * Description: Uses 8.8 fixed-point position and scroll accumulators.\n */\n\n#include <stdint.h>\n#include <web64/fixed.h>\n\nweb64_fix8_8 sprite_x;\nweb64_fix8_8 sprite_v;\nweb64_fix8_8 scroll_x;\nweb64_fix8_8 scroll_v;\n\nvoid main(void) {\n    sprite_x = WEB64_FIX8_FROM_INT(32);\n    sprite_v = WEB64_FIX8_FROM_RATIO(3, 2);\n    scroll_v = WEB64_FIX8_FROM_RATIO(1, 8);\n    *(uint8_t*)0xd015 = 1;\n    *(uint8_t*)0xd001 = 120;\n    *(uint8_t*)0xd027 = 7;\n    while (1) {\n        sprite_x = web64_fix8_add_wrap(sprite_x, sprite_v);\n        scroll_x = web64_fix8_add_wrap(scroll_x, scroll_v);\n        *(uint8_t*)0xd000 = WEB64_FIX8_TO_INT(sprite_x);\n        *(uint8_t*)0xd016 = WEB64_FIX8_TO_INT(scroll_x);\n        *(uint8_t*)0xd020 = WEB64_FIX8_TO_INT(scroll_x);\n    }\n}\n"
+    }
+  ]
+}

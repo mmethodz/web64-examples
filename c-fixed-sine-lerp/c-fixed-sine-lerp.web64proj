@@ -1,0 +1,42 @@
+{
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-18T00:00:00.000Z",
+  "main": {
+    "fileName": "c-fixed-sine-lerp.asm",
+    "origin": "$c000",
+    "source": "; Web64 IDE Example\n; Name: C Fixed Sine Lerp\n; Description: Fixed sine, multiply, and lerp animation; main.c is the entry source.\n",
+    "selectedEntryLabel": "_main"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": ["include", "assets"],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native"
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "files": [
+    {
+      "path": "main.c",
+      "name": "main.c",
+      "kind": "source",
+      "source": "/*\n * Web64 IDE Example\n * Name: C Fixed Sine Lerp\n * Description: Uses angle8 sine, fixed multiply, and fixed lerp.\n */\n\n#include <stdint.h>\n#include <web64/fixed.h>\n\nweb64_angle8 phase;\nweb64_fix8_8 radius;\nweb64_fix8_8 wave;\nweb64_fix8_8 smooth;\n\nvoid main(void) {\n    radius = WEB64_FIX8_FROM_INT(24);\n    *(uint8_t*)0xd015 = 1;\n    *(uint8_t*)0xd001 = 120;\n    *(uint8_t*)0xd027 = 14;\n    while (1) {\n        phase = phase + 2;\n        wave = web64_fix8_mul(web64_sin8(phase), radius);\n        smooth = web64_fix8_lerp(smooth, wave, 32);\n        *(uint8_t*)0xd000 = 160 + WEB64_FIX8_TO_INT(smooth);\n        *(uint8_t*)0xd020 = phase;\n    }\n}\n"
+    }
+  ]
+}

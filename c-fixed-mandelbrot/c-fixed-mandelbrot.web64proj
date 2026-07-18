@@ -1,0 +1,48 @@
+{
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-19T00:00:00.000Z",
+  "main": {
+    "fileName": "c-fixed-mandelbrot.asm",
+    "origin": "$c000",
+    "source": "; Web64 IDE Example\n; Name: C Fixed Mandelbrot\n; Description: 8.8 fixed-point Mandelbrot renderer writes to C64 multicolor bitmap memory.\n",
+    "selectedEntryLabel": "_main"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native",
+    "zeroPage": {
+      "reserved": []
+    }
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "files": [
+    {
+      "path": "main.c",
+      "name": "main.c",
+      "kind": "source",
+      "source": "/*\n * Web64 IDE Example\n * Name: C Fixed Mandelbrot\n * Description: Renders a 160x200 Mandelbrot set in C64 multicolor bitmap mode using web64/fixed.h 8.8 helpers.\n */\n\n#include <stdint.h>\n#include <web64/fixed.h>\n\n#define MANDEL_WIDTH_BYTES 40\n#define MANDEL_CELL_ROWS 25\n#define MANDEL_MAX_ITERATIONS 24\n#define MANDEL_ESCAPE_RADIUS2 1024\n#define MANDEL_MIN_REAL -550\n#define MANDEL_MAX_IMAG 307\n#define MANDEL_REAL_STEP 5\n#define MANDEL_IMAG_STEP 3\n#define MANDEL_CELL_REAL_STEP 20\n#define MANDEL_CELL_IMAG_STEP 24\n\nuint8_t oracle_failures;\nuint8_t screen_band;\nuint8_t screen_offset;\nuint8_t cell_row;\nuint8_t y_pixel;\nuint8_t char_col;\nuint8_t pair_index;\nuint8_t iter_count;\nuint8_t pixel_pair;\nuint8_t bitmap_byte;\nuint8_t color_hi;\nuint8_t color_lo;\nuint8_t color_ram;\nuint8_t screen_row_offset;\nint bitmap_addr;\nint current_cell_addr;\nint row_base;\nweb64_fix8_8 c_real;\nweb64_fix8_8 cell_real_start;\nweb64_fix8_8 row_imag;\nweb64_fix8_8 pixel_imag;\nweb64_fix8_8 z_real;\nweb64_fix8_8 z_imag;\nweb64_fix8_8 real_sq;\nweb64_fix8_8 imag_sq;\nweb64_fix8_8 mag_sq;\nweb64_fix8_8 two_real_imag;\nweb64_fix8_8 next_real;\nweb64_fix8_8 next_imag;\n\nuint8_t mandelbrot_iterate(web64_fix8_8 point_real, web64_fix8_8 point_imag, uint8_t max_iterations) {\n    uint8_t iteration;\n\n    z_real = 0;\n    z_imag = 0;\n    iteration = 0;\n\n    while (iteration < max_iterations) {\n        real_sq = web64_fix8_mul(z_real, z_real);\n        imag_sq = web64_fix8_mul(z_imag, z_imag);\n        mag_sq = web64_fix8_add_wrap(real_sq, imag_sq);\n        if (mag_sq > MANDEL_ESCAPE_RADIUS2) {\n            return iteration;\n        }\n\n        two_real_imag = web64_fix8_mul(z_real, z_imag);\n        next_real = web64_fix8_add_wrap(web64_fix8_sub_wrap(real_sq, imag_sq), point_real);\n        next_imag = web64_fix8_add_wrap(web64_fix8_add_wrap(two_real_imag, two_real_imag), point_imag);\n        z_real = next_real;\n        z_imag = next_imag;\n        iteration = iteration + 1;\n    }\n\n    return max_iterations;\n}\n\nuint8_t mandelbrot_pixel_pair(uint8_t iteration) {\n    if (iteration == MANDEL_MAX_ITERATIONS) return 0;\n    if (iteration < 3) return 1;\n    if (iteration < 7) return 2;\n    if (iteration < 13) return 3;\n    if (iteration < 19) return 2;\n    return 1;\n}\n\nvoid bitmap_put(uint8_t value) {\n    *(uint8_t*)bitmap_addr = value;\n}\n\nvoid cell_color_put(void) {\n    color_hi = 2;\n    color_lo = 8;\n    color_ram = 7;\n    if (screen_band == 0) { *(uint8_t*)(0x0400 + screen_offset) = (color_hi << 4) | color_lo; *(uint8_t*)(0xd800 + screen_offset) = color_ram; return; }\n    if (screen_band == 1) { *(uint8_t*)(0x04c8 + screen_offset) = (color_hi << 4) | color_lo; *(uint8_t*)(0xd8c8 + screen_offset) = color_ram; return; }\n    if (screen_band == 2) { *(uint8_t*)(0x0590 + screen_offset) = (color_hi << 4) | color_lo; *(uint8_t*)(0xd990 + screen_offset) = color_ram; return; }\n    if (screen_band == 3) { *(uint8_t*)(0x0658 + screen_offset) = (color_hi << 4) | color_lo; *(uint8_t*)(0xda58 + screen_offset) = color_ram; return; }\n    *(uint8_t*)(0x0720 + screen_offset) = (color_hi << 4) | color_lo;\n    *(uint8_t*)(0xdb20 + screen_offset) = color_ram;\n}\n\nuint8_t build_multicolor_pixel_byte(void) {\n    pair_index = 0;\n    bitmap_byte = 0;\n    while (pair_index < 4) {\n        iter_count = mandelbrot_iterate(c_real, pixel_imag, MANDEL_MAX_ITERATIONS);\n        pixel_pair = mandelbrot_pixel_pair(iter_count);\n        if (pair_index == 0) bitmap_byte = pixel_pair << 6;\n        if (pair_index == 1) bitmap_byte = bitmap_byte | (pixel_pair << 4);\n        if (pair_index == 2) bitmap_byte = bitmap_byte | (pixel_pair << 2);\n        if (pair_index == 3) bitmap_byte = bitmap_byte | pixel_pair;\n        c_real = web64_fix8_add_wrap(c_real, MANDEL_REAL_STEP);\n        pair_index = pair_index + 1;\n    }\n    return bitmap_byte;\n}\n\nvoid render_multicolor_cell_pixels(void) {\n    bitmap_addr = current_cell_addr;\n    pixel_imag = row_imag;\n    y_pixel = 0;\n    while (y_pixel < 8) {\n        c_real = cell_real_start;\n        bitmap_put(build_multicolor_pixel_byte());\n        bitmap_addr = bitmap_addr + 1;\n        pixel_imag = web64_fix8_sub_wrap(pixel_imag, MANDEL_IMAG_STEP);\n        y_pixel = y_pixel + 1;\n    }\n    cell_color_put();\n}\n\nvoid mandelbrot_render_bitmap(void) {\n    row_imag = 307;\n    row_base = 0;\n    cell_row = 0;\n    screen_band = 0;\n    screen_row_offset = 0;\n    while (cell_row < MANDEL_CELL_ROWS) {\n        current_cell_addr = 0x2000 + row_base;\n        cell_real_start = -550;\n        char_col = 0;\n        screen_offset = screen_row_offset;\n        while (char_col < MANDEL_WIDTH_BYTES) {\n            render_multicolor_cell_pixels();\n            screen_offset = screen_offset + 1;\n            current_cell_addr = current_cell_addr + 8;\n            cell_real_start = web64_fix8_add_wrap(cell_real_start, MANDEL_CELL_REAL_STEP);\n            char_col = char_col + 1;\n        }\n        row_imag = web64_fix8_sub_wrap(row_imag, MANDEL_CELL_IMAG_STEP);\n        row_base = row_base + 320;\n        screen_row_offset = screen_row_offset + 40;\n        if (screen_row_offset == 200) {\n            screen_row_offset = 0;\n            screen_band = screen_band + 1;\n        }\n        cell_row = cell_row + 1;\n        *(uint8_t*)0xd020 = cell_row;\n    }\n}\n\nvoid enable_multicolor_bitmap(void) {\n    *(uint8_t*)0xd020 = 0;\n    *(uint8_t*)0xd021 = 0;\n    *(uint8_t*)0xd018 = 0x18;\n    *(uint8_t*)0xd011 = 0x3b;\n    *(uint8_t*)0xd016 = 0x18;\n}\n\nvoid expect_bounded(web64_fix8_8 point_real, web64_fix8_8 point_imag) {\n    if (mandelbrot_iterate(point_real, point_imag, MANDEL_MAX_ITERATIONS) != MANDEL_MAX_ITERATIONS) {\n        oracle_failures = oracle_failures + 1;\n    }\n}\n\nvoid expect_escaped(web64_fix8_8 point_real, web64_fix8_8 point_imag) {\n    if (mandelbrot_iterate(point_real, point_imag, MANDEL_MAX_ITERATIONS) == MANDEL_MAX_ITERATIONS) {\n        oracle_failures = oracle_failures + 1;\n    }\n}\n\nvoid run_oracles(void) {\n    oracle_failures = 0;\n    expect_bounded(0, 0);\n    expect_bounded(-256, 0);\n    expect_escaped(256, 0);\n    expect_bounded(-512, 0);\n    expect_escaped(256, 256);\n    expect_bounded(-32, 192);\n}\n\nvoid show_oracle_failure(void) {\n    *(uint8_t*)0xd020 = 2;\n    *(uint8_t*)0xd021 = 0;\n    *(uint8_t*)0x0400 = 6;\n    *(uint8_t*)0x0401 = 9;\n    *(uint8_t*)0x0402 = 24;\n    *(uint8_t*)0x0403 = 5;\n    *(uint8_t*)0x0404 = 4;\n    *(uint8_t*)0x0405 = 32;\n    *(uint8_t*)0x0406 = 15;\n    *(uint8_t*)0x0407 = 18;\n    *(uint8_t*)0x0408 = 1;\n    *(uint8_t*)0x0409 = 3;\n    *(uint8_t*)0x040a = 12;\n    *(uint8_t*)0x040b = 5;\n    *(uint8_t*)0x040c = 32;\n    *(uint8_t*)0x040d = 6;\n    *(uint8_t*)0x040e = 1;\n    *(uint8_t*)0x040f = 9;\n    *(uint8_t*)0x0410 = 12;\n}\n\nvoid main(void) {\n    run_oracles();\n    if (oracle_failures != 0) {\n        show_oracle_failure();\n        while (1) {\n        }\n    }\n\n    enable_multicolor_bitmap();\n    mandelbrot_render_bitmap();\n    *(uint8_t*)0xd020 = 5;\n    while (1) {\n    }\n}\n"
+    }
+  ]
+}

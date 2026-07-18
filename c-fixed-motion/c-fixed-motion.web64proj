@@ -1,0 +1,42 @@
+{
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-18T00:00:00.000Z",
+  "main": {
+    "fileName": "c-fixed-motion.asm",
+    "origin": "$c000",
+    "source": "; Web64 IDE Example\n; Name: C Fixed Motion\n; Description: Web64Motion2D integration helper closure; main.c is the entry source.\n",
+    "selectedEntryLabel": "_main"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": ["include", "assets"],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native"
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "files": [
+    {
+      "path": "main.c",
+      "name": "main.c",
+      "kind": "source",
+      "source": "/*\n * Web64 IDE Example\n * Name: C Fixed Motion\n * Description: Uses Web64Motion2D and the fixed vector runtime helper.\n */\n\n#include <stdint.h>\n#include <web64/fixed.h>\n\nWeb64Motion2D motion;\n\nvoid main(void) {\n    *(uint8_t*)0xd015 = 1;\n    *(uint8_t*)0xd000 = 160;\n    *(uint8_t*)0xd001 = 100;\n    *(uint8_t*)0xd027 = 5;\n    while (1) {\n        web64_motion2d_integrate(&motion);\n        *(uint8_t*)0xd020 = 5;\n    }\n}\n"
+    }
+  ]
+}
