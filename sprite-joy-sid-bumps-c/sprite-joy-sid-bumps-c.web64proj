@@ -1,151 +1,151 @@
 {
-    "kind":  "web64.ide.project",
-    "version":  2,
-    "savedAt":  "2026-07-17T00:00:00.000Z",
-    "main":  {
-                 "fileName":  "sprite-joy-sid-bumps-c.asm",
-                 "origin":  "$c000",
-                 "source":  "; Web64 IDE Example\n; Name: Sprite Joy SID Bumps C\n; Description: C-first version of Sprite Joy SID Bumps. Assembly is limited to the asset-copy labels.",
-                 "selectedEntryLabel":  "_main"
-             },
-    "c":  {
-              "enabled":  true,
-              "dialect":  "web64-c-v0.1",
-              "entry":  "main.c",
-              "includePaths":  [
-                                   "include",
-                                   "assets"
-                               ],
-              "stdout":  "none",
-              "stdin":  "none",
-              "runtimeProfile":  "tiny",
-              "compilerBackend":  "web64-native"
-          },
-    "emulator":  {
-                     "emulatorScale":  "fit",
-                     "livePatchEnabled":  true,
-                     "audioEnabled":  true,
-                     "audioMuted":  false,
-                     "audioVolume":  1,
-                     "sidQuality":  "fastsid",
-                     "scanlinesEnabled":  true,
-                     "warpEnabled":  false,
-                     "drive9Enabled":  true,
-                     "gamepadEnabled":  true,
-                     "joystickPort":  2
-                 },
-    "files":  [
-                  {
-                      "path":  "main.c",
-                      "name":  "main.c",
-                      "kind":  "source",
-                      "source":  "/*\n * Web64 IDE Example\n * Name: Sprite Joy SID Bumps C\n * Description: C-first version of the sprite, joystick, SID, and bumps charset demo.\n */\n\n#include \u003cstdint.h\u003e\n#include \"game.h\"\n\n#define BORDER 0xd020\n#define BACKGROUND 0xd021\n#define VIC_MEMORY 0xd018\n#define SCREEN_RAM 0x0400\n#define COLOR_RAM 0xd800\n#define SPR0_X 0xd000\n#define SPR0_Y 0xd001\n#define SPR_MSB 0xd010\n#define SPR_ENABLE 0xd015\n#define SPR_MC 0xd01c\n#define SPR_PTR0 0x07f8\n#define SPR_MC0 0xd025\n#define SPR_MC1 0xd026\n#define SPR_COLOR0 0xd027\n#define JOY2 0xdc00\n#define CIA1_DDRA 0xdc02\n#define CIA1_DDRB 0xdc03\n#define SID 0xd400\n#define SPRITE_PTR 0xc0\n\nuint16_t x_pos = 160;\nuint8_t y_pos = 112;\nuint8_t x_vel = 0;\nuint8_t y_vel = 0;\nuint8_t joy_now = 0xff;\nuint8_t frame = 0;\nuint8_t anim_delay = 0;\nuint8_t sid_delay = 0;\nuint8_t sid_step = 0;\nuint8_t scene_phase = 0;\n\nvoid poke(uint16_t address, uint8_t value) { *(uint8_t*)address = value; }\nuint8_t peek(uint16_t address) { return *(uint8_t*)address; }\n\nvoid wait_frame(void) {\n    while (peek(0xd012) == 0xf8) { }\n    while (peek(0xd012) != 0xf8) { }\n}\n\nvoid setup_video(void) {\n    poke(CIA1_DDRA, 0);\n    poke(CIA1_DDRB, 0);\n    poke(BORDER, 0);\n    poke(BACKGROUND, 0);\n    poke(VIC_MEMORY, 0x18);\n}\n\nvoid setup_sprite(void) {\n    poke(SPR_PTR0, SPRITE_PTR);\n    poke(SPR_ENABLE, 1);\n    poke(SPR_MC, 1);\n    poke(SPR_MC0, 5);\n    poke(SPR_MC1, 11);\n    poke(SPR_COLOR0, 1);\n}\n\nvoid read_joystick(void) { joy_now = peek(JOY2); }\n\nvoid update_x_velocity(void) {\n    if (!(joy_now \u0026 4)) {\n        if (x_vel != 0xfc) { x_vel = x_vel - 1; }\n        return;\n    }\n    if (!(joy_now \u0026 8)) {\n        if (x_vel != 4) { x_vel = x_vel + 1; }\n        return;\n    }\n    if (x_vel == 0) { return; }\n    if (x_vel \u0026 0x80) { x_vel = x_vel + 1; }\n    else { x_vel = x_vel - 1; }\n}\n\nvoid update_y_velocity(void) {\n    if (!(joy_now \u0026 1)) {\n        if (y_vel != 0xfd) { y_vel = y_vel - 1; }\n        return;\n    }\n    if (!(joy_now \u0026 2)) {\n        if (y_vel != 3) { y_vel = y_vel + 1; }\n        return;\n    }\n    if (y_vel == 0) { return; }\n    if (y_vel \u0026 0x80) { y_vel = y_vel + 1; }\n    else { y_vel = y_vel - 1; }\n}\n\nvoid apply_motion(void) {\n    uint8_t speed;\n    if (x_vel \u0026 0x80) {\n        speed = (uint8_t)(0 - x_vel);\n        if (x_pos \u003c speed) { x_pos = 320 - (speed - x_pos); }\n        else { x_pos = x_pos - speed; }\n    } else {\n        x_pos = x_pos + x_vel;\n        if (x_pos \u003e= 320) { x_pos = x_pos - 320; }\n    }\n\n    if (y_vel \u0026 0x80) {\n        speed = (uint8_t)(0 - y_vel);\n        if (y_pos \u003c= (50 + speed)) { y_pos = 50; y_vel = 0; }\n        else { y_pos = y_pos - speed; }\n    } else {\n        y_pos = y_pos + y_vel;\n        if (y_pos \u003e= 219) { y_pos = 219; y_vel = 0; }\n    }\n}\n\nvoid position_sprite(void) {\n    poke(SPR0_X, (uint8_t)x_pos);\n    poke(SPR0_Y, y_pos);\n    if (x_pos \u003e= 256) { poke(SPR_MSB, peek(SPR_MSB) | 1); }\n    else { poke(SPR_MSB, peek(SPR_MSB) \u0026 0xfe); }\n    if (!(joy_now \u0026 16)) { poke(SPR_COLOR0, 2); }\n    else { poke(SPR_COLOR0, 1); }\n}\n\nvoid animate_ghost(void) {\n    if ((x_vel | y_vel) == 0) {\n        frame = 0;\n        poke(SPR_PTR0, SPRITE_PTR);\n        return;\n    }\n    anim_delay = anim_delay + 1;\n    if (anim_delay \u003c 5) { return; }\n    anim_delay = 0;\n    frame = frame + 1;\n    if (frame \u003e= 4) { frame = 0; }\n    poke(SPR_PTR0, SPRITE_PTR + frame);\n}\n\nuint8_t shade_char(uint8_t index) {\n    if (index \u003c 8) { return 0x1a; }\n    return (uint8_t)(0x1f - index);\n}\n\nuint8_t wave_value(uint8_t x) {\n    if (x \u003c 16) { return x; }\n    if (x \u003c 32) { return (uint8_t)(31 - x); }\n    return (uint8_t)(x - 32);\n}\n\nvoid clear_screen(void) {\n    uint16_t i = 0;\n    while (i \u003c 1000) {\n        poke(SCREEN_RAM + i, 0);\n        i = i + 1;\n    }\n}\n\nvoid paint_scene(void) {\n    uint8_t x = 0;\n    while (x \u003c 40) {\n        poke(COLOR_RAM + 0x0028 + x, 6);\n        poke(COLOR_RAM + 0x0050 + x, 6);\n        poke(COLOR_RAM + 0x0370 + x, 6);\n        poke(COLOR_RAM + 0x0078 + x, 14);\n        poke(COLOR_RAM + 0x00a0 + x, 14);\n        poke(COLOR_RAM + 0x0348 + x, 14);\n        poke(COLOR_RAM + 0x00c8 + x, 3);\n        poke(COLOR_RAM + 0x02f8 + x, 3);\n        poke(COLOR_RAM + 0x01e0 + x, 1);\n        poke(COLOR_RAM + 0x0208 + x, 1);\n        x = x + 1;\n    }\n}\n\nvoid pulse_scene(void) {\n    uint8_t x = 0;\n    uint8_t index;\n    scene_phase = scene_phase + 1;\n    if (scene_phase \u0026 3) { return; }\n    while (x \u003c 40) {\n        index = (uint8_t)((x + scene_phase) \u0026 0x1f);\n        poke(SCREEN_RAM + 0x0028 + x, shade_char(index));\n        index = (uint8_t)(((scene_phase \u003e\u003e 1) + wave_value(x)) \u0026 0x1f);\n        poke(SCREEN_RAM + 0x0370 + x, shade_char(index));\n        x = x + 1;\n    }\n}\n\nuint8_t note_value(uint8_t table, uint8_t step) {\n    uint8_t s = step \u0026 15;\n    if (table == 0) {\n        if (s == 0) return 0x25; if (s == 1) return 0x6b; if (s == 2) return 0xb6; if (s == 3) return 0x0d;\n        if (s == 4) return 0x6b; if (s == 5) return 0xd5; if (s == 6) return 0x4b; if (s == 7) return 0xd1;\n        if (s == 8) return 0x25; if (s == 9) return 0xd1; if (s == 10) return 0x4b; if (s == 11) return 0xd5;\n        if (s == 12) return 0x6b; if (s == 13) return 0x0d; if (s == 14) return 0xb6; return 0x6b;\n    }\n    if (table == 1) {\n        if (s == 0) return 0x11; if (s == 1) return 0x12; if (s == 2) return 0x13; if (s == 3) return 0x15;\n        if (s == 4) return 0x16; if (s == 5) return 0x17; if (s == 6) return 0x19; if (s == 7) return 0x1a;\n        if (s == 8) return 0x1c; if (s == 9) return 0x1a; if (s == 10) return 0x19; if (s == 11) return 0x17;\n        if (s == 12) return 0x16; if (s == 13) return 0x15; if (s == 14) return 0x13; return 0x12;\n    }\n    if (table == 2) {\n        if (s \u003c 2) return 0x12; if (s \u003c 4) return 0x35; if (s \u003c 6) return 0x12; if (s \u003c 8) return 0x46;\n        if (s \u003c 10) return 0x25; if (s \u003c 12) return 0x58; if (s \u003c 14) return 0x25; return 0x46;\n    }\n    if (table == 3) {\n        if (s \u003c 2) return 0x08; if (s \u003c 4) return 0x09; if (s \u003c 6) return 0x08; if (s \u003c 8) return 0x0a;\n        if (s \u003c 10) return 0x09; if (s \u003c 12) return 0x0b; if (s \u003c 14) return 0x09; return 0x0a;\n    }\n    if (table == 4) {\n        if (s \u003c 2) return 0xb6; if (s \u003c 4) return 0x0d; if (s \u003c 6) return 0x4b; if (s \u003c 8) return 0xd1;\n        if (s \u003c 10) return 0x6b; if (s \u003c 12) return 0x25; if (s \u003c 14) return 0xd5; return 0x6b;\n    }\n    if (s \u003c 2) return 0x13; if (s \u003c 4) return 0x15; if (s \u003c 6) return 0x19; if (s \u003c 8) return 0x1a;\n    if (s \u003c 10) return 0x16; if (s \u003c 12) return 0x1c; if (s \u003c 14) return 0x17; return 0x12;\n}\n\nvoid sid_init(void) {\n    uint8_t i = 0;\n    while (i \u003c 25) { poke(SID + i, 0); i = i + 1; }\n    poke(SID + 0x18, 0x0f);\n    poke(SID + 0x05, 0x09); poke(SID + 0x06, 0x86);\n    poke(SID + 0x0c, 0x08); poke(SID + 0x0d, 0x86);\n    poke(SID + 0x13, 0x08); poke(SID + 0x14, 0xa8);\n    poke(SID + 0x04, 0x11); poke(SID + 0x0b, 0x21); poke(SID + 0x12, 0x41);\n}\n\nvoid play_sid(void) {\n    sid_delay = sid_delay + 1;\n    if (sid_delay \u003c 8) { return; }\n    sid_delay = 0;\n    sid_step = sid_step + 1;\n    poke(SID + 0x00, note_value(0, sid_step)); poke(SID + 0x01, note_value(1, sid_step));\n    poke(SID + 0x07, note_value(2, sid_step)); poke(SID + 0x08, note_value(3, sid_step));\n    poke(SID + 0x0e, note_value(4, sid_step)); poke(SID + 0x0f, note_value(5, sid_step));\n}\n\nvoid main(void) {\n    setup_video();\n    copy_charset();\n    copy_sprites();\n    clear_screen();\n    paint_scene();\n    sid_init();\n    setup_sprite();\n\n    while (1) {\n        wait_frame();\n        play_sid();\n        read_joystick();\n        update_x_velocity();\n        update_y_velocity();\n        apply_motion();\n        animate_ghost();\n        position_sprite();\n        pulse_scene();\n    }\n}"
-                  },
-                  {
-                      "path":  "game.h",
-                      "name":  "game.h",
-                      "kind":  "source",
-                      "source":  "#ifndef SPRITE_JOY_SID_BUMPS_C_GAME_H\n#define SPRITE_JOY_SID_BUMPS_C_GAME_H\n\nvoid copy_charset(void);\nvoid copy_sprites(void);\n\n#endif"
-                  },
-                  {
-                      "path":  "asset_copy.asm",
-                      "name":  "asset_copy.asm",
-                      "kind":  "source",
-                      "source":  "; Web64 IDE Example\n; Name: Sprite Joy SID Bumps C Asset Copy\n; Description: Mandatory assembly bridge for binary asset labels used by the C program.\n\n_copy_charset:\n    ldx #$00\ncopy_char_loop_c:\n    lda bumps_chars+$0000,x\n    sta $2000,x\n    lda bumps_chars+$0100,x\n    sta $2100,x\n    lda bumps_chars+$0200,x\n    sta $2200,x\n    lda bumps_chars+$0300,x\n    sta $2300,x\n    lda bumps_chars+$0400,x\n    sta $2400,x\n    lda bumps_chars+$0500,x\n    sta $2500,x\n    lda bumps_chars+$0600,x\n    sta $2600,x\n    lda bumps_chars+$0700,x\n    sta $2700,x\n    inx\n    bne copy_char_loop_c\n    rts\n\n_copy_sprites:\n    ldx #$00\ncopy_sprite_loop_c:\n    lda c_joy_sprites,x\n    sta $3000,x\n    inx\n    bne copy_sprite_loop_c\n    rts\n\n.incbin c_joy_sprites, \"assets/sprites/c-joy.spr\"\n.include \"assets/sprites/c-joy.inc\"\n.incbin bumps_chars, \"assets/chars/bumps.chr\"\n.include \"assets/chars/bumps.inc\""
-                  },
-                  {
-                      "path":  "assets/sprites/c-joy.inc",
-                      "name":  "c-joy.inc",
-                      "kind":  "source",
-                      "generated":  true,
-                      "generatedFrom":  "assets/sprites/c-joy.spr",
-                      "source":  "; Generated by Web64 IDE. Edit the graphics asset, not this file.\nc_joy_sprites_size = $0100\n; Editor color references\nc_joy_color_0 = 0\nc_joy_background_color = 0\nc_joy_color_1 = 5\nc_joy_multicolor_1 = 5\nc_joy_color_2 = 1\nc_joy_sprite_color = 1\nc_joy_color_3 = $0b\nc_joy_multicolor_2 = $0b\nc_joy_sprite_count = 4\nc_joy_sprites_end = c_joy_sprites + c_joy_sprites_size\nc_joy_frame_0 = c_joy_sprites + 0\nc_joy_frame_1 = c_joy_sprites + $40\nc_joy_frame_2 = c_joy_sprites + $80\nc_joy_frame_3 = c_joy_sprites + $c0\n"
-                  },
-                  {
-                      "path":  "assets/sprites/c-joy.spr",
-                      "name":  "c-joy.spr",
-                      "kind":  "spritebank",
-                      "mode":  "multicolor",
-                      "width":  24,
-                      "height":  21,
-                      "count":  4,
-                      "colors":  {
-                                     "background":  0,
-                                     "multicolor1":  5,
-                                     "foreground":  1,
-                                     "multicolor2":  11,
-                                     "mode":  "multicolor"
-                                 },
-                      "includePath":  "assets/sprites/c-joy.inc",
-                      "dirty":  true,
-                      "lastCompiledHash":  null,
-                      "lastPatchedHash":  null,
-                      "asset":  {
-                                    "schema":  "web64.ide.graphicsAsset",
-                                    "version":  1,
-                                    "kind":  "spritebank",
-                                    "mode":  "multicolor",
-                                    "width":  24,
-                                    "height":  21,
-                                    "count":  4,
-                                    "colors":  {
-                                                   "background":  0,
-                                                   "multicolor1":  5,
-                                                   "foreground":  1,
-                                                   "multicolor2":  11,
-                                                   "mode":  "multicolor"
-                                               },
-                                    "includePath":  "assets/sprites/c-joy.inc"
-                                },
-                      "encoding":  "base64",
-                      "bytes":  "AAAAANcAAVVADVVwBVVQBZZQBKKQBKKQB77QBddQBVVQNVVcNcNcFQBU1X1X1VVXXVV1UUFFwcNDAQBAAwDAAAAAAADXAAFVQA1VcAVVUAWWUAaqkASikASy0AXXUAVVUAVVUDXDXDUAXBV9VNVVV91Vd1FBRVHDRcEAQwMAwAAAAAAA1wABVUANVXAFVVAFllAGqpAGKJAHPNAF11AFVVA1VVw1w1wVAFTVfVfVVVddVXVRQUXBw0MBAEADAMAAAAAAANcAAVVADVVwBVVQBZZQBiiQBiiQB77QBddQBVVQNVVcNcNcFQBU1X1X1VVXXVV1UUFFwcNDAQBAAwDAAA=="
-                  },
-                  {
-                      "path":  "assets/chars/bumps.chr",
-                      "name":  "bumps.chr",
-                      "kind":  "charset",
-                      "mode":  "mono",
-                      "width":  8,
-                      "height":  8,
-                      "count":  256,
-                      "colors":  {
-                                     "background":  0,
-                                     "multicolor1":  5,
-                                     "multicolor2":  2,
-                                     "foreground":  1,
-                                     "mode":  "mono"
-                                 },
-                      "includePath":  "assets/chars/bumps.inc",
-                      "dirty":  true,
-                      "lastCompiledHash":  null,
-                      "lastPatchedHash":  null,
-                      "asset":  {
-                                    "schema":  "web64.ide.graphicsAsset",
-                                    "version":  1,
-                                    "kind":  "charset",
-                                    "mode":  "mono",
-                                    "width":  8,
-                                    "height":  8,
-                                    "count":  256,
-                                    "colors":  {
-                                                   "background":  0,
-                                                   "multicolor1":  5,
-                                                   "multicolor2":  2,
-                                                   "foreground":  1,
-                                                   "mode":  "mono"
-                                               },
-                                    "includePath":  "assets/chars/bumps.inc"
-                                },
-                      "encoding":  "base64",
-                      "bytes":  "AAAAAAAAAAAAAAAAAEAAAAAAEgAAAAAAAAAAAAAwBAAAgAAAABAAIAAAgAIABAAAAAIAIAIAgAFAAAAEIAABIAAIgAQgAAAIQgIAAAAQBAAEAACIACAAgQBUwASKBAAAICEgUABCQAwhAUgCACAEAIAkggAQAAEUBBQAAkgBAESiAChgAIAJNKIAKGAEgAk0ogAqYASgCTQ0CaAUQKpAoiyQBagCVYJFRaJVAqhFkiyqTapAFaJJNLRJohVkqk2qLdJXqIpVulVVulXKrFfSLapdqlu16ku0LdpXrfpVulVVul36rXfararful/16l+1td/+tf+6/er3/9///X//7wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-                  },
-                  {
-                      "path":  "assets/chars/bumps.inc",
-                      "name":  "bumps.inc",
-                      "kind":  "source",
-                      "generated":  true,
-                      "generatedFrom":  "assets/chars/bumps.chr",
-                      "source":  "; Generated by Web64 IDE. Edit the graphics asset, not this file.\nbumps_chars_size = $0800\n; Editor color references\nbumps_color_0 = 0\nbumps_background_color = 0\nbumps_color_1 = 5\nbumps_multicolor_1 = 5\nbumps_color_2 = 2\nbumps_multicolor_2 = 2\nbumps_color_3 = 1\nbumps_foreground_color = 1\nbumps_char_count = $0100\nbumps_chars_end = bumps_chars + bumps_chars_size\nbumps_char_0 = 0\nbumps_char_1 = 1\nbumps_char_2 = 2\nbumps_char_3 = 3\nbumps_char_4 = 4\nbumps_char_5 = 5\nbumps_char_6 = 6\nbumps_char_7 = 7\nbumps_char_8 = 8\nbumps_char_9 = 9\nbumps_char_10 = $0a\nbumps_char_11 = $0b\nbumps_char_12 = $0c\nbumps_char_13 = $0d\nbumps_char_14 = $0e\nbumps_char_15 = $0f\n"
-                  }
-              ]
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-18T08:18:12.398Z",
+  "main": {
+    "fileName": "sprite-joy-sid-bumps-c.asm",
+    "origin": "$c000",
+    "source": "; Web64 IDE Example\n; Name: Sprite Joy SID Bumps C\n; Description: C-first version of Sprite Joy SID Bumps. Assembly is limited to the asset-copy labels.",
+    "selectedEntryLabel": "_main"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native"
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": true,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": true,
+    "joystickPort": 2
+  },
+  "files": [
+    {
+      "path": "main.c",
+      "name": "main.c",
+      "kind": "source",
+      "source": "/*\n * Web64 IDE Example\n * Name: Sprite Joy SID Bumps C\n * Description: C-first control loop with frame-critical C64 work in C-callable assembly.\n */\n\n#include \"game.h\"\n\nvoid main(void) {\n    setup_video();\n    copy_charset();\n    copy_sprites();\n    clear_screen();\n    paint_scene();\n    sid_init();\n    sprite_init();\n\n    while (1) {\n        wait_frame();\n        play_sid();\n        read_joy();\n        update_x_velocity();\n        update_y_velocity();\n        apply_motion();\n        animate_ghost();\n        position_sprite();\n        pulse_scene();\n    }\n}"
+    },
+    {
+      "path": "game.h",
+      "name": "game.h",
+      "kind": "source",
+      "source": "#ifndef SPRITE_JOY_SID_BUMPS_C_GAME_H\n#define SPRITE_JOY_SID_BUMPS_C_GAME_H\n\nvoid setup_video(void);\nvoid copy_charset(void);\nvoid copy_sprites(void);\nvoid clear_screen(void);\nvoid paint_scene(void);\nvoid sid_init(void);\nvoid sprite_init(void);\nvoid wait_frame(void);\nvoid play_sid(void);\nvoid read_joy(void);\nvoid update_x_velocity(void);\nvoid update_y_velocity(void);\nvoid apply_motion(void);\nvoid animate_ghost(void);\nvoid position_sprite(void);\nvoid pulse_scene(void);\n\n#endif"
+    },
+    {
+      "path": "asset_copy.asm",
+      "name": "asset_copy.asm",
+      "kind": "source",
+      "source": "; Web64 IDE Example\n; Name: Sprite Joy SID Bumps C Optimized Routines\n; Description: C-callable 6502 routines for dynamic C64 hardware writes and frame-critical work.\n\nBORDER=$d020\nBACKGROUND=$d021\nVIC_MEMORY=$d018\nRASTER=$d012\nSCREEN_RAM=$0400\nCOLOR_RAM=$d800\nSPR0_X=$d000\nSPR0_Y=$d001\nSPR_MSB=$d010\nSPR_ENABLE=$d015\nSPR_MC=$d01c\nSPR_PTR0=$07f8\nSPR_MC0=$d025\nSPR_MC1=$d026\nSPR_COLOR0=$d027\nJOY2=$dc00\nCIA1_DDRA=$dc02\nCIA1_DDRB=$dc03\nSID=$d400\nSPRITE_PTR=$c0\n\n_setup_video:\n    sei\n    lda #$00\n    sta CIA1_DDRA\n    sta CIA1_DDRB\n    sta BORDER\n    sta BACKGROUND\n    lda #%00011000\n    sta VIC_MEMORY\n    rts\n_wait_frame:\nwait_not_f8:\n    lda RASTER\n    cmp #$f8\n    beq wait_not_f8\nwait_f8:\n    lda RASTER\n    cmp #$f8\n    bne wait_f8\n    rts\n\n_sprite_init:\n    lda #SPRITE_PTR\n    sta SPR_PTR0\n    lda #%00000001\n    sta SPR_ENABLE\n    sta SPR_MC\n    lda #c_joy_multicolor_1\n    sta SPR_MC0\n    lda #c_joy_multicolor_2\n    sta SPR_MC1\n    lda #c_joy_sprite_color\n    sta SPR_COLOR0\n    rts\n\n_read_joy:\n    lda JOY2\n    sta joy_now\n    rts\n\n_update_x_velocity:\n    lda joy_now\n    and #%00000100\n    bne not_left\n    lda x_vel\n    cmp #$fc\n    beq x_done\n    dec x_vel\n    jmp x_done\nnot_left:\n    lda joy_now\n    and #%00001000\n    bne no_x_input\n    lda x_vel\n    cmp #$04\n    beq x_done\n    inc x_vel\n    jmp x_done\nno_x_input:\n    lda x_vel\n    beq x_done\n    bmi friction_right\n    dec x_vel\n    jmp x_done\nfriction_right:\n    inc x_vel\nx_done:\n    rts\n\n_update_y_velocity:\n    lda joy_now\n    and #%00000001\n    bne not_up\n    lda y_vel\n    cmp #$fd\n    beq y_done\n    dec y_vel\n    jmp y_done\nnot_up:\n    lda joy_now\n    and #%00000010\n    bne no_y_input\n    lda y_vel\n    cmp #$03\n    beq y_done\n    inc y_vel\n    jmp y_done\nno_y_input:\n    lda y_vel\n    beq y_done\n    bmi y_friction_down\n    dec y_vel\n    jmp y_done\ny_friction_down:\n    inc y_vel\ny_done:\n    rts\n\n_apply_motion:\n    lda x_vel\n    clc\n    adc x_lo\n    sta x_lo\n    lda x_vel\n    bpl add_x_positive\n    lda x_hi\n    adc #$ff\n    sta x_hi\n    jmp wrap_x\nadd_x_positive:\n    lda x_hi\n    adc #$00\n    sta x_hi\nwrap_x:\n    lda x_hi\n    cmp #$ff\n    bne check_right_wrap\n    lda x_lo\n    clc\n    adc #$40\n    sta x_lo\n    lda x_hi\n    adc #$01\n    sta x_hi\n    jmp apply_y\ncheck_right_wrap:\n    lda x_hi\n    beq apply_y\n    cmp #$01\n    bne subtract_320\n    lda x_lo\n    cmp #$40\n    bcc apply_y\nsubtract_320:\n    lda x_lo\n    sec\n    sbc #$40\n    sta x_lo\n    lda x_hi\n    sbc #$01\n    sta x_hi\napply_y:\n    lda y_vel\n    clc\n    adc y_pos\n    sta y_pos\n    cmp #$32\n    bcs check_y_bottom\n    lda #$32\n    sta y_pos\n    lda #0\n    sta y_vel\n    rts\ncheck_y_bottom:\n    cmp #$db\n    bcc motion_done\n    lda #$db\n    sta y_pos\n    lda #0\n    sta y_vel\nmotion_done:\n    rts\n\n_position_sprite:\n    lda x_lo\n    sta SPR0_X\n    lda y_pos\n    sta SPR0_Y\n    lda x_hi\n    and #$01\n    beq clear_msb\n    lda SPR_MSB\n    ora #%00000001\n    sta SPR_MSB\n    jmp color_sprite\nclear_msb:\n    lda SPR_MSB\n    and #%11111110\n    sta SPR_MSB\ncolor_sprite:\n    lda joy_now\n    and #%00010000\n    bne no_fire\n    lda #$02\n    sta SPR_COLOR0\n    rts\nno_fire:\n    lda #c_joy_sprite_color\n    sta SPR_COLOR0\n    rts\n\n_animate_ghost:\n    lda x_vel\n    ora y_vel\n    bne moving_anim\n    lda #0\n    sta frame\n    lda #SPRITE_PTR\n    sta SPR_PTR0\n    rts\nmoving_anim:\n    inc anim_delay\n    lda anim_delay\n    cmp #5\n    bcc anim_done\n    lda #0\n    sta anim_delay\n    inc frame\n    lda frame\n    cmp #4\n    bcc frame_ok\n    lda #0\n    sta frame\nframe_ok:\n    lda #SPRITE_PTR\n    clc\n    adc frame\n    sta SPR_PTR0\nanim_done:\n    rts\n\n_sid_init:\n    ldx #$18\n    lda #0\nsid_clear:\n    sta SID,x\n    dex\n    bpl sid_clear\n    lda #$0f\n    sta SID+$18\n    lda #$09\n    sta SID+$05\n    lda #$86\n    sta SID+$06\n    lda #$08\n    sta SID+$0c\n    lda #$86\n    sta SID+$0d\n    lda #$08\n    sta SID+$13\n    lda #$a8\n    sta SID+$14\n    lda #$11\n    sta SID+$04\n    lda #$21\n    sta SID+$0b\n    lda #$41\n    sta SID+$12\n    rts\n\n_play_sid:\n    inc sid_delay\n    lda sid_delay\n    cmp #8\n    bcc sid_done\n    lda #0\n    sta sid_delay\n    inc sid_step\n    lda sid_step\n    and #$0f\n    tax\n    lda lead_lo,x\n    sta SID+$00\n    lda lead_hi,x\n    sta SID+$01\n    lda bass_lo,x\n    sta SID+$07\n    lda bass_hi,x\n    sta SID+$08\n    lda chord_lo,x\n    sta SID+$0e\n    lda chord_hi,x\n    sta SID+$0f\nsid_done:\n    rts\n\n_clear_screen:\n    ldx #0\n    lda #0\nclear_loop:\n    sta SCREEN_RAM+$0000,x\n    sta SCREEN_RAM+$0100,x\n    sta SCREEN_RAM+$0200,x\n    sta SCREEN_RAM+$02e8,x\n    inx\n    bne clear_loop\n    rts\n\n_paint_scene:\n    ldx #$27\npaint_loop:\n    lda #$06\n    sta COLOR_RAM+$0028,x\n    sta COLOR_RAM+$0050,x\n    sta COLOR_RAM+$0370,x\n    lda #$0e\n    sta COLOR_RAM+$0078,x\n    sta COLOR_RAM+$00a0,x\n    sta COLOR_RAM+$0348,x\n    lda #$03\n    sta COLOR_RAM+$00c8,x\n    sta COLOR_RAM+$02f8,x\n    lda #$01\n    sta COLOR_RAM+$01e0,x\n    sta COLOR_RAM+$0208,x\n    dex\n    bpl paint_loop\n    rts\n\n_pulse_scene:\n    inc scene_phase\n    lda scene_phase\n    and #$03\n    bne pulse_done\n    ldx #$27\npulse_loop:\n    txa\n    clc\n    adc scene_phase\n    and #$1f\n    tay\n    lda shade_chars,y\n    sta SCREEN_RAM+$0028,x\n    lda scene_phase\n    lsr\n    clc\n    adc wave_x,x\n    and #$1f\n    tay\n    lda shade_chars,y\n    sta SCREEN_RAM+$0370,x\n    dex\n    bpl pulse_loop\npulse_done:\n    rts\n\n_copy_charset:\n    ldx #$00\ncopy_char_loop:\n    lda bumps_chars+$0000,x\n    sta $2000,x\n    lda bumps_chars+$0100,x\n    sta $2100,x\n    lda bumps_chars+$0200,x\n    sta $2200,x\n    lda bumps_chars+$0300,x\n    sta $2300,x\n    lda bumps_chars+$0400,x\n    sta $2400,x\n    lda bumps_chars+$0500,x\n    sta $2500,x\n    lda bumps_chars+$0600,x\n    sta $2600,x\n    lda bumps_chars+$0700,x\n    sta $2700,x\n    inx\n    bne copy_char_loop\n    rts\n\n_copy_sprites:\n    ldx #0\ncopy_sprite_loop:\n    lda c_joy_sprites,x\n    sta $3000,x\n    inx\n    bne copy_sprite_loop\n    rts\n\nx_lo: .byte 160\nx_hi: .byte 0\ny_pos: .byte 112\nx_vel: .byte 0\ny_vel: .byte 0\njoy_now: .byte $ff\nframe: .byte 0\nanim_delay: .byte 0\nsid_delay: .byte 0\nsid_step: .byte 0\nscene_phase: .byte 0\n\nlead_lo: .byte $25,$6b,$b6,$0d,$6b,$d5,$4b,$d1,$25,$d1,$4b,$d5,$6b,$0d,$b6,$6b\nlead_hi: .byte $11,$12,$13,$15,$16,$17,$19,$1a,$1c,$1a,$19,$17,$16,$15,$13,$12\nbass_lo: .byte $12,$12,$35,$35,$12,$12,$46,$46,$25,$25,$58,$58,$25,$25,$46,$46\nbass_hi: .byte $08,$08,$09,$09,$08,$08,$0a,$0a,$09,$09,$0b,$0b,$09,$09,$0a,$0a\nchord_lo:.byte $b6,$b6,$0d,$0d,$4b,$4b,$d1,$d1,$6b,$6b,$25,$25,$d5,$d5,$6b,$6b\nchord_hi:.byte $13,$13,$15,$15,$19,$19,$1a,$1a,$16,$16,$1c,$1c,$17,$17,$12,$12\n\nshade_chars:\n    .byte $1a,$1a,$1a,$1a,$1a,$1a,$1a,$1a\n    .byte $17,$16,$15,$14,$13,$12,$11,$10\n    .byte $0f,$0e,$0d,$0c,$0b,$0a,$09,$08\n    .byte $07,$06,$05,$04,$03,$02,$01,$00\nwave_x:\n    .byte $00,$01,$02,$03,$04,$05,$06,$07,$08,$09,$0a,$0b,$0c,$0d,$0e,$0f\n    .byte $0f,$0e,$0d,$0c,$0b,$0a,$09,$08,$07,$06,$05,$04,$03,$02,$01,$00\n    .byte $00,$01,$02,$03,$04,$05,$06,$07\n\n.incbin c_joy_sprites, \"assets/sprites/c-joy.spr\"\n.include \"assets/sprites/c-joy.inc\"\n.incbin bumps_chars, \"assets/chars/bumps.chr\"\n.include \"assets/chars/bumps.inc\"\n"
+    },
+    {
+      "path": "assets/sprites/c-joy.inc",
+      "name": "c-joy.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/sprites/c-joy.spr",
+      "source": "; Generated by Web64 IDE. Edit the graphics asset, not this file.\nc_joy_sprites_size = $0100\n; Editor color references\nc_joy_color_0 = 0\nc_joy_background_color = 0\nc_joy_color_1 = 5\nc_joy_multicolor_1 = 5\nc_joy_color_2 = 1\nc_joy_sprite_color = 1\nc_joy_color_3 = $0b\nc_joy_multicolor_2 = $0b\nc_joy_sprite_count = 4\nc_joy_sprites_end = c_joy_sprites + c_joy_sprites_size\nc_joy_frame_0 = c_joy_sprites + 0\nc_joy_frame_1 = c_joy_sprites + $40\nc_joy_frame_2 = c_joy_sprites + $80\nc_joy_frame_3 = c_joy_sprites + $c0\n"
+    },
+    {
+      "path": "assets/sprites/c-joy.spr",
+      "name": "c-joy.spr",
+      "kind": "spritebank",
+      "mode": "multicolor",
+      "width": 24,
+      "height": 21,
+      "count": 4,
+      "colors": {
+        "background": 0,
+        "multicolor1": 5,
+        "foreground": 1,
+        "multicolor2": 11,
+        "mode": "multicolor"
+      },
+      "includePath": "assets/sprites/c-joy.inc",
+      "dirty": true,
+      "lastCompiledHash": null,
+      "lastPatchedHash": null,
+      "asset": {
+        "schema": "web64.ide.graphicsAsset",
+        "version": 1,
+        "kind": "spritebank",
+        "mode": "multicolor",
+        "width": 24,
+        "height": 21,
+        "count": 4,
+        "colors": {
+          "background": 0,
+          "multicolor1": 5,
+          "foreground": 1,
+          "multicolor2": 11,
+          "mode": "multicolor"
+        },
+        "includePath": "assets/sprites/c-joy.inc"
+      },
+      "encoding": "base64",
+      "bytes": "AAAAANcAAVVADVVwBVVQBZZQBKKQBKKQB77QBddQBVVQNVVcNcNcFQBU1X1X1VVXXVV1UUFFwcNDAQBAAwDAAAAAAADXAAFVQA1VcAVVUAWWUAaqkASikASy0AXXUAVVUAVVUDXDXDUAXBV9VNVVV91Vd1FBRVHDRcEAQwMAwAAAAAAA1wABVUANVXAFVVAFllAGqpAGKJAHPNAF11AFVVA1VVw1w1wVAFTVfVfVVVddVXVRQUXBw0MBAEADAMAAAAAAANcAAVVADVVwBVVQBZZQBiiQBiiQB77QBddQBVVQNVVcNcNcFQBU1X1X1VVXXVV1UUFFwcNDAQBAAwDAAA=="
+    },
+    {
+      "path": "assets/chars/bumps.chr",
+      "name": "bumps.chr",
+      "kind": "charset",
+      "mode": "mono",
+      "width": 8,
+      "height": 8,
+      "count": 256,
+      "colors": {
+        "background": 0,
+        "multicolor1": 5,
+        "multicolor2": 2,
+        "foreground": 1,
+        "mode": "mono"
+      },
+      "includePath": "assets/chars/bumps.inc",
+      "dirty": true,
+      "lastCompiledHash": null,
+      "lastPatchedHash": null,
+      "asset": {
+        "schema": "web64.ide.graphicsAsset",
+        "version": 1,
+        "kind": "charset",
+        "mode": "mono",
+        "width": 8,
+        "height": 8,
+        "count": 256,
+        "colors": {
+          "background": 0,
+          "multicolor1": 5,
+          "multicolor2": 2,
+          "foreground": 1,
+          "mode": "mono"
+        },
+        "includePath": "assets/chars/bumps.inc"
+      },
+      "encoding": "base64",
+      "bytes": "AAAAAAAAAAAAAAAAAEAAAAAAEgAAAAAAAAAAAAAwBAAAgAAAABAAIAAAgAIABAAAAAIAIAIAgAFAAAAEIAABIAAIgAQgAAAIQgIAAAAQBAAEAACIACAAgQBUwASKBAAAICEgUABCQAwhAUgCACAEAIAkggAQAAEUBBQAAkgBAESiAChgAIAJNKIAKGAEgAk0ogAqYASgCTQ0CaAUQKpAoiyQBagCVYJFRaJVAqhFkiyqTapAFaJJNLRJohVkqk2qLdJXqIpVulVVulXKrFfSLapdqlu16ku0LdpXrfpVulVVul36rXfararful/16l+1td/+tf+6/er3/9///X//7wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    },
+    {
+      "path": "assets/chars/bumps.inc",
+      "name": "bumps.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/chars/bumps.chr",
+      "source": "; Generated by Web64 IDE. Edit the graphics asset, not this file.\nbumps_chars_size = $0800\n; Editor color references\nbumps_color_0 = 0\nbumps_background_color = 0\nbumps_color_1 = 5\nbumps_multicolor_1 = 5\nbumps_color_2 = 2\nbumps_multicolor_2 = 2\nbumps_color_3 = 1\nbumps_foreground_color = 1\nbumps_char_count = $0100\nbumps_chars_end = bumps_chars + bumps_chars_size\nbumps_char_0 = 0\nbumps_char_1 = 1\nbumps_char_2 = 2\nbumps_char_3 = 3\nbumps_char_4 = 4\nbumps_char_5 = 5\nbumps_char_6 = 6\nbumps_char_7 = 7\nbumps_char_8 = 8\nbumps_char_9 = 9\nbumps_char_10 = $0a\nbumps_char_11 = $0b\nbumps_char_12 = $0c\nbumps_char_13 = $0d\nbumps_char_14 = $0e\nbumps_char_15 = $0f\n"
+    }
+  ]
 }
