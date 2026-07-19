@@ -1,7 +1,7 @@
 {
   "kind": "web64.ide.project",
   "version": 2,
-  "savedAt": "2026-07-19T12:30:15.846Z",
+  "savedAt": "2026-07-19T17:46:53.870Z",
   "main": {
     "fileName": "c-fixed-mandelbrot-bitmap.asm",
     "origin": "$c000",
@@ -30,12 +30,65 @@
     "audioEnabled": false,
     "audioMuted": false,
     "audioVolume": 1,
-    "sidQuality": "fastsid",
+    "sidQuality": "realtime",
     "scanlinesEnabled": false,
     "warpEnabled": true,
     "drive9Enabled": true,
     "gamepadEnabled": false,
     "joystickPort": 2
+  },
+  "settings": {
+    "version": 1,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": true,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "1",
+      "livePatchEnabled": false,
+      "audioEnabled": false,
+      "audioMuted": false,
+      "audioVolume": 1,
+      "sidQuality": "realtime",
+      "scanlinesEnabled": false,
+      "warpEnabled": true,
+      "drive9Enabled": true,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": true,
+      "dialect": "web64-c-v0.1",
+      "entry": "main.c",
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "none",
+      "stdin": "none",
+      "runtimeProfile": "tiny",
+      "compilerBackend": "web64-native",
+      "zeroPage": {
+        "reserved": []
+      }
+    },
+    "optimizer": {
+      "profile": "default",
+      "peephole": true,
+      "simplification": true,
+      "runtimeDependencySelection": true,
+      "unsupportedNativeFlags": "diagnostic"
+    }
   },
   "media": {
     "version": 1,
