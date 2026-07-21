@@ -92,26 +92,7 @@
   },
   "media": {
     "version": 1,
-    "disks": [
-      {
-        "id": "disk",
-        "title": "DISK",
-        "unit": 8,
-        "injectSysLoader": true,
-        "source": null,
-        "entries": [
-          {
-            "name": "c-fixed-mandelbr",
-            "type": "prg",
-            "injectSysLoader": true,
-            "source": {
-              "kind": "build-output",
-              "path": "build/c-fixed-mandelbrot-bitmap.prg"
-            }
-          }
-        ]
-      }
-    ]
+    "disks": []
   },
   "files": [
     {

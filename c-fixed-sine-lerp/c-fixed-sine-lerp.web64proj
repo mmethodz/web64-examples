@@ -6,7 +6,7 @@
     "fileName": "c-fixed-sine-lerp.asm",
     "origin": "$c000",
     "source": "; Web64 IDE Example\n; Name: C Fixed Sine Lerp\n; Description: Fixed sine, multiply, and lerp animation; main.c is the entry source.\n",
-    "selectedEntryLabel": "_main"
+    "selectedEntryLabel": "_start"
   },
   "c": {
     "enabled": true,

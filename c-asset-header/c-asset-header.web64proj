@@ -6,7 +6,7 @@
     "fileName": "c-asset-header.asm",
     "origin": "$c000",
     "source": "; Web64 IDE Example\n; Name: C Asset Header Shell\n; Description: Assembly shell for a C project that reads generated asset symbols.\n",
-    "selectedEntryLabel": "_main"
+    "selectedEntryLabel": "_start"
   },
   "c": {
     "enabled": true,

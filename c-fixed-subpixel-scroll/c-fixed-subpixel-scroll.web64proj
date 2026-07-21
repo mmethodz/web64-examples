@@ -1,22 +1,28 @@
 {
   "kind": "web64.ide.project",
   "version": 2,
-  "savedAt": "2026-07-18T00:00:00.000Z",
+  "savedAt": "2026-07-20T12:18:50.804Z",
   "main": {
     "fileName": "c-fixed-subpixel-scroll.asm",
-    "origin": "$c000",
+    "origin": "$8000",
     "source": "; Web64 IDE Example\n; Name: C Fixed Subpixel Scroll\n; Description: 8.8 fixed-point sprite and fine-scroll accumulation; main.c is the entry source.\n",
-    "selectedEntryLabel": "_main"
+    "selectedEntryLabel": "_start"
   },
   "c": {
     "enabled": true,
     "dialect": "web64-c-v0.1",
     "entry": "main.c",
-    "includePaths": ["include", "assets"],
+    "includePaths": [
+      "include",
+      "assets"
+    ],
     "stdout": "none",
     "stdin": "none",
     "runtimeProfile": "tiny",
-    "compilerBackend": "web64-native"
+    "compilerBackend": "web64-native",
+    "zeroPage": {
+      "reserved": []
+    }
   },
   "emulator": {
     "emulatorScale": "fit",
@@ -31,12 +37,122 @@
     "gamepadEnabled": false,
     "joystickPort": 2
   },
+  "settings": {
+    "version": 1,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "fit",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": false,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": true,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": true,
+      "dialect": "web64-c-v0.1",
+      "entry": "main.c",
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "none",
+      "stdin": "none",
+      "runtimeProfile": "tiny",
+      "compilerBackend": "web64-native",
+      "zeroPage": {
+        "reserved": []
+      }
+    },
+    "optimizer": {
+      "profile": "default",
+      "peephole": true,
+      "simplification": true,
+      "runtimeDependencySelection": true,
+      "unsupportedNativeFlags": "diagnostic"
+    }
+  },
+  "media": {
+    "version": 1,
+    "disks": []
+  },
   "files": [
+    {
+      "path": "assets/chars/charset.chr",
+      "name": "charset.chr",
+      "kind": "charset",
+      "mode": "mono",
+      "width": 8,
+      "height": 8,
+      "count": 256,
+      "colors": {
+        "background": 0,
+        "multicolor1": 5,
+        "multicolor2": 2,
+        "foreground": 1,
+        "mode": "mono"
+      },
+      "includePath": "assets/chars/charset.inc",
+      "dirty": true,
+      "lastCompiledHash": null,
+      "lastPatchedHash": null,
+      "asset": {
+        "schema": "web64.ide.graphicsAsset",
+        "version": 1,
+        "kind": "charset",
+        "mode": "mono",
+        "width": 8,
+        "height": 8,
+        "count": 256,
+        "colors": {
+          "background": 0,
+          "multicolor1": 5,
+          "multicolor2": 2,
+          "foreground": 1,
+          "mode": "mono"
+        },
+        "includePath": "assets/chars/charset.inc"
+      },
+      "encoding": "base64",
+      "bytes": "AAAAAAAAAAAAAACAgAAAAAAAAMDAAAAAAAAAYGAAAAAAAAAwMAAAAAAAABgYAAAAAAAADAwAAAAAAAAGBgAAAAAAAAYGAAAAAAAAAwMAAAAAAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    },
+    {
+      "path": "assets/chars/charset.inc",
+      "name": "charset.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/chars/charset.chr",
+      "source": "; Generated by Web64 IDE. Edit the graphics asset, not this file.\ncharset_chars_size = $0800\n; Editor color references\ncharset_color_0 = 0\ncharset_background_color = 0\ncharset_color_1 = 5\ncharset_multicolor_1 = 5\ncharset_color_2 = 2\ncharset_multicolor_2 = 2\ncharset_color_3 = 1\ncharset_foreground_color = 1\ncharset_char_count = $0100\ncharset_chars_end = charset_chars + charset_chars_size\ncharset_char_0 = 0\ncharset_char_1 = 1\ncharset_char_2 = 2\ncharset_char_3 = 3\ncharset_char_4 = 4\ncharset_char_5 = 5\ncharset_char_6 = 6\ncharset_char_7 = 7\ncharset_char_8 = 8\ncharset_char_9 = 9\ncharset_char_10 = $0a\ncharset_char_11 = $0b\ncharset_char_12 = $0c\ncharset_char_13 = $0d\ncharset_char_14 = $0e\ncharset_char_15 = $0f\n"
+    },
+    {
+      "path": "asset_copy.asm",
+      "name": "asset_copy.asm",
+      "kind": "source",
+      "source": "; Web64 IDE Example\n; Name: C Fixed Subpixel Scroll Assets\n; Description: C-callable asset copy for the project charset.\n\nVIC_MEMORY=$d018\n\n_copy_charset:\n    ldx #$00\ncopy_charset_loop:\n    lda charset_chars+$0000,x\n    sta $2000,x\n    lda charset_chars+$0100,x\n    sta $2100,x\n    lda charset_chars+$0200,x\n    sta $2200,x\n    lda charset_chars+$0300,x\n    sta $2300,x\n    lda charset_chars+$0400,x\n    sta $2400,x\n    lda charset_chars+$0500,x\n    sta $2500,x\n    lda charset_chars+$0600,x\n    sta $2600,x\n    lda charset_chars+$0700,x\n    sta $2700,x\n    inx\n    bne copy_charset_loop\n    lda #%00011000\n    sta VIC_MEMORY\n    rts\n\n.incbin charset_chars, \"assets/chars/charset.chr\"\n.include \"assets/chars/charset.inc\"\n"
+    },
     {
       "path": "main.c",
       "name": "main.c",
       "kind": "source",
-      "source": "/*\n * Web64 IDE Example\n * Name: C Fixed Subpixel Scroll\n * Description: Uses 8.8 fixed-point position and scroll accumulators.\n */\n\n#include <stdint.h>\n#include <web64/fixed.h>\n\nweb64_fix8_8 sprite_x;\nweb64_fix8_8 sprite_v;\nweb64_fix8_8 scroll_x;\nweb64_fix8_8 scroll_v;\n\nvoid main(void) {\n    sprite_x = WEB64_FIX8_FROM_INT(32);\n    sprite_v = WEB64_FIX8_FROM_RATIO(3, 2);\n    scroll_v = WEB64_FIX8_FROM_RATIO(1, 8);\n    *(uint8_t*)0xd015 = 1;\n    *(uint8_t*)0xd001 = 120;\n    *(uint8_t*)0xd027 = 7;\n    while (1) {\n        sprite_x = web64_fix8_add_wrap(sprite_x, sprite_v);\n        scroll_x = web64_fix8_add_wrap(scroll_x, scroll_v);\n        *(uint8_t*)0xd000 = WEB64_FIX8_TO_INT(sprite_x);\n        *(uint8_t*)0xd016 = WEB64_FIX8_TO_INT(scroll_x);\n        *(uint8_t*)0xd020 = WEB64_FIX8_TO_INT(scroll_x);\n    }\n}\n"
+      "source": "/*\n * Web64 IDE Example\n * Name: C Fixed Subpixel Scroll\n * Description: Uses 8.8 fixed-point accumulators for a slow, irregular star drift.\n */\n\n#include <stdint.h>\n#include <web64/fixed.h>\n\n#define SCREEN_RAM 0x0400\n#define COLOR_RAM 0xd800\n#define STAR_GLYPH_FIRST 1\n#define STAR_GLYPH_COUNT 10\n\nweb64_fix8_8 s0;\nweb64_fix8_8 s1;\nweb64_fix8_8 s2;\nweb64_fix8_8 s3;\nweb64_fix8_8 s4;\nweb64_fix8_8 s5;\nweb64_fix8_8 s6;\nweb64_fix8_8 s7;\nweb64_fix8_8 s8;\nweb64_fix8_8 s9;\nweb64_fix8_8 s10;\nweb64_fix8_8 s11;\nweb64_fix8_8 v0;\nweb64_fix8_8 v1;\nweb64_fix8_8 v2;\nweb64_fix8_8 v3;\nweb64_fix8_8 v4;\nweb64_fix8_8 v5;\nweb64_fix8_8 v6;\nweb64_fix8_8 v7;\nweb64_fix8_8 v8;\nweb64_fix8_8 v9;\nweb64_fix8_8 v10;\nweb64_fix8_8 v11;\nuint8_t i;\nuint8_t x;\nuint8_t old_x;\nuint8_t row;\nuint16_t offset;\n\nvoid put_screen(uint8_t value) {\n    *(uint8_t*)(SCREEN_RAM + offset) = value;\n}\n\nvoid put_color(uint8_t value) {\n    *(uint8_t*)(COLOR_RAM + offset) = value;\n}\n\nvoid seek_cell(uint8_t y, uint8_t x_pos) {\n    row = y;\n    offset = x_pos;\n    while (row != 0) {\n        offset = offset + 40;\n        row = row - 1;\n    }\n}\n\nvoid clear_screen(void) {\n    i = 0;\n    while (i < 250) {\n        *(uint8_t*)(SCREEN_RAM + i) = 0;\n        *(uint8_t*)(SCREEN_RAM + 250 + i) = 0;\n        *(uint8_t*)(SCREEN_RAM + 500 + i) = 0;\n        *(uint8_t*)(SCREEN_RAM + 750 + i) = 0;\n        i = i + 1;\n    }\n}\n\nuint8_t gray_for_line(uint8_t y) {\n    if (y < 5) return 11;\n    if (y < 10) return 12;\n    if (y < 15) return 15;\n    if (y < 20) return 12;\n    return 11;\n}\n\nvoid paint_gray_lines(void) {\n    row = 0;\n    offset = 0;\n    while (row < 25) {\n        x = 0;\n        while (x < 40) {\n            *(uint8_t*)(COLOR_RAM + offset + x) = gray_for_line(row);\n            x = x + 1;\n        }\n        offset = offset + 40;\n        row = row + 1;\n    }\n}\n\nvoid copy_charset(void);\n\nvoid init_stars(void) {\n    s0 = WEB64_FIX8_FROM_INT(3) + 19; v0 = WEB64_FIX8_FROM_RATIO(1, 16);\n    s1 = WEB64_FIX8_FROM_INT(17) + 203; v1 = WEB64_FIX8_FROM_RATIO(1, 10);\n    s2 = WEB64_FIX8_FROM_INT(29) + 71; v2 = WEB64_FIX8_FROM_RATIO(3, 32);\n    s3 = WEB64_FIX8_FROM_INT(8) + 144; v3 = WEB64_FIX8_FROM_RATIO(1, 8);\n    s4 = WEB64_FIX8_FROM_INT(35) + 11; v4 = WEB64_FIX8_FROM_RATIO(5, 64);\n    s5 = WEB64_FIX8_FROM_INT(22) + 231; v5 = WEB64_FIX8_FROM_RATIO(1, 12);\n    s6 = WEB64_FIX8_FROM_INT(11) + 87; v6 = WEB64_FIX8_FROM_RATIO(7, 64);\n    s7 = WEB64_FIX8_FROM_INT(31) + 166; v7 = WEB64_FIX8_FROM_RATIO(1, 14);\n    s8 = WEB64_FIX8_FROM_INT(5) + 243; v8 = WEB64_FIX8_FROM_RATIO(3, 40);\n    s9 = WEB64_FIX8_FROM_INT(26) + 39; v9 = WEB64_FIX8_FROM_RATIO(1, 9);\n    s10 = WEB64_FIX8_FROM_INT(14) + 118; v10 = WEB64_FIX8_FROM_RATIO(5, 48);\n    s11 = WEB64_FIX8_FROM_INT(38) + 92; v11 = WEB64_FIX8_FROM_RATIO(1, 18);\n}\n\nvoid draw_star(uint8_t y, uint8_t glyph, uint8_t color) {\n    seek_cell(y, x);\n    put_screen(glyph);\n    put_color(color);\n}\n\nvoid erase_star(uint8_t y) {\n    seek_cell(y, old_x);\n    put_screen(0);\n}\n\nuint8_t star_glyph(web64_fix8_8 position) {\n    uint8_t phase;\n    phase = (uint8_t)position;\n    if (phase < 26) return 1;\n    if (phase < 52) return 2;\n    if (phase < 78) return 3;\n    if (phase < 104) return 4;\n    if (phase < 130) return 5;\n    if (phase < 156) return 6;\n    if (phase < 182) return 7;\n    if (phase < 208) return 8;\n    if (phase < 234) return 9;\n    return 10;\n}\n\nvoid move_stars(void) {\n    old_x = WEB64_FIX8_TO_INT(s0); erase_star(3); s0 = web64_fix8_add_wrap(s0, v0); x = WEB64_FIX8_TO_INT(s0); if (x >= 40) { s0 = 23; x = 0; } draw_star(3, star_glyph(s0), 1);\n    old_x = WEB64_FIX8_TO_INT(s1); erase_star(9); s1 = web64_fix8_add_wrap(s1, v1); x = WEB64_FIX8_TO_INT(s1); if (x >= 40) { s1 = 197; x = 0; } draw_star(9, star_glyph(s1), 15);\n    old_x = WEB64_FIX8_TO_INT(s2); erase_star(15); s2 = web64_fix8_add_wrap(s2, v2); x = WEB64_FIX8_TO_INT(s2); if (x >= 40) { s2 = 83; x = 0; } draw_star(15, star_glyph(s2), 12);\n    old_x = WEB64_FIX8_TO_INT(s3); erase_star(6); s3 = web64_fix8_add_wrap(s3, v3); x = WEB64_FIX8_TO_INT(s3); if (x >= 40) { s3 = 151; x = 0; } draw_star(6, star_glyph(s3), 1);\n    old_x = WEB64_FIX8_TO_INT(s4); erase_star(20); s4 = web64_fix8_add_wrap(s4, v4); x = WEB64_FIX8_TO_INT(s4); if (x >= 40) { s4 = 37; x = 0; } draw_star(20, star_glyph(s4), 11);\n    old_x = WEB64_FIX8_TO_INT(s5); erase_star(12); s5 = web64_fix8_add_wrap(s5, v5); x = WEB64_FIX8_TO_INT(s5); if (x >= 40) { s5 = 211; x = 0; } draw_star(12, star_glyph(s5), 15);\n    old_x = WEB64_FIX8_TO_INT(s6); erase_star(23); s6 = web64_fix8_add_wrap(s6, v6); x = WEB64_FIX8_TO_INT(s6); if (x >= 40) { s6 = 107; x = 0; } draw_star(23, star_glyph(s6), 1);\n    old_x = WEB64_FIX8_TO_INT(s7); erase_star(5); s7 = web64_fix8_add_wrap(s7, v7); x = WEB64_FIX8_TO_INT(s7); if (x >= 40) { s7 = 179; x = 0; } draw_star(5, star_glyph(s7), 12);\n    old_x = WEB64_FIX8_TO_INT(s8); erase_star(17); s8 = web64_fix8_add_wrap(s8, v8); x = WEB64_FIX8_TO_INT(s8); if (x >= 40) { s8 = 251; x = 0; } draw_star(17, star_glyph(s8), 1);\n    old_x = WEB64_FIX8_TO_INT(s9); erase_star(7); s9 = web64_fix8_add_wrap(s9, v9); x = WEB64_FIX8_TO_INT(s9); if (x >= 40) { s9 = 53; x = 0; } draw_star(7, star_glyph(s9), 15);\n    old_x = WEB64_FIX8_TO_INT(s10); erase_star(19); s10 = web64_fix8_add_wrap(s10, v10); x = WEB64_FIX8_TO_INT(s10); if (x >= 40) { s10 = 131; x = 0; } draw_star(19, star_glyph(s10), 1);\n    old_x = WEB64_FIX8_TO_INT(s11); erase_star(11); s11 = web64_fix8_add_wrap(s11, v11); x = WEB64_FIX8_TO_INT(s11); if (x >= 40) { s11 = 97; x = 0; } draw_star(11, star_glyph(s11), 12);\n}\n\nvoid wait_frame(void) {\n    while (*(uint8_t*)0xd012 != 250) {\n    }\n    while (*(uint8_t*)0xd012 == 250) {\n    }\n}\n\nvoid main(void) {\n    *(uint8_t*)0xd020 = 0;\n    *(uint8_t*)0xd021 = 0;\n    copy_charset();\n    clear_screen();\n    paint_gray_lines();\n    init_stars();\n    while (1) {\n        wait_frame();\n        move_stars();\n    }\n}\n"
     }
   ]
 }

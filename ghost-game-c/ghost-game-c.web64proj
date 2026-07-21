@@ -1,0 +1,258 @@
+{
+  "kind": "web64.ide.project",
+  "version": 2,
+  "savedAt": "2026-07-21T14:52:09.283Z",
+  "main": {
+    "fileName": "sprite-joy-sid-bumps-c.asm",
+    "origin": "$8000",
+    "source": "; Web64 IDE Example\n; Name: Sprite Joy SID Bumps C\n; Description: C-first version of Sprite Joy SID Bumps. Assembly is limited to the asset-copy labels.",
+    "selectedEntryLabel": "_start"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native",
+    "zeroPage": {
+      "reserved": []
+    }
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": true,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": true,
+    "joystickPort": 2
+  },
+  "settings": {
+    "version": 1,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "fit",
+      "livePatchEnabled": true,
+      "audioEnabled": true,
+      "audioMuted": false,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": true,
+      "gamepadEnabled": true,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": true,
+      "dialect": "web64-c-v0.1",
+      "entry": "main.c",
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "none",
+      "stdin": "none",
+      "runtimeProfile": "tiny",
+      "compilerBackend": "web64-native",
+      "zeroPage": {
+        "reserved": []
+      }
+    },
+    "optimizer": {
+      "profile": "default",
+      "peephole": true,
+      "simplification": true,
+      "runtimeDependencySelection": true,
+      "unsupportedNativeFlags": "diagnostic"
+    }
+  },
+  "media": {
+    "version": 1,
+    "disks": []
+  },
+  "files": [
+    {
+      "path": "asset_copy.asm",
+      "name": "asset_copy.asm",
+      "kind": "source",
+      "source": "; Web64 IDE Example\n; Name: Sprite Joy SID Bumps C Optimized Routines\n; Description: C-callable 6502 routines for assets, SID, raster wait, and scene work.\n\nBORDER=$d020\nBACKGROUND=$d021\nVIC_MEMORY=$d018\nRASTER=$d012\n;SCREEN_RAM=$0400\n;COLOR_RAM=$d800\nSPR_ENABLE=$d015\nSPR_MC=$d01c\nSPR_PTR0=$07f8\nSPR_PTR1=$07f9\nSPR_MC0=$d025\nSPR_MC1=$d026\nSPR_COLOR0=$d027\nSPR_COLOR1=$d028\n;CIA1_DDRA=$dc02\n;CIA1_DDRB=$dc03\nSID=$d400\nSPRITE_PTR=$c0\nCOIN_SPRITE_PTR=$c4\n\n_setup_video:\n    sei\n    lda #$00\n    sta CIA1_DDRA\n    sta CIA1_DDRB\n    sta BORDER\n    sta BACKGROUND\n    lda #%00011000\n    sta VIC_MEMORY\n    rts\n_wait_frame:\nwait_not_f8:\n    lda RASTER\n    cmp #$f8\n    beq wait_not_f8\nwait_f8:\n    lda RASTER\n    cmp #$f8\n    bne wait_f8\n    rts\n\n_sprite_init:\n    lda #SPRITE_PTR\n    sta SPR_PTR0\n    lda #COIN_SPRITE_PTR\n    sta SPR_PTR1\n    lda #%00000011\n    sta SPR_ENABLE\n    sta SPR_MC\n    lda #c_joy_multicolor_1\n    sta SPR_MC0\n    lda #c_joy_multicolor_2\n    sta SPR_MC1\n    lda #c_joy_sprite_color\n    sta SPR_COLOR0\n    lda #bank_2_sprite_color\n    sta SPR_COLOR1\n    rts\n\n_sid_init:\n    ldx #$18\n    lda #0\nsid_clear:\n    sta SID,x\n    dex\n    bpl sid_clear\n    lda #$0f\n    sta SID+$18\n    lda #$09\n    sta SID+$05\n    lda #$86\n    sta SID+$06\n    lda #$08\n    sta SID+$0c\n    lda #$86\n    sta SID+$0d\n    lda #$08\n    sta SID+$13\n    lda #$a8\n    sta SID+$14\n    lda #$11\n    sta SID+$04\n    lda #$21\n    sta SID+$0b\n    lda #$41\n    sta SID+$12\n    rts\n\n_play_sid:\n    inc sid_delay\n    lda sid_delay\n    cmp #8\n    bcc sid_done\n    lda #0\n    sta sid_delay\n    inc sid_step\n    lda sid_step\n    and #$0f\n    tax\n    lda lead_lo,x\n    sta SID+$00\n    lda lead_hi,x\n    sta SID+$01\n    lda bass_lo,x\n    sta SID+$07\n    lda bass_hi,x\n    sta SID+$08\n    lda chord_lo,x\n    sta SID+$0e\n    lda chord_hi,x\n    sta SID+$0f\nsid_done:\n    rts\n\n_clear_screen:\n    ldx #0\n    lda #0\nclear_loop:\n    sta SCREEN_RAM+$0000,x\n    sta SCREEN_RAM+$0100,x\n    sta SCREEN_RAM+$0200,x\n    sta SCREEN_RAM+$02e8,x\n    inx\n    bne clear_loop\n    rts\n\n_paint_scene:\n    ldx #$27\npaint_loop:\n    lda #$06\n    sta COLOR_RAM+$0028,x\n    sta COLOR_RAM+$0050,x\n    sta COLOR_RAM+$0370,x\n    lda #$0e\n    sta COLOR_RAM+$0078,x\n    sta COLOR_RAM+$00a0,x\n    sta COLOR_RAM+$0348,x\n    lda #$03\n    sta COLOR_RAM+$00c8,x\n    sta COLOR_RAM+$02f8,x\n    lda #$01\n    sta COLOR_RAM+$01e0,x\n    sta COLOR_RAM+$0208,x\n    dex\n    bpl paint_loop\n    rts\n\n_pulse_scene:\n    inc scene_phase\n    lda scene_phase\n    and #$03\n    bne pulse_done\n    ldx #$27\npulse_loop:\n    txa\n    clc\n    adc scene_phase\n    and #$1f\n    tay\n    lda shade_chars,y\n    sta SCREEN_RAM+$0028,x\n    lda scene_phase\n    lsr\n    clc\n    adc wave_x,x\n    and #$1f\n    tay\n    lda shade_chars,y\n    sta SCREEN_RAM+$0370,x\n    dex\n    bpl pulse_loop\npulse_done:\n    rts\n\nasm_draw_score:\n    ldx #$06\nscore_clear_top:\n    lda #0\n    sta SCREEN_RAM+$0001,x\n    sta SCREEN_RAM+$0029,x\n    sta SCREEN_RAM+$0051,x\n    sta SCREEN_RAM+$0079,x\n    sta SCREEN_RAM+$00a1,x\n    lda #$07\n    sta COLOR_RAM+$0001,x\n    sta COLOR_RAM+$0029,x\n    sta COLOR_RAM+$0051,x\n    sta COLOR_RAM+$0079,x\n    sta COLOR_RAM+$00a1,x\n    dex\n    bpl score_clear_top\n    lda _score\n    ldx #0\nscore_tens_loop:\n    cmp #10\n    bcc score_digits_ready\n    sec\n    sbc #10\n    inx\n    jmp score_tens_loop\nscore_digits_ready:\n    clc\n    adc #$20\n    sta SCREEN_RAM+$0002\n    lda #$07\n    sta COLOR_RAM+$0002\n    txa\n    clc\n    adc #$20\n    sta SCREEN_RAM+$0001\n    lda #$07\n    sta COLOR_RAM+$0001\n    rts\n\n_copy_charset:\n    ldx #$00\ncopy_char_loop:\n    lda bumps_chars+$0000,x\n    sta $2000,x\n    lda bumps_chars+$0100,x\n    sta $2100,x\n    lda bumps_chars+$0200,x\n    sta $2200,x\n    lda bumps_chars+$0300,x\n    sta $2300,x\n    lda bumps_chars+$0400,x\n    sta $2400,x\n    lda bumps_chars+$0500,x\n    sta $2500,x\n    lda bumps_chars+$0600,x\n    sta $2600,x\n    lda bumps_chars+$0700,x\n    sta $2700,x\n    inx\n    bne copy_char_loop\n    rts\n\n_copy_sprites:\n    ldx #0\ncopy_ghost_loop:\n    lda c_joy_sprites,x\n    sta $3000,x\n    inx\n    bne copy_ghost_loop\n    ldx #0\ncopy_coin_page0:\n    lda bank_2_sprites+$0000,x\n    sta $3100,x\n    inx\n    bne copy_coin_page0\n    ldx #0\ncopy_coin_page1:\n    lda bank_2_sprites+$0100,x\n    sta $3200,x\n    inx\n    bne copy_coin_page1\n    ldx #0\ncopy_coin_tail:\n    lda bank_2_sprites+$0200,x\n    sta $3300,x\n    inx\n    cpx #$40\n    bne copy_coin_tail\n    rts\n\nsid_delay: .byte 0\nsid_step: .byte 0\nscene_phase: .byte 0\n\nlead_lo: .byte $25,$6b,$b6,$0d,$6b,$d5,$4b,$d1,$25,$d1,$4b,$d5,$6b,$0d,$b6,$6b\nlead_hi: .byte $11,$12,$13,$15,$16,$17,$19,$1a,$1c,$1a,$19,$17,$16,$15,$13,$12\nbass_lo: .byte $12,$12,$35,$35,$12,$12,$46,$46,$25,$25,$58,$58,$25,$25,$46,$46\nbass_hi: .byte $08,$08,$09,$09,$08,$08,$0a,$0a,$09,$09,$0b,$0b,$09,$09,$0a,$0a\nchord_lo:.byte $b6,$b6,$0d,$0d,$4b,$4b,$d1,$d1,$6b,$6b,$25,$25,$d5,$d5,$6b,$6b\nchord_hi:.byte $13,$13,$15,$15,$19,$19,$1a,$1a,$16,$16,$1c,$1c,$17,$17,$12,$12\n\nshade_chars:\n    .byte $1a,$1a,$1a,$1a,$1a,$1a,$1a,$1a\n    .byte $17,$16,$15,$14,$13,$12,$11,$10\n    .byte $0f,$0e,$0d,$0c,$0b,$0a,$09,$08\n    .byte $07,$06,$05,$04,$03,$02,$01,$00\nwave_x:\n    .byte $00,$01,$02,$03,$04,$05,$06,$07,$08,$09,$0a,$0b,$0c,$0d,$0e,$0f\n    .byte $0f,$0e,$0d,$0c,$0b,$0a,$09,$08,$07,$06,$05,$04,$03,$02,$01,$00\n    .byte $00,$01,$02,$03,$04,$05,$06,$07\n\n.incbin c_joy_sprites, \"assets/sprites/c-joy.spr\"\n.include \"assets/sprites/c-joy.inc\"\n.incbin bank_2_sprites, \"assets/sprites/bank-2.spr\"\n.include \"assets/sprites/bank-2.inc\"\n.incbin bumps_chars, \"assets/chars/bumps.chr\"\n.include \"assets/chars/bumps.inc\""
+    },
+    {
+      "path": "assets/chars/bumps.chr",
+      "name": "bumps.chr",
+      "kind": "charset",
+      "mode": "mono",
+      "width": 8,
+      "height": 8,
+      "count": 256,
+      "colors": {
+        "background": 0,
+        "multicolor1": 5,
+        "multicolor2": 2,
+        "foreground": 1,
+        "mode": "mono"
+      },
+      "includePath": "assets/chars/bumps.inc",
+      "dirty": true,
+      "lastCompiledHash": null,
+      "lastPatchedHash": null,
+      "asset": {
+        "schema": "web64.ide.graphicsAsset",
+        "version": 1,
+        "kind": "charset",
+        "mode": "mono",
+        "width": 8,
+        "height": 8,
+        "count": 256,
+        "colors": {
+          "background": 0,
+          "multicolor1": 5,
+          "multicolor2": 2,
+          "foreground": 1,
+          "mode": "mono"
+        },
+        "includePath": "assets/chars/bumps.inc"
+      },
+      "encoding": "base64",
+      "bytes": "AAAAAAAAAAAAAAAAAEAAAAAAEgAAAAAAAAAAAAAwBAAAgAAAABAAIAAAgAIABAAAAAIAIAIAgAFAAAAEIAABIAAIgAQgAAAIQgIAAAAQBAAEAACIACAAgQBUwASKBAAAICEgUABCQAwhAUgCACAEAIAkggAQAAEUBBQAAkgBAESiAChgAIAJNKIAKGAEgAk0ogAqYASgCTQ0CaAUQKpAoiyQBagCVYJFRaJVAqhFkiyqTapAFaJJNLRJohVkqk2qLdJXqIpVulVVulXKrFfSLapdqlu16ku0LdpXrfpVulVVul36rXfararful/16l+1td/+tf+6/er3/9///X//73zGxsbGxnwAOBgYGBgYGAB8xgwYMGD+AHzGDBgMxnwAHjZmxv4GBgAcMGD8Bgb8ABgwYPzGxnwA/gYMGDAwMAB8xsZ8xsZ8AHzGxn4MGDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    },
+    {
+      "path": "assets/chars/bumps.inc",
+      "name": "bumps.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/chars/bumps.chr",
+      "source": "; Generated by Web64 IDE. Edit the graphics asset, not this file.\nbumps_chars_size = $0800\n; Editor color references\nbumps_color_0 = 0\nbumps_background_color = 0\nbumps_color_1 = 5\nbumps_multicolor_1 = 5\nbumps_color_2 = 2\nbumps_multicolor_2 = 2\nbumps_color_3 = 1\nbumps_foreground_color = 1\nbumps_char_count = $0100\nbumps_chars_end = bumps_chars + bumps_chars_size\nbumps_char_0 = 0\nbumps_char_1 = 1\nbumps_char_2 = 2\nbumps_char_3 = 3\nbumps_char_4 = 4\nbumps_char_5 = 5\nbumps_char_6 = 6\nbumps_char_7 = 7\nbumps_char_8 = 8\nbumps_char_9 = 9\nbumps_char_10 = $0a\nbumps_char_11 = $0b\nbumps_char_12 = $0c\nbumps_char_13 = $0d\nbumps_char_14 = $0e\nbumps_char_15 = $0f\n"
+    },
+    {
+      "path": "assets/sprites/bank-2.inc",
+      "name": "bank-2.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/sprites/bank-2.spr",
+      "source": "; Generated by Web64 IDE. Edit the graphics asset, not this file.\nbank_2_sprites_size = $0240\n; Editor color references\nbank_2_color_0 = 0\nbank_2_background_color = 0\nbank_2_color_1 = 5\nbank_2_multicolor_1 = 5\nbank_2_color_2 = 7\nbank_2_sprite_color = 7\nbank_2_color_3 = 2\nbank_2_multicolor_2 = 2\nbank_2_sprite_count = 9\nbank_2_sprites_end = bank_2_sprites + bank_2_sprites_size\nbank_2_frame_0 = bank_2_sprites + 0\nbank_2_frame_1 = bank_2_sprites + $40\nbank_2_frame_2 = bank_2_sprites + $80\nbank_2_frame_3 = bank_2_sprites + $c0\nbank_2_frame_4 = bank_2_sprites + $0100\nbank_2_frame_5 = bank_2_sprites + $0140\nbank_2_frame_6 = bank_2_sprites + $0180\nbank_2_frame_7 = bank_2_sprites + $01c0\nbank_2_frame_8 = bank_2_sprites + $0200\n"
+    },
+    {
+      "path": "assets/sprites/bank-2.spr",
+      "name": "bank-2.spr",
+      "kind": "spritebank",
+      "mode": "multicolor",
+      "width": 24,
+      "height": 21,
+      "count": 9,
+      "colors": {
+        "background": 0,
+        "multicolor1": 5,
+        "foreground": 7,
+        "multicolor2": 2,
+        "mode": "multicolor"
+      },
+      "includePath": "assets/sprites/bank-2.inc",
+      "dirty": true,
+      "lastCompiledHash": null,
+      "lastPatchedHash": null,
+      "asset": {
+        "schema": "web64.ide.graphicsAsset",
+        "version": 1,
+        "kind": "spritebank",
+        "mode": "multicolor",
+        "width": 24,
+        "height": 21,
+        "count": 9,
+        "colors": {
+          "background": 0,
+          "multicolor1": 5,
+          "foreground": 7,
+          "multicolor2": 2,
+          "mode": "multicolor"
+        },
+        "includePath": "assets/sprites/bank-2.inc"
+      },
+      "encoding": "base64",
+      "bytes": "AAAAAP8AA6rADqqwCqugOqqsOq7sKq6oKu64Kq64Kq64Kq64Kq64Lr7oOqrsO6vsCv+gDr6wA6rAAP8AAAAAAAAAAAD/AADrwAOqwAKvwA6rsA6uoAquoAq+oAquoAquoAquoAqvoA6/oA6rsA7rsA6+sAK+gAOqwAD/AAAAAAAAAAAAPAAA/wAA6wAAr8ADq8ADroACroACvoACroACroACroACroADvoADq8AD68ADvsAAvsAA6wAAPAAAAAAAAAAAACwAAD8AAKsAAO8AAOsAAO4AAK4AAL4AAK4AAK4AAK4AAK4AAP4AAO8AAO8AAP8AAL8AADwAADwAAAAAAAAAAAAsAAA8AAAsAAA8AAAsAAAsAAAsAAA8AAAsAAAsAAAsAAAsAAA8AAAsAAAsAAA8AAAsAAA8AAA8AAAAAAAAAAAAOAAA/AAA6gAA+wAA6wAAuwAAugAAvgAAugAAugAAugAAugAAvwAA+wAA+wAA/wAA/gAAPAAAPAAAAAAAAAAAADwAAP8AAOsAA/oAA+rAArrAArqAAr6AArqAArqAArqAArqAAr7AA+rAA+vAA77AA74AAOsAADwAAAAAAAAAAAD/AAPrAAOqwAP6gA7qsAq6sAq6oAq+oAq6oAq6oAq6oAr6oAr+sA7qsA7rsA6+sAK+gAOqwAD/AAAAAAAAAAAA/wADqsAOqrAK6qA6qqw7uqwquqguu6guuqguuqguuqguuqgrvrg7qqw76uwK/6AOvrADqsAA/wAAAAAA"
+    },
+    {
+      "path": "assets/sprites/c-joy.inc",
+      "name": "c-joy.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/sprites/c-joy.spr",
+      "source": "; Generated by Web64 IDE. Edit the graphics asset, not this file.\nc_joy_sprites_size = $0100\n; Editor color references\nc_joy_color_0 = 0\nc_joy_background_color = 0\nc_joy_color_1 = 5\nc_joy_multicolor_1 = 5\nc_joy_color_2 = 1\nc_joy_sprite_color = 1\nc_joy_color_3 = 2\nc_joy_multicolor_2 = 2\nc_joy_sprite_count = 4\nc_joy_sprites_end = c_joy_sprites + c_joy_sprites_size\nc_joy_frame_0 = c_joy_sprites + 0\nc_joy_frame_1 = c_joy_sprites + $40\nc_joy_frame_2 = c_joy_sprites + $80\nc_joy_frame_3 = c_joy_sprites + $c0\n"
+    },
+    {
+      "path": "assets/sprites/c-joy.spr",
+      "name": "c-joy.spr",
+      "kind": "spritebank",
+      "mode": "multicolor",
+      "width": 24,
+      "height": 21,
+      "count": 4,
+      "colors": {
+        "background": 0,
+        "multicolor1": 5,
+        "foreground": 1,
+        "multicolor2": 2,
+        "mode": "multicolor"
+      },
+      "includePath": "assets/sprites/c-joy.inc",
+      "dirty": true,
+      "lastCompiledHash": null,
+      "lastPatchedHash": null,
+      "asset": {
+        "schema": "web64.ide.graphicsAsset",
+        "version": 1,
+        "kind": "spritebank",
+        "mode": "multicolor",
+        "width": 24,
+        "height": 21,
+        "count": 4,
+        "colors": {
+          "background": 0,
+          "multicolor1": 5,
+          "foreground": 1,
+          "multicolor2": 2,
+          "mode": "multicolor"
+        },
+        "includePath": "assets/sprites/c-joy.inc"
+      },
+      "encoding": "base64",
+      "bytes": "AAAAANcAAVVADVVwBVVQBZZQBKKQBKKQB77QBddQBVVQNVVcNcNcFQBU1X1X1VVXXVV1UUFFwcNDAQBAAwDAAAAAAADXAAFVQA1VcAVVUAWWUAaqkASikASy0AXXUAVVUAVVUDXDXDUAXBV9VNVVV91Vd1FBRVHDRcEAQwMAwAAAAAAA1wABVUANVXAFVVAFllAGqpAGKJAHPNAF11AFVVA1VVw1w1wVAFTVfVfVVVddVXVRQUXBw0MBAEADAMAAAAAAANcAAVVADVVwBVVQBZZQBiiQBiiQB77QBddQBVVQNVVcNcNcFQBU1X1X1VVXXVV1UUFFwcNDAQBAAwDAAA=="
+    },
+    {
+      "path": "game.h",
+      "name": "game.h",
+      "kind": "source",
+      "source": "#ifndef SPRITE_JOY_SID_BUMPS_C_GAME_H\n#define SPRITE_JOY_SID_BUMPS_C_GAME_H\n\nvoid setup_video(void);\nvoid copy_charset(void);\nvoid copy_sprites(void);\nvoid clear_screen(void);\nvoid paint_scene(void);\nvoid sid_init(void);\nvoid sprite_init(void);\nvoid wait_frame(void);\nvoid play_sid(void);\nvoid read_joy(void);\nvoid update_x_velocity(void);\nvoid update_y_velocity(void);\nvoid apply_motion(void);\nvoid animate_ghost(void);\nvoid position_sprite(void);\nvoid pulse_scene(void);\nvoid asm_draw_score(void);\n\n#endif"
+    },
+    {
+      "path": "main.c",
+      "name": "main.c",
+      "kind": "source",
+      "source": "/*\n * Web64 IDE Example\n * Name: Sprite Joy SID Bumps C\n * Description: C control loop with fixed-point sprite acceleration and C-callable assembly assets/SID.\n */\n\n#include <stdint.h>\n#include <c64.h>\n#include \"game.h\"\n\n#define SPRITE_POINTER 0xc0\n#define COIN_POINTER 0xc4\n#define SCREEN_RAM 0x0400\n#define COLOR_RAM 0xd800\n#define VIC_SPRITE1_X 0xd002\n#define VIC_SPRITE1_Y 0xd003\n#define VIC_SPRITE1_COLOR 0xd028\n#define SCORE_ROW 0\n#define SCORE_COL 1\n#define SCORE_FILL 0x1a\n#define SCORE_COLOR VIC_COLOR_YELLOW\n\nint16_t player_x = 5120;\nint16_t player_y = 3584;\nint16_t player_dx = 0;\nint16_t player_dy = 0;\nuint8_t joy_now = JOY_RELEASED_MASK;\nuint8_t frame = 0;\nuint8_t anim_delay = 0;\nuint16_t coin_x = 184;\nuint8_t coin_y = 96;\nuint8_t coin_frame = 0;\nuint8_t coin_delay = 0;\nuint8_t coin_forward = 1;\nuint8_t rng = 73;\nuint8_t score = 0;\nuint16_t screen_offset = 0;\n\nvoid read_joy(void) {\n    joy_now = *(uint8_t*)JOYPORT_2;\n}\n\nvoid update_x_velocity(void) {\n    if ((joy_now & JOY_LEFT) == 0) {\n        player_dx = player_dx - 6;\n        if (player_dx < -128) {\n            player_dx = -128;\n        }\n        return;\n    }\n    if ((joy_now & JOY_RIGHT) == 0) {\n        player_dx = player_dx + 6;\n        if (player_dx > 128) {\n            player_dx = 128;\n        }\n        return;\n    }\n    if (player_dx > 0) {\n        if (player_dx <= 4) {\n            player_dx = 0;\n        } else {\n            player_dx = player_dx - 4;\n        }\n        return;\n    }\n    if (player_dx < 0) {\n        if (player_dx >= -4) {\n            player_dx = 0;\n        } else {\n            player_dx = player_dx + 4;\n        }\n    }\n}\n\nvoid update_y_velocity(void) {\n    if ((joy_now & JOY_UP) == 0) {\n        player_dy = player_dy - 5;\n        if (player_dy < -96) {\n            player_dy = -96;\n        }\n        return;\n    }\n    if ((joy_now & JOY_DOWN) == 0) {\n        player_dy = player_dy + 5;\n        if (player_dy > 96) {\n            player_dy = 96;\n        }\n        return;\n    }\n    if (player_dy > 0) {\n        if (player_dy <= 4) {\n            player_dy = 0;\n        } else {\n            player_dy = player_dy - 4;\n        }\n        return;\n    }\n    if (player_dy < 0) {\n        if (player_dy >= -4) {\n            player_dy = 0;\n        } else {\n            player_dy = player_dy + 4;\n        }\n    }\n}\n\nvoid apply_motion(void) {\n    player_x = player_x + player_dx;\n    if (player_x < 0) {\n        player_x = player_x + 10240;\n    }\n    if (player_x >= 10240) {\n        player_x = player_x - 10240;\n    }\n\n    player_y = player_y + player_dy;\n    if (player_y < 1600) {\n        player_y = 1600;\n        player_dy = 0;\n    }\n    if (player_y > 7008) {\n        player_y = 7008;\n        player_dy = 0;\n    }\n}\n\nvoid animate_ghost(void) {\n    if ((player_dx == 0) && (player_dy == 0)) {\n        frame = 0;\n        anim_delay = 0;\n        *(uint8_t*)VIC_SPRITE_POINTER_BASE = SPRITE_POINTER;\n        return;\n    }\n\n    anim_delay = anim_delay + 1;\n    if (anim_delay < 5) {\n        return;\n    }\n    anim_delay = 0;\n    frame = frame + 1;\n    if (frame >= 4) {\n        frame = 0;\n    }\n    *(uint8_t*)VIC_SPRITE_POINTER_BASE = SPRITE_POINTER + frame;\n}\n\nvoid animate_coin(void) {\n    coin_delay = coin_delay + 1;\n    if (coin_delay < 2) {\n        return;\n    }\n    coin_delay = 0;\n\n    if (coin_forward != 0) {\n        coin_frame = coin_frame + 1;\n        if (coin_frame >= 8) {\n            coin_forward = 0;\n        }\n    } else {\n        coin_frame = coin_frame - 1;\n        if (coin_frame == 0) {\n            coin_forward = 1;\n        }\n    }\n    *(uint8_t*)(VIC_SPRITE_POINTER_BASE + 1) = COIN_POINTER + coin_frame;\n}\n\nvoid position_sprite(void) {\n    uint16_t sprite_x;\n    uint8_t x_msb;\n\n    sprite_x = (uint16_t)(player_x / 32);\n    *(uint8_t*)VIC_SPRITE0_X = (uint8_t)sprite_x;\n    *(uint8_t*)VIC_SPRITE0_Y = (uint8_t)(player_y / 32);\n\n    x_msb = *(uint8_t*)VIC_SPRITE_X_MSB;\n    if (sprite_x >= 256) {\n        x_msb = x_msb | 0x01;\n    } else {\n        x_msb = x_msb & 0xfe;\n    }\n    if (coin_x >= 256) {\n        x_msb = x_msb | 0x02;\n    } else {\n        x_msb = x_msb & 0xfd;\n    }\n    *(uint8_t*)VIC_SPRITE_X_MSB = x_msb;\n\n    *(uint8_t*)VIC_SPRITE1_X = (uint8_t)coin_x;\n    *(uint8_t*)VIC_SPRITE1_Y = coin_y;\n    *(uint8_t*)VIC_SPRITE1_COLOR = VIC_COLOR_YELLOW;\n\n    if ((joy_now & JOY_FIRE) == 0) {\n        *(uint8_t*)VIC_SPRITE0_COLOR = VIC_COLOR_RED;\n    } else {\n        *(uint8_t*)VIC_SPRITE0_COLOR = VIC_COLOR_WHITE;\n    }\n}\n\nuint8_t abs_diff8(uint8_t left, uint8_t right) {\n    if (left >= right) {\n        return left - right;\n    }\n    return right - left;\n}\n\nuint16_t screen_cell(uint8_t row, uint8_t col) {\n    screen_offset = col;\n    while (row != 0) {\n        screen_offset = screen_offset + 40;\n        row = row - 1;\n    }\n    return screen_offset;\n}\n\nvoid put_score_cell(uint8_t row, uint8_t col, uint8_t filled) {\n    uint16_t cell;\n    cell = screen_cell(row, col);\n    if (filled != 0) {\n        *(uint8_t*)(SCREEN_RAM + cell) = SCORE_FILL;\n    } else {\n        *(uint8_t*)(SCREEN_RAM + cell) = 0;\n    }\n    *(uint8_t*)(COLOR_RAM + cell) = SCORE_COLOR;\n}\n\nuint8_t digit_bit(uint8_t digit, uint8_t bit) {\n    if (digit == 0) return bit != 6;\n    if (digit == 1) return (bit == 2) || (bit == 5);\n    if (digit == 2) return (bit == 0) || (bit == 2) || (bit == 3) || (bit == 4) || (bit == 6);\n    if (digit == 3) return (bit == 0) || (bit == 2) || (bit == 3) || (bit == 5) || (bit == 6);\n    if (digit == 4) return (bit == 1) || (bit == 2) || (bit == 3) || (bit == 5);\n    if (digit == 5) return (bit == 0) || (bit == 1) || (bit == 3) || (bit == 5) || (bit == 6);\n    if (digit == 6) return (bit == 0) || (bit == 1) || (bit == 3) || (bit == 4) || (bit == 5) || (bit == 6);\n    if (digit == 7) return (bit == 0) || (bit == 2) || (bit == 5);\n    if (digit == 8) return 1;\n    return (bit == 0) || (bit == 1) || (bit == 2) || (bit == 3) || (bit == 5) || (bit == 6);\n}\n\nvoid draw_digit(uint8_t col, uint8_t digit) {\n    put_score_cell(SCORE_ROW, col + 0, digit_bit(digit, 0));\n    put_score_cell(SCORE_ROW, col + 1, digit_bit(digit, 0));\n    put_score_cell(SCORE_ROW, col + 2, digit_bit(digit, 0));\n    put_score_cell(SCORE_ROW + 1, col + 0, digit_bit(digit, 1));\n    put_score_cell(SCORE_ROW + 1, col + 1, 0);\n    put_score_cell(SCORE_ROW + 1, col + 2, digit_bit(digit, 2));\n    put_score_cell(SCORE_ROW + 2, col + 0, digit_bit(digit, 3));\n    put_score_cell(SCORE_ROW + 2, col + 1, digit_bit(digit, 3));\n    put_score_cell(SCORE_ROW + 2, col + 2, digit_bit(digit, 3));\n    put_score_cell(SCORE_ROW + 3, col + 0, digit_bit(digit, 4));\n    put_score_cell(SCORE_ROW + 3, col + 1, 0);\n    put_score_cell(SCORE_ROW + 3, col + 2, digit_bit(digit, 5));\n    put_score_cell(SCORE_ROW + 4, col + 0, digit_bit(digit, 6));\n    put_score_cell(SCORE_ROW + 4, col + 1, digit_bit(digit, 6));\n    put_score_cell(SCORE_ROW + 4, col + 2, digit_bit(digit, 6));\n}\n\nvoid draw_score(void) {\n    uint8_t tens;\n    uint8_t ones;\n    tens = score / 10;\n    ones = score;\n    while (ones >= 10) {\n        ones = ones - 10;\n    }\n    draw_digit(SCORE_COL, tens);\n    draw_digit(SCORE_COL + 4, ones);\n}\n\nvoid spawn_coin(void) {\n    uint8_t y_seed;\n    uint16_t coin_y_candidate;\n    rng = rng + 73 + (uint8_t)(player_x / 32) + (uint8_t)(player_y / 32) + score;\n    coin_x = 24 + rng;\n    y_seed = rng + frame + score;\n    coin_y_candidate = 58 + (uint16_t)y_seed;\n    while (coin_y_candidate > 210) {\n        coin_y_candidate = coin_y_candidate - 153;\n    }\n    coin_y = (uint8_t)coin_y_candidate;\n    coin_frame = 0;\n    coin_delay = 0;\n    coin_forward = 1;\n    *(uint8_t*)(VIC_SPRITE_POINTER_BASE + 1) = COIN_POINTER;\n    position_sprite();\n}\n\nvoid collect_coin(void) {\n    uint16_t sprite_x;\n    uint16_t x_gap;\n    uint8_t sprite_y;\n    sprite_x = (uint16_t)(player_x / 32);\n    sprite_y = (uint8_t)(player_y / 32);\n    if (sprite_x >= coin_x) {\n        x_gap = sprite_x - coin_x;\n    } else {\n        x_gap = coin_x - sprite_x;\n    }\n    if (x_gap >= 20) {\n        return;\n    }\n    if (abs_diff8(sprite_y, coin_y) >= 18) {\n        return;\n    }\n    score = score + 1;\n    if (score >= 100) {\n        score = 0;\n    }\n    asm_draw_score();\n    spawn_coin();\n}\n\nvoid main(void) {\n    setup_video();\n    copy_charset();\n    copy_sprites();\n    clear_screen();\n    paint_scene();\n    sid_init();\n    sprite_init();\n    spawn_coin();\n    position_sprite();\n    asm_draw_score();\n\n    while (1) {\n\t\t//*(uint8_t*)VIC_BORDER = VIC_COLOR_GREEN;\n        wait_frame();\n        //*(uint8_t*)VIC_BORDER = VIC_COLOR_RED;\n        play_sid();\n        read_joy();\n        update_x_velocity();\n        update_y_velocity();\n        apply_motion();\n        animate_ghost();\n        animate_coin();\n        position_sprite();\n        collect_coin();\n        pulse_scene();\n        asm_draw_score();\n    \n    }\n}"
+    }
+  ]
+}

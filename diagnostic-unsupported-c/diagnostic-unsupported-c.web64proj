@@ -6,7 +6,7 @@
     "fileName": "diagnostic-unsupported-c.asm",
     "origin": "$c000",
     "source": "; Web64 IDE Example\n; Name: Diagnostic Unsupported C Shell\n; Description: Loads a C project intended to produce clear unsupported-feature diagnostics.\n",
-    "selectedEntryLabel": "_main"
+    "selectedEntryLabel": "_start"
   },
   "c": {
     "enabled": true,

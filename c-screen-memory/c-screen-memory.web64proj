@@ -6,7 +6,7 @@
     "fileName": "c-screen-memory.asm",
     "origin": "$c000",
     "source": "; Web64 IDE Example\n; Name: C Project Shell\n; Description: Assembly shell used by Web64 C projects; main.c is the entry source.\n",
-    "selectedEntryLabel": "_main"
+    "selectedEntryLabel": "_start"
   },
   "c": {
     "enabled": true,

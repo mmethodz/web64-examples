@@ -6,7 +6,7 @@
     "fileName": "hybrid-asset-copy.asm",
     "origin": "$c000",
     "source": "; Web64 IDE Example\n; Name: Hybrid Asset Copy Shell\n; Description: C entry point calls assembly that uses an included binary asset label.\n",
-    "selectedEntryLabel": "_main"
+    "selectedEntryLabel": "_start"
   },
   "c": {
     "enabled": true,

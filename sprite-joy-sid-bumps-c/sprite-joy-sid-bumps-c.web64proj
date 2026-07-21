@@ -1,12 +1,12 @@
 {
   "kind": "web64.ide.project",
   "version": 2,
-  "savedAt": "2026-07-18T08:18:12.398Z",
+  "savedAt": "2026-07-21T11:57:47.448Z",
   "main": {
     "fileName": "sprite-joy-sid-bumps-c.asm",
     "origin": "$c000",
     "source": "; Web64 IDE Example\n; Name: Sprite Joy SID Bumps C\n; Description: C-first version of Sprite Joy SID Bumps. Assembly is limited to the asset-copy labels.",
-    "selectedEntryLabel": "_main"
+    "selectedEntryLabel": "_start"
   },
   "c": {
     "enabled": true,
@@ -19,7 +19,10 @@
     "stdout": "none",
     "stdin": "none",
     "runtimeProfile": "tiny",
-    "compilerBackend": "web64-native"
+    "compilerBackend": "web64-native",
+    "zeroPage": {
+      "reserved": []
+    }
   },
   "emulator": {
     "emulatorScale": "fit",
@@ -34,12 +37,69 @@
     "gamepadEnabled": true,
     "joystickPort": 2
   },
+  "settings": {
+    "version": 1,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "fit",
+      "livePatchEnabled": true,
+      "audioEnabled": true,
+      "audioMuted": false,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": true,
+      "gamepadEnabled": true,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": true,
+      "dialect": "web64-c-v0.1",
+      "entry": "main.c",
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "none",
+      "stdin": "none",
+      "runtimeProfile": "tiny",
+      "compilerBackend": "web64-native",
+      "zeroPage": {
+        "reserved": []
+      }
+    },
+    "optimizer": {
+      "profile": "default",
+      "peephole": true,
+      "simplification": true,
+      "runtimeDependencySelection": true,
+      "unsupportedNativeFlags": "diagnostic"
+    }
+  },
+  "media": {
+    "version": 1,
+    "disks": []
+  },
   "files": [
     {
       "path": "main.c",
       "name": "main.c",
       "kind": "source",
-      "source": "/*\n * Web64 IDE Example\n * Name: Sprite Joy SID Bumps C\n * Description: C-first control loop with frame-critical C64 work in C-callable assembly.\n */\n\n#include \"game.h\"\n\nvoid main(void) {\n    setup_video();\n    copy_charset();\n    copy_sprites();\n    clear_screen();\n    paint_scene();\n    sid_init();\n    sprite_init();\n\n    while (1) {\n        wait_frame();\n        play_sid();\n        read_joy();\n        update_x_velocity();\n        update_y_velocity();\n        apply_motion();\n        animate_ghost();\n        position_sprite();\n        pulse_scene();\n    }\n}"
+      "source": "/*\n * Web64 IDE Example\n * Name: Sprite Joy SID Bumps C\n * Description: C-first control loop with frame-critical C64 work in C-callable assembly.\n */\n\n#include \"game.h\"\n\nvoid main(void) {\n    setup_video();\n    copy_charset();\n    copy_sprites();\n    clear_screen();\n    paint_scene();\n    sid_init();\n    sprite_init();\n\n    while (1) {\n\t\t*(uint8_t*)0xd020 = 5;\n        wait_frame();\n\t\t*(uint8_t*)0xd020 = 2;\n        play_sid();\n        read_joy();\n        update_x_velocity();\n        update_y_velocity();\n        apply_motion();\n        animate_ghost();\n        position_sprite();\n        pulse_scene();\n    }\n}"
     },
     {
       "path": "game.h",

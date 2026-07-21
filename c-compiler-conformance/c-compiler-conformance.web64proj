@@ -6,7 +6,7 @@
     "fileName": "c-compiler-conformance.asm",
     "origin": "$c000",
     "source": "; Web64 IDE Example\n; Name: C Compiler Conformance\n; Description: Browser-run Web64 C v1 conformance checks; main.c is the entry source.\n",
-    "selectedEntryLabel": "_main"
+    "selectedEntryLabel": "_start"
   },
   "c": {
     "enabled": true,

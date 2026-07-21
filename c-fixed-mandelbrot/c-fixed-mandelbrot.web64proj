@@ -6,7 +6,7 @@
     "fileName": "c-fixed-mandelbrot.asm",
     "origin": "$c000",
     "source": "; Web64 IDE Example\n; Name: C Fixed Mandelbrot\n; Description: 8.8 fixed-point Mandelbrot renderer writes to C64 multicolor bitmap memory.\n",
-    "selectedEntryLabel": "_main"
+    "selectedEntryLabel": "_start"
   },
   "c": {
     "enabled": true,

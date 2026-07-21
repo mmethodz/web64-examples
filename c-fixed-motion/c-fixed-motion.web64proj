@@ -6,7 +6,7 @@
     "fileName": "c-fixed-motion.asm",
     "origin": "$c000",
     "source": "; Web64 IDE Example\n; Name: C Fixed Motion\n; Description: Web64Motion2D integration helper closure; main.c is the entry source.\n",
-    "selectedEntryLabel": "_main"
+    "selectedEntryLabel": "_start"
   },
   "c": {
     "enabled": true,

@@ -6,7 +6,7 @@
     "fileName": "hybrid-c-calls-asm.asm",
     "origin": "$c000",
     "source": "; Web64 IDE Example\n; Name: Hybrid C Calls ASM Shell\n; Description: C entry point plus hand-written assembly routine in project files.\n",
-    "selectedEntryLabel": "_main"
+    "selectedEntryLabel": "_start"
   },
   "c": {
     "enabled": true,

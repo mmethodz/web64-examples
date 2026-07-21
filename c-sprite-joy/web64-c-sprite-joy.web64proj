@@ -6,7 +6,7 @@
     "fileName": "web64-c-sprite-joy.asm",
     "origin": "$c000",
     "source": "; Web64 C sprite and joystick example.\n; main.c keeps joystick polling, player movement, and sprite positioning in C functions.\n; Inline assembly is limited to raster wait, sprite data copy, and frame-loop glue required by Web64 C v0.1.\n",
-    "selectedEntryLabel": "_main"
+    "selectedEntryLabel": "_start"
   },
   "c": {
     "enabled": true,
