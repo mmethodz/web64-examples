@@ -1,7 +1,7 @@
 {
   "kind": "web64.ide.project",
   "version": 2,
-  "savedAt": "2026-07-23T11:31:50.876Z",
+  "savedAt": "2026-07-23T11:32:43.946Z",
   "main": {
     "fileName": "ghost-game-c.asm",
     "origin": "$6000",
@@ -92,7 +92,26 @@
   },
   "media": {
     "version": 1,
-    "disks": []
+    "disks": [
+      {
+        "id": "disk",
+        "title": "DISK",
+        "unit": 8,
+        "injectSysLoader": true,
+        "source": null,
+        "entries": [
+          {
+            "name": "ghost-game-c",
+            "type": "prg",
+            "injectSysLoader": true,
+            "source": {
+              "kind": "build-output",
+              "path": "build/ghost-game-c.prg"
+            }
+          }
+        ]
+      }
+    ]
   },
   "files": [
     {
