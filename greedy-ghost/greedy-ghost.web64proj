@@ -1,7 +1,7 @@
 {
   "kind": "web64.ide.project",
-  "version": 2,
-  "savedAt": "2026-07-24T06:10:54.259Z",
+  "version": 3,
+  "savedAt": "2026-07-24T07:42:59.553Z",
   "main": {
     "fileName": "ghost-game-c.asm",
     "origin": "$6000",
@@ -89,6 +89,23 @@
       "runtimeDependencySelection": true,
       "unsupportedNativeFlags": "diagnostic"
     }
+  },
+  "workspace": {
+    "selectedFile": {
+      "scope": "project",
+      "path": "main.c"
+    },
+    "editor": {
+      "file": {
+        "scope": "project",
+        "path": "main.c"
+      },
+      "selectionStart": 19305,
+      "selectionEnd": 19305,
+      "scrollTop": 15235,
+      "scrollLeft": 0
+    },
+    "emulatorCollapsed": true
   },
   "media": {
     "version": 1,
