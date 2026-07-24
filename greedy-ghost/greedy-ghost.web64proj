@@ -1,7 +1,7 @@
 {
   "kind": "web64.ide.project",
   "version": 3,
-  "savedAt": "2026-07-24T07:42:59.553Z",
+  "savedAt": "2026-07-24T17:54:25.566Z",
   "main": {
     "fileName": "ghost-game-c.asm",
     "origin": "$6000",
@@ -102,10 +102,10 @@
       },
       "selectionStart": 19305,
       "selectionEnd": 19305,
-      "scrollTop": 15235,
+      "scrollTop": 15236,
       "scrollLeft": 0
     },
-    "emulatorCollapsed": true
+    "emulatorCollapsed": false
   },
   "media": {
     "version": 1,
