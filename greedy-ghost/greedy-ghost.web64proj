@@ -1,7 +1,7 @@
 {
   "kind": "web64.ide.project",
-  "version": 3,
-  "savedAt": "2026-07-26T12:30:28.312Z",
+  "version": 4,
+  "savedAt": "2026-07-29T15:17:56.865Z",
   "main": {
     "fileName": "ghost-game-c.asm",
     "origin": "$6000",
@@ -12,6 +12,8 @@
     "enabled": true,
     "dialect": "web64-c-v0.1",
     "entry": "main.c",
+    "entrySymbol": "",
+    "predefinedDefines": {},
     "includePaths": [
       "include",
       "assets"
@@ -23,6 +25,29 @@
     "zeroPage": {
       "reserved": []
     }
+  },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "targets": [
+      {
+        "id": "main",
+        "label": "Main",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c",
+          "asset_copy.asm"
+        ],
+        "entrySymbol": "",
+        "origin": "$6000",
+        "outputName": "ghost.prg",
+        "defines": {},
+        "c": {
+          "enabled": true
+        }
+      }
+    ]
   },
   "emulator": {
     "emulatorScale": "1",
@@ -38,7 +63,7 @@
     "joystickPort": 2
   },
   "settings": {
-    "version": 1,
+    "version": 2,
     "live": {
       "compilationEnabled": true,
       "compileOnSave": true,
@@ -70,6 +95,8 @@
       "enabled": true,
       "dialect": "web64-c-v0.1",
       "entry": "main.c",
+      "entrySymbol": "",
+      "predefinedDefines": {},
       "includePaths": [
         "include",
         "assets"
@@ -100,60 +127,76 @@
         "scope": "project",
         "path": "main.c"
       },
-      "selectionStart": 19607,
-      "selectionEnd": 19607,
+      "selectionStart": 19509,
+      "selectionEnd": 19509,
       "scrollTop": 15424,
       "scrollLeft": 0
     },
     "emulatorCollapsed": true
   },
   "media": {
-    "version": 1,
+    "version": 2,
+    "files": [
+      {
+        "id": "main",
+        "label": "main",
+        "dosName": "ghost",
+        "type": "prg",
+        "source": {
+          "kind": "target-output",
+          "targetId": "main"
+        },
+        "injectSysLoader": true
+      }
+    ],
     "disks": [
       {
         "id": "disk",
-        "title": "DISK",
+        "title": "GHOST",
+        "diskId": "disk",
         "unit": 8,
-        "injectSysLoader": true,
-        "source": null,
+        "markerName": "@W64-DISK",
         "entries": [
           {
-            "name": "ghost-game-c",
-            "type": "prg",
-            "injectSysLoader": true,
-            "source": {
-              "kind": "build-output",
-              "path": "build/ghost-game-c.prg"
-            }
-          },
-          {
-            "name": "bumps",
-            "type": "prg",
-            "injectSysLoader": true,
-            "source": {
-              "kind": "project-file",
-              "path": "assets/chars/bumps.chr"
-            }
+            "fileId": "main",
+            "placement": {
+              "interleave": 1,
+              "alignment": 1,
+              "preferredTracks": null,
+              "sectors": []
+            },
+            "order": 0
           }
-        ]
+        ],
+        "placement": {
+          "interleave": 1,
+          "reservedSectors": [],
+          "trackOrder": []
+        }
+      }
+    ],
+    "diskSets": [
+      {
+        "id": "default",
+        "label": "greedy-ghost",
+        "diskIds": [
+          "disk"
+        ],
+        "bootDiskId": "disk",
+        "bootFileId": "",
+        "unit": 8,
+        "assisted": true
       },
       {
-        "id": "disk-2",
-        "title": "DISK",
+        "id": "Disk-Set-2",
+        "label": "Disk Set 2",
+        "diskIds": [
+          "disk"
+        ],
+        "bootDiskId": "disk",
+        "bootFileId": "",
         "unit": 8,
-        "injectSysLoader": true,
-        "source": null,
-        "entries": [
-          {
-            "name": "ghost-game-c",
-            "type": "prg",
-            "injectSysLoader": true,
-            "source": {
-              "kind": "build-output",
-              "path": "build/ghost-game-c.prg"
-            }
-          }
-        ]
+        "assisted": true
       }
     ]
   },
