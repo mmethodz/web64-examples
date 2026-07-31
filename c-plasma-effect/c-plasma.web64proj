@@ -1,0 +1,203 @@
+{
+  "kind": "web64.ide.project",
+  "version": 4,
+  "savedAt": "2026-07-31T14:58:03.765Z",
+  "main": {
+    "fileName": "main.asm",
+    "origin": "$4000",
+    "source": "",
+    "selectedEntryLabel": "auto"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "entry": "main.c",
+    "entrySymbol": "",
+    "predefinedDefines": {},
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "screen",
+    "stdin": "keyboard",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native",
+    "zeroPage": {
+      "reserved": []
+    }
+  },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "targets": [
+      {
+        "id": "main",
+        "label": "Main",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c",
+          "main.asm"
+        ],
+        "entrySymbol": "",
+        "origin": "$4000",
+        "outputName": ".prg",
+        "defines": {},
+        "c": {
+          "enabled": true
+        }
+      }
+    ]
+  },
+  "emulator": {
+    "emulatorScale": "1",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": true,
+    "joystickPort": 2
+  },
+  "settings": {
+    "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "1",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": false,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": true,
+      "gamepadEnabled": true,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": true,
+      "dialect": "web64-c-v0.1",
+      "entry": "main.c",
+      "entrySymbol": "",
+      "predefinedDefines": {},
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "screen",
+      "stdin": "keyboard",
+      "runtimeProfile": "tiny",
+      "compilerBackend": "web64-native",
+      "zeroPage": {
+        "reserved": []
+      }
+    },
+    "optimizer": {
+      "profile": "default",
+      "peephole": true,
+      "simplification": true,
+      "runtimeDependencySelection": true,
+      "unsupportedNativeFlags": "diagnostic"
+    }
+  },
+  "workspace": {
+    "selectedFile": {
+      "scope": "project",
+      "path": "main.c"
+    },
+    "editor": {
+      "file": {
+        "scope": "project",
+        "path": "main.c"
+      },
+      "selectionStart": 3499,
+      "selectionEnd": 3499,
+      "scrollTop": 1600,
+      "scrollLeft": 0
+    },
+    "emulatorCollapsed": false
+  },
+  "media": {
+    "version": 2,
+    "files": [],
+    "disks": [],
+    "diskSets": []
+  },
+  "files": [
+    {
+      "path": "assets/chars/charset.chr",
+      "name": "charset.chr",
+      "kind": "charset",
+      "mode": "mono",
+      "width": 8,
+      "height": 8,
+      "count": 256,
+      "colors": {
+        "background": 0,
+        "multicolor1": 5,
+        "multicolor2": 2,
+        "foreground": 1,
+        "mode": "mono"
+      },
+      "includePath": "assets/chars/charset.inc",
+      "dirty": true,
+      "lastCompiledHash": null,
+      "lastPatchedHash": null,
+      "asset": {
+        "schema": "web64.ide.graphicsAsset",
+        "version": 2,
+        "kind": "charset",
+        "mode": "mono",
+        "width": 8,
+        "height": 8,
+        "count": 256,
+        "colors": {
+          "background": 0,
+          "multicolor1": 5,
+          "multicolor2": 2,
+          "foreground": 1,
+          "mode": "mono"
+        },
+        "frames": [],
+        "animations": [],
+        "tiles": [],
+        "paletteProfile": null,
+        "nextFrameSerial": 0,
+        "includePath": "assets/chars/charset.inc"
+      },
+      "encoding": "base64",
+      "bytes": "AAAAAAAAAAAAACAAAAACAAAABABAAAQAAAiAAARAAAEBIACEACACEBCCKACkASSBqkEUiCWSJImZZJJlqlRJquwT7FO6Fe2qu2Sbda5V36q671Xudb9qt133u3fu/Vft/Vf97n//912/+v93/v/v/v7v///3//6/////////9/8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    },
+    {
+      "path": "assets/chars/charset.inc",
+      "name": "charset.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/chars/charset.chr",
+      "source": "; Generated by Web64 IDE. Edit the graphics asset, not this file.\ncharset_chars_size = $0800\n; Editor color references\ncharset_color_0 = 0\ncharset_background_color = 0\ncharset_color_1 = 5\ncharset_multicolor_1 = 5\ncharset_color_2 = 2\ncharset_multicolor_2 = 2\ncharset_color_3 = 1\ncharset_foreground_color = 1\ncharset_char_count = $0100\ncharset_chars_end = charset_chars + charset_chars_size\ncharset_char_0 = 0\ncharset_char_1 = 1\ncharset_char_2 = 2\ncharset_char_3 = 3\ncharset_char_4 = 4\ncharset_char_5 = 5\ncharset_char_6 = 6\ncharset_char_7 = 7\ncharset_char_8 = 8\ncharset_char_9 = 9\ncharset_char_10 = $0a\ncharset_char_11 = $0b\ncharset_char_12 = $0c\ncharset_char_13 = $0d\ncharset_char_14 = $0e\ncharset_char_15 = $0f\n"
+    },
+    {
+      "path": "main.c",
+      "name": "main.c",
+      "kind": "source",
+      "source": "#include <stdint.h>\n#include <stdio.h>\n#include <c64.h>\n#include \"assets/generated.h\"\n\n\n/* Web64 generated v1; kind=table; preset=sine; samples=512; type=uint8; layout=interleaved; shape=multidimensional; encoding=byte; endpoint=excluded; overflow=error; dimensions=512 */\n#define SINE_TABLE_COUNT 512\n#define SINE_TABLE_ROWS 1\n#define SINE_TABLE_COLUMNS 512\nconst uint8_t sine_table[512] = {\n    8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 10,\n    10, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 12,\n    12, 12, 12, 12, 12, 12, 13, 13, 13, 13, 13, 13,\n    13, 13, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,\n    14, 14, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,\n    15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,\n    15, 15, 15, 15, 15, 15, 15, 14, 14, 14, 14, 14,\n    14, 14, 14, 14, 14, 14, 14, 13, 13, 13, 13, 13,\n    13, 13, 13, 12, 12, 12, 12, 12, 12, 12, 11, 11,\n    11, 11, 11, 11, 10, 10, 10, 10, 10, 10, 9, 9,\n    9, 9, 9, 8, 8, 8, 8, 8, 8, 7, 7, 7,\n    7, 7, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5,\n    5, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3,\n    3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1,\n    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n    1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3,\n    3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4,\n    5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 7,\n    7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 9, 9,\n    9, 9, 9, 10, 10, 10, 10, 10, 10, 11, 11, 11,\n    11, 11, 11, 12, 12, 12, 12, 12, 12, 12, 13, 13,\n    13, 13, 13, 13, 13, 13, 14, 14, 14, 14, 14, 14,\n    14, 14, 14, 14, 14, 14, 15, 15, 15, 15, 15, 15,\n    15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,\n    15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 14,\n    14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 13,\n    13, 13, 13, 13, 13, 13, 13, 12, 12, 12, 12, 12,\n    12, 12, 11, 11, 11, 11, 11, 11, 10, 10, 10, 10,\n    10, 10, 9, 9, 9, 9, 9, 8, 8, 8, 8, 8,\n    8, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 5,\n    5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 3,\n    3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2,\n    2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n    1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,\n    1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2,\n    2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4,\n    4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6,\n    6, 6, 6, 7, 7, 7, 7, 7\n};\n\nvoid wait_frame(void) {\n    while (*((volatile uint8_t*)VIC_RASTER) == 0xf8) {\n    }\n    while (*((volatile uint8_t*)VIC_RASTER) != 0xf8) {\n    }\n}\n\nvoid main(void) {\n    VIC->border_color = 0;\n    VIC->background_color0 = 0;\n    clrscr();\n\n    memcpy((void*)0x2000, charset_chars, charset_chars_size);\n    VIC->memory_setup = 0x18;\n\n    uint8_t rc1 = 0; // Horizontal scroll phase\n    uint8_t rc2 = 0; // Vertical distortion phase\n\n    while (1) {     \n      \t//VIC->border_color = COLOR_RED;\n        wait_frame();\n      \t//VIC->border_color = COLOR_GREEN;\n\n        uint8_t *scr = (uint8_t*)0x0400;\n\n        for (uint8_t sr = 0; sr < 9; sr++) {\n            // 1. Fetch vertical wobble from sine table\n            uint8_t row_wobble = sine_table[(uint8_t)(rc2 + (sr << 4))];\n\n            // 2. 8-bit addition naturally wraps 0..255!\n            uint8_t row_start = rc1 + row_wobble;\n\n            // 3. Pointer into cycle 1; reads safely bleed into cycle 2 (up to byte 295 max)\n            const uint8_t *zsrc = &sine_table[row_start];\n\n            // 4. Fast 23-cycle byte copy with zero masking\n            for (uint8_t cc = 0; cc < 40; cc++) {\n                scr[cc] = zsrc[cc];\n            }\n\n            scr += 40;\n        }\n\n        rc1 += 2;\n        rc2 += 3;\n    }\n}"
+    }
+  ]
+}
