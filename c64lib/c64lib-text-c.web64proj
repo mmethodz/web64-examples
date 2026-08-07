@@ -1,0 +1,29 @@
+{
+  "kind": "web64.ide.project",
+  "version": 4,
+  "main": {
+    "fileName": "main.c",
+    "origin": "$c000",
+    "selectedEntryLabel": "main",
+    "source": "#include <stdint.h>\n#include <c64.h>\n#include <c64lib/text.h>\n\n#pragma charset(\"screencode\")\nconst char message[] = \"WEB64 C64LIB\";\n#pragma charset(\"ascii\")\n\nvoid main(void) {\n    VIC->border_color = COLOR_BLUE;\n    VIC->background_color0 = COLOR_BLACK;\n    c64lib_text_putxy(message, 13, 12, COLOR_CYAN);\n    c64lib_text_hex8(0x64, 18, 14, COLOR_WHITE);\n    while (1) {\n    }\n}\n"
+  },
+  "c": { "enabled": true, "entry": "main.c", "abi": "web64-stack-v1" },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "targets": [{
+      "id": "main",
+      "label": "c64lib Text C",
+      "kind": "prg",
+      "rootPath": "main.c",
+      "inputs": ["main.c"],
+      "entrySymbol": "main",
+      "origin": "$c000",
+      "outputName": "c64lib-text-c.prg",
+      "defines": {},
+      "compatibilityModules": ["c64lib.text"],
+      "c": { "enabled": true, "abi": "web64-stack-v1" }
+    }]
+  },
+  "files": []
+}

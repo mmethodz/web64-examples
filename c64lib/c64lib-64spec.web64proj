@@ -1,0 +1,29 @@
+{
+  "kind": "web64.ide.project",
+  "version": 4,
+  "main": {
+    "fileName": "spec.asm",
+    "origin": "$c000",
+    "selectedEntryLabel": "start",
+    "source": ".include \"web64/c64lib/64spec.inc\"\n\nstart:\n    web64_64spec_reset\n    lda #3\n    web64_64spec_assert_a_equal 3\n    ldx #0\n    web64_64spec_assert_x_zero\n    ldy #1\n    web64_64spec_assert_y_not_zero\n    web64_64spec_finish\n    rts\n"
+  },
+  "c": { "enabled": false },
+  "build": {
+    "version": 1,
+    "activeTargetId": "spec",
+    "targets": [{
+      "id": "spec",
+      "label": "c64lib 64spec",
+      "kind": "test",
+      "rootPath": "spec.asm",
+      "inputs": ["spec.asm"],
+      "entrySymbol": "start",
+      "origin": "$c000",
+      "outputName": "c64lib-64spec.prg",
+      "defines": {},
+      "compatibilityModules": ["c64lib.64spec"],
+      "c": { "enabled": false }
+    }]
+  },
+  "files": []
+}

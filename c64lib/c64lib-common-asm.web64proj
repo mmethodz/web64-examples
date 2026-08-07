@@ -1,0 +1,29 @@
+{
+  "kind": "web64.ide.project",
+  "version": 4,
+  "main": {
+    "fileName": "main.asm",
+    "origin": "$c000",
+    "selectedEntryLabel": "start",
+    "source": ".include \"web64/c64lib/common.inc\"\n.include \"web64/c64lib/chipset.inc\"\n\nstart:\n    sei\n    web64_c64lib_configure_memory C64LIB_BASIC_IO_KERNAL\n    web64_c64lib_set_vic_bank C64LIB_BANK_0\n    web64_c64lib_fill_screen $0400, $20\n    lda #$06\n    sta C64LIB_BORDER_COLOR\n    lda #$00\n    sta C64LIB_BACKGROUND_COLOR_0\nloop:\n    jmp loop\n"
+  },
+  "c": { "enabled": false },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "targets": [{
+      "id": "main",
+      "label": "c64lib Common ASM",
+      "kind": "prg",
+      "rootPath": "main.asm",
+      "inputs": ["main.asm"],
+      "entrySymbol": "start",
+      "origin": "$c000",
+      "outputName": "c64lib-common-asm.prg",
+      "defines": {},
+      "compatibilityModules": ["c64lib.common", "c64lib.chipset"],
+      "c": { "enabled": false }
+    }]
+  },
+  "files": []
+}

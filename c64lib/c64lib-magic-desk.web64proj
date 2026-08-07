@@ -1,0 +1,33 @@
+{
+  "kind": "web64.ide.project",
+  "version": 4,
+  "main": {
+    "fileName": "cartridge.asm",
+    "origin": "$8000",
+    "selectedEntryLabel": "start",
+    "source": ".include \"web64/c64lib/magic-desk-crt.inc\"\n\nstart:\n    web64_c64lib_magic_desk_bootstrap $02, $04, $06, loader_end-loader, loader, $c000\nloader:\n    lda #$06\n    sta $d020\n    lda #$00\n    sta $d021\nforever:\n    jmp forever\nloader_end:\n"
+  },
+  "c": { "enabled": false },
+  "build": {
+    "version": 1,
+    "activeTargetId": "cartridge",
+    "targets": [{
+      "id": "cartridge",
+      "label": "c64lib Magic Desk",
+      "kind": "magic-desk-crt",
+      "rootPath": "cartridge.asm",
+      "inputs": ["cartridge.asm"],
+      "entrySymbol": "start",
+      "origin": "$8000",
+      "outputName": "c64lib-magic-desk.crt",
+      "defines": {},
+      "compatibilityModules": ["c64lib.magic-desk-crt"],
+      "cartridge": {
+        "name": "WEB64 C64LIB",
+        "requireAutostartHeader": true
+      },
+      "c": { "enabled": false }
+    }]
+  },
+  "files": []
+}

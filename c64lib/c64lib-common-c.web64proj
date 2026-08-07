@@ -1,0 +1,29 @@
+{
+  "kind": "web64.ide.project",
+  "version": 4,
+  "main": {
+    "fileName": "main.c",
+    "origin": "$c000",
+    "selectedEntryLabel": "main",
+    "source": "#include <stdint.h>\n#include <c64.h>\n#include <c64lib/common.h>\n#include <c64lib/chipset.h>\n\nvoid main(void) {\n    c64lib_fill_screen((void*)0x0400, 32);\n    c64lib_set_vic_bank(C64LIB_BANK_0);\n    VIC->border_color = COLOR_BLUE;\n    VIC->background_color0 = COLOR_BLACK;\n    while (1) {\n    }\n}\n"
+  },
+  "c": { "enabled": true, "entry": "main.c", "abi": "web64-stack-v1" },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "targets": [{
+      "id": "main",
+      "label": "c64lib Common C",
+      "kind": "prg",
+      "rootPath": "main.c",
+      "inputs": ["main.c"],
+      "entrySymbol": "main",
+      "origin": "$c000",
+      "outputName": "c64lib-common-c.prg",
+      "defines": {},
+      "compatibilityModules": ["c64lib.common", "c64lib.chipset"],
+      "c": { "enabled": true, "abi": "web64-stack-v1" }
+    }]
+  },
+  "files": []
+}

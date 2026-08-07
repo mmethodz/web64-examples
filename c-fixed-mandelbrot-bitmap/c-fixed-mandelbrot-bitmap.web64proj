@@ -1,7 +1,7 @@
 {
   "kind": "web64.ide.project",
-  "version": 2,
-  "savedAt": "2026-07-19T17:46:53.870Z",
+  "version": 4,
+  "savedAt": "2026-08-03T12:54:58.476Z",
   "main": {
     "fileName": "c-fixed-mandelbrot-bitmap.asm",
     "origin": "$c000",
@@ -11,7 +11,10 @@
   "c": {
     "enabled": true,
     "dialect": "web64-c-v0.1",
+    "abi": "web64-static-v0",
     "entry": "main.c",
+    "entrySymbol": "",
+    "predefinedDefines": {},
     "includePaths": [
       "include",
       "assets"
@@ -20,9 +23,36 @@
     "stdin": "none",
     "runtimeProfile": "tiny",
     "compilerBackend": "web64-native",
+    "stack": {
+      "size": 512,
+      "address": null
+    },
     "zeroPage": {
       "reserved": []
     }
+  },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "targets": [
+      {
+        "id": "main",
+        "label": "Main",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c",
+          "c-fixed-mandelbrot-bitmap.asm"
+        ],
+        "entrySymbol": "",
+        "origin": "$c000",
+        "outputName": ".prg",
+        "defines": {},
+        "c": {
+          "enabled": true
+        }
+      }
+    ]
   },
   "emulator": {
     "emulatorScale": "1",
@@ -38,7 +68,7 @@
     "joystickPort": 2
   },
   "settings": {
-    "version": 1,
+    "version": 2,
     "live": {
       "compilationEnabled": false,
       "compileOnSave": true,
@@ -69,7 +99,10 @@
     "compiler": {
       "enabled": true,
       "dialect": "web64-c-v0.1",
+      "abi": "web64-static-v0",
       "entry": "main.c",
+      "entrySymbol": "",
+      "predefinedDefines": {},
       "includePaths": [
         "include",
         "assets"
@@ -78,6 +111,10 @@
       "stdin": "none",
       "runtimeProfile": "tiny",
       "compilerBackend": "web64-native",
+      "stack": {
+        "size": 512,
+        "address": null
+      },
       "zeroPage": {
         "reserved": []
       }
@@ -90,9 +127,28 @@
       "unsupportedNativeFlags": "diagnostic"
     }
   },
+  "workspace": {
+    "selectedFile": {
+      "scope": "project",
+      "path": "main.c"
+    },
+    "editor": {
+      "file": {
+        "scope": "project",
+        "path": "main.c"
+      },
+      "selectionStart": 0,
+      "selectionEnd": 0,
+      "scrollTop": 0,
+      "scrollLeft": 0
+    },
+    "emulatorCollapsed": false
+  },
   "media": {
-    "version": 1,
-    "disks": []
+    "version": 2,
+    "files": [],
+    "disks": [],
+    "diskSets": []
   },
   "files": [
     {

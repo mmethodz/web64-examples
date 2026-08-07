@@ -1,0 +1,34 @@
+{
+  "kind": "web64.ide.project",
+  "version": 4,
+  "main": {
+    "fileName": "main.c",
+    "origin": "$c000",
+    "selectedEntryLabel": "main",
+    "source": "#include <stdint.h>\n#include <c64.h>\n#include <c64lib/chipset.h>\n\nvoid asm_pulse(void);\n\nvoid c_border_step(void) {\n    VIC->border_color = COLOR_BLUE;\n}\n\nvoid main(void) {\n    c64lib_disable_cia_interrupts();\n    while (1) {\n        asm_pulse();\n    }\n}\n"
+  },
+  "c": { "enabled": true, "entry": "main.c", "abi": "web64-stack-v1" },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "targets": [{
+      "id": "main",
+      "label": "c64lib Mixed C and ASM",
+      "kind": "prg",
+      "rootPath": "main.c",
+      "inputs": ["main.c", "support.asm"],
+      "entrySymbol": "main",
+      "origin": "$c000",
+      "outputName": "c64lib-mixed.prg",
+      "defines": {},
+      "compatibilityModules": ["c64lib.chipset"],
+      "c": { "enabled": true, "abi": "web64-stack-v1" }
+    }]
+  },
+  "files": [{
+    "path": "support.asm",
+    "name": "support.asm",
+    "kind": "source",
+    "source": "asm_pulse:\nwait_line:\n    lda $d012\n    cmp #$f8\n    bne wait_line\n    jsr _c_border_step\n    rts\n"
+  }]
+}
