@@ -1,0 +1,39 @@
+{
+  "kind": "web64.ide.project",
+  "version": 4,
+  "main": {
+    "fileName": "main.asm",
+    "origin": "$c000",
+    "selectedEntryLabel": "start",
+    "source": ".include \"web64/c64lib/text.inc\"\n\nstart:\n    lda #0\n    sta $d020\n    sta $d021\n    lda #<tile_config\n    sta __web64_c64lib_c64lib_tile2_init_config\n    lda #>tile_config\n    sta __web64_c64lib_c64lib_tile2_init_config+1\n    jsr web64_c64lib_tile2_init\nmain_loop:\nwait_not_f8:\n    lda $d012\n    cmp #$f8\n    beq wait_not_f8\nwait_f8:\n    lda $d012\n    cmp #$f8\n    bne wait_f8\n    inc scroll_delay\n    lda scroll_delay\n    and #7\n    bne main_loop\n    lda scroll_direction\n    bne scroll_back\nscroll_forward:\n    jsr web64_c64lib_tile2_scroll_left\n    inc scroll_position\n    lda scroll_position\n    cmp #8\n    bcc main_loop\n    lda #1\n    sta scroll_direction\n    jmp main_loop\nscroll_back:\n    jsr web64_c64lib_tile2_scroll_right\n    dec scroll_position\n    bne main_loop\n    lda #0\n    sta scroll_direction\n    jmp main_loop\n\nscroll_delay: .byte 0\nscroll_position: .byte 0\nscroll_direction: .byte 0\n\ntile_config:\n    web64_c64lib_tile2_config tile_map, tile_planes, tile_colors, tile_materials, 0, 0, $0400, $d800, row_offsets_lo, row_offsets_hi, 24, 12, 40, 25, 0, 24, 0, 0, 1\n\ntile_map:\n    .byte 0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3\n    .byte 1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0\n    .byte 2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1\n    .byte 3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2\n    .byte 0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3\n    .byte 1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0\n    .byte 2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1\n    .byte 3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2\n    .byte 0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3\n    .byte 1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0\n    .byte 2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1\n    .byte 3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2\ntile_planes:\n    .byte 1,5,9,13\n    .fill 252,1\n    .byte 2,6,10,14\n    .fill 252,2\n    .byte 3,7,11,15\n    .fill 252,3\n    .byte 4,8,12,16\n    .fill 252,4\ntile_colors:\n    .byte 6,14,3,1\ntile_materials:\n    .byte 0,1,2,3\nrow_offsets_lo:\n    .fill 12,0\nrow_offsets_hi:\n    .fill 12,0\n"
+  },
+  "c": {
+    "enabled": false
+  },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "targets": [
+      {
+        "id": "main",
+        "label": "c64lib Tile2 Scroll",
+        "kind": "prg",
+        "rootPath": "main.asm",
+        "inputs": [
+          "main.asm"
+        ],
+        "entrySymbol": "start",
+        "origin": "$c000",
+        "outputName": "c64lib-tile2-scroll.prg",
+        "defines": {},
+        "compatibilityModules": [
+          "c64lib.text"
+        ],
+        "c": {
+          "enabled": false
+        }
+      }
+    ]
+  },
+  "files": []
+}
