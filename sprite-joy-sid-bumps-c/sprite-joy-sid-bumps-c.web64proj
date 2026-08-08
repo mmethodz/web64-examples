@@ -1,17 +1,20 @@
 {
   "kind": "web64.ide.project",
-  "version": 2,
-  "savedAt": "2026-07-21T11:57:47.448Z",
+  "version": 4,
+  "savedAt": "2026-08-08T18:48:17.755Z",
   "main": {
     "fileName": "sprite-joy-sid-bumps-c.asm",
     "origin": "$c000",
     "source": "; Web64 IDE Example\n; Name: Sprite Joy SID Bumps C\n; Description: C-first version of Sprite Joy SID Bumps. Assembly is limited to the asset-copy labels.",
-    "selectedEntryLabel": "_start"
+    "selectedEntryLabel": "auto"
   },
   "c": {
     "enabled": true,
     "dialect": "web64-c-v0.1",
+    "abi": "web64-static-v0",
     "entry": "main.c",
+    "entrySymbol": "",
+    "predefinedDefines": {},
     "includePaths": [
       "include",
       "assets"
@@ -20,9 +23,41 @@
     "stdin": "none",
     "runtimeProfile": "tiny",
     "compilerBackend": "web64-native",
+    "stack": {
+      "size": 512,
+      "address": null
+    },
     "zeroPage": {
       "reserved": []
     }
+  },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "compatibilityDefaults": [],
+    "targets": [
+      {
+        "id": "main",
+        "label": "Main",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c",
+          "asset_copy.asm",
+          "sprite-joy-sid-bumps-c.asm"
+        ],
+        "entrySymbol": "",
+        "origin": "$c000",
+        "outputName": "sprite-joy-sid-bumps-c.prg",
+        "defines": {},
+        "compatibilityModules": [],
+        "c": {
+          "enabled": true
+        },
+        "cartridge": {},
+        "test": {}
+      }
+    ]
   },
   "emulator": {
     "emulatorScale": "fit",
@@ -38,7 +73,7 @@
     "joystickPort": 2
   },
   "settings": {
-    "version": 1,
+    "version": 2,
     "live": {
       "compilationEnabled": false,
       "compileOnSave": false,
@@ -69,7 +104,10 @@
     "compiler": {
       "enabled": true,
       "dialect": "web64-c-v0.1",
+      "abi": "web64-static-v0",
       "entry": "main.c",
+      "entrySymbol": "",
+      "predefinedDefines": {},
       "includePaths": [
         "include",
         "assets"
@@ -78,6 +116,10 @@
       "stdin": "none",
       "runtimeProfile": "tiny",
       "compilerBackend": "web64-native",
+      "stack": {
+        "size": 512,
+        "address": null
+      },
       "zeroPage": {
         "reserved": []
       }
@@ -90,9 +132,16 @@
       "unsupportedNativeFlags": "diagnostic"
     }
   },
+  "workspace": {
+    "selectedFile": null,
+    "editor": null,
+    "emulatorCollapsed": false
+  },
   "media": {
-    "version": 1,
-    "disks": []
+    "version": 2,
+    "files": [],
+    "disks": [],
+    "diskSets": []
   },
   "files": [
     {

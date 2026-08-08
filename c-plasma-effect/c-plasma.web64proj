@@ -41,7 +41,7 @@
         ],
         "entrySymbol": "",
         "origin": "$4000",
-        "outputName": ".prg",
+        "outputName": "c-plasma.prg",
         "defines": {},
         "c": {
           "enabled": true

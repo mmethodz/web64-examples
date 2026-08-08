@@ -1,17 +1,20 @@
 {
   "kind": "web64.ide.project",
-  "version": 2,
-  "savedAt": "2026-07-14T00:00:00.000Z",
+  "version": 4,
+  "savedAt": "2026-08-08T18:48:17.743Z",
   "main": {
     "fileName": "diagnostic-unsupported-c.asm",
     "origin": "$c000",
-    "source": "; Web64 IDE Example\n; Name: Diagnostic Unsupported C Shell\n; Description: Loads a C project intended to produce clear unsupported-feature diagnostics.\n",
-    "selectedEntryLabel": "_start"
+    "source": "; Web64 IDE Example\n; Name: C Switch Regression Shell\n; Description: Loads a C project that verifies switch statements remain runnable.\n",
+    "selectedEntryLabel": "auto"
   },
   "c": {
     "enabled": true,
     "dialect": "web64-c-v0.1",
+    "abi": "web64-static-v0",
     "entry": "main.c",
+    "entrySymbol": "",
+    "predefinedDefines": {},
     "includePaths": [
       "include",
       "assets"
@@ -19,7 +22,41 @@
     "stdout": "none",
     "stdin": "none",
     "runtimeProfile": "tiny",
-    "compilerBackend": "web64-native"
+    "compilerBackend": "web64-native",
+    "stack": {
+      "size": 512,
+      "address": null
+    },
+    "zeroPage": {
+      "reserved": []
+    }
+  },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "compatibilityDefaults": [],
+    "targets": [
+      {
+        "id": "main",
+        "label": "Main",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c",
+          "diagnostic-unsupported-c.asm"
+        ],
+        "entrySymbol": "",
+        "origin": "$c000",
+        "outputName": "diagnostic-unsupported-c.prg",
+        "defines": {},
+        "compatibilityModules": [],
+        "c": {
+          "enabled": true
+        },
+        "cartridge": {},
+        "test": {}
+      }
+    ]
   },
   "emulator": {
     "emulatorScale": "fit",
@@ -34,12 +71,83 @@
     "gamepadEnabled": false,
     "joystickPort": 2
   },
+  "settings": {
+    "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "fit",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": false,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": true,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": true,
+      "dialect": "web64-c-v0.1",
+      "abi": "web64-static-v0",
+      "entry": "main.c",
+      "entrySymbol": "",
+      "predefinedDefines": {},
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "none",
+      "stdin": "none",
+      "runtimeProfile": "tiny",
+      "compilerBackend": "web64-native",
+      "stack": {
+        "size": 512,
+        "address": null
+      },
+      "zeroPage": {
+        "reserved": []
+      }
+    },
+    "optimizer": {
+      "profile": "default",
+      "peephole": true,
+      "simplification": true,
+      "runtimeDependencySelection": true,
+      "unsupportedNativeFlags": "diagnostic"
+    }
+  },
+  "workspace": {
+    "selectedFile": null,
+    "editor": null,
+    "emulatorCollapsed": false
+  },
+  "media": {
+    "version": 2,
+    "files": [],
+    "disks": [],
+    "diskSets": []
+  },
   "files": [
     {
       "path": "main.c",
       "name": "main.c",
       "kind": "source",
-      "source": "/*\n * Web64 IDE Example\n * Name: Diagnostic Unsupported C\n * Description: Demonstrates unsupported Web64 C v0.1 features for diagnostics.\n */\n\n#include <stdint.h>\n\nuint8_t value = 0;\n\nvoid main(void) {\n    value = 1;\n    value += 1;\n    switch (value) {\n        case 1:\n            value = 2;\n            break;\n        default:\n            value = 3;\n            break;\n    }\n    while (1) { }\n}\n"
+      "source": "/*\n * Web64 IDE Example\n * Name: C Switch Regression\n * Description: Uses a switch statement and displays the selected value as the border color.\n */\n\n#include <stdint.h>\n\nuint8_t value = 0;\n\nvoid main(void) {\n    value = 1;\n    value += 1;\n    switch (value) {\n        case 1:\n            value = 2;\n            break;\n        case 2:\n            value = 3;\n            break;\n        default:\n            value = 5;\n            break;\n    }\n    *(uint8_t*)0xd020 = value;\n    *(uint8_t*)0xd021 = 0;\n    while (1) {\n    }\n}\n"
     }
   ]
 }

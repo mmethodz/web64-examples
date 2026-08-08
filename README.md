@@ -12,5 +12,5 @@ Open a .web64proj in the Web64 IDE to inspect, build, and run it.
 - `c-fixed-subpixel-scroll`, `c-fixed-sine-lerp`, `c-fixed-motion`, `c-fixed-mandelbrot`, and `c-fixed-mandelbrot-bitmap` cover `web64/fixed.h` 8.8 constants/conversions, wrapping fixed addition/subtraction, fixed multiply, `web64_sin8`, `web64_fix8_lerp`, `Web64Motion2D` runtime dependency closure, and runtime-calculated character-mode and multicolor bitmap fixed-point Mandelbrot renderers.
 - `c-screen-colors`, `c-screen-memory`, `c-joystick-registers`, `c-sprite-joy`, `sprite-joy-sid-bumps-c`, and `c-asset-header` cover SDK headers, C64 register aliases, sprite helpers, joystick helpers, SID/register workflows, and generated asset metadata.
 - `hybrid-c-calls-asm`, `hybrid-asm-uses-c-data`, and `hybrid-asset-copy` cover mixed C/ASM symbols and runtime dependency selection boundaries.
-- `diagnostic-unsupported-c` covers stable unsupported-syntax diagnostics.
+- `diagnostic-unsupported-c` retains its historical path but now serves as a runnable `switch`-statement regression project.
 - `tutorials/README.md` links tutorial prose to runnable projects and intentionally documents only shipped behavior.

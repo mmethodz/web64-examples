@@ -46,7 +46,7 @@
         ],
         "entrySymbol": "",
         "origin": "$c000",
-        "outputName": ".prg",
+        "outputName": "c-fixed-mandelbrot-bitmap.prg",
         "defines": {},
         "c": {
           "enabled": true

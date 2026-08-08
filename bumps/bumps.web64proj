@@ -1,12 +1,61 @@
 {
   "kind": "web64.ide.project",
-  "version": 1,
-  "savedAt": "2026-06-30T18:15:36.078Z",
+  "version": 4,
+  "savedAt": "2026-08-08T18:48:17.710Z",
   "main": {
     "fileName": "bumps.asm",
     "origin": "$c000",
     "source": ";\n; Web64 IDE Custom Charset Example\n;\n\n* = $c000         ; Program origin at 49152 ($c000)\n\n; --- Hardware Registers ---\nRASTER_REG   = $d012\nVIC_MEMORY   = $d018          ; NEW: Memory Control Register\nBORDER_COLOR = $d020\nBG_COLOR     = $d021\nSCREEN_RAM   = $0400\nCOLOR_RAM    = $d800\n\n; --- Setup Section ---\ninit:\n    sei               \n    lda #$00\n    sta BORDER_COLOR  \n    sta BG_COLOR      \n\n    lda #%00011000 \n    sta VIC_MEMORY\n\n    jsr copy_charset  ; <-- NEW: Shovel the asset down to $2000 in RAM\n    jsr wipe_screen   \n    jsr paint_chrome  \n    \n    lda #$00\n    sta anim_step     \n\n    jmp mainloop\n    rts\n\n; --- Main Real-Time Plasma Loop ---\nmainloop:\n    ; 1. Sync raster beam to line 40\nwait_top:\n    lda RASTER_REG\n    cmp #$28\n    bne wait_top\n\n    ; 2. Advance Plasma Animation Phase\n    inc anim_step\n    lda anim_step\n    and #$3f          ; Keep phase bounded to 64-step table\n    sta current_phase\n\n    ; 3. Render 18-Row Widescreen Liquid Banner (Shifted 3 rows up)\n    ldy #$27          ; Loop 40 columns right-to-left (39 down to 0)\ncol_loop:\n    lda wave_x,y\n    clc\n    adc current_phase\n    and #$1f\n    sta base_x\n\n    ; --- Plasma Row 5 ---\n    clc\n    lda base_x\n    adc wy0\n    and #$1f\n    tax\n    lda shade_chars,x\n    sta SCREEN_RAM + $00c8,y\n\n    ; --- Plasma Row 6 ---\n    lda base_x\n    adc wy1\n    and #$1f\n    tax\n    lda shade_chars,x\n    sta SCREEN_RAM + $00f0,y\n\n    ; --- Plasma Row 7 ---\n    lda base_x\n    adc wy2\n    and #$1f\n    tax\n    lda shade_chars,x\n    sta SCREEN_RAM + $0118,y\n\n    ; --- Plasma Row 8 ---\n    lda base_x\n    adc wy3\n    and #$1f\n    tax\n    lda shade_chars,x\n    sta SCREEN_RAM + $0140,y\n\n    ; --- Plasma Row 9 ---\n    lda base_x\n    adc wy4\n    and #$1f\n    tax\n    lda shade_chars,x\n    sta SCREEN_RAM + $0168,y\n\n    ; --- Plasma Row 10 ---\n    lda base_x\n    adc wy5\n    and #$1f\n    tax\n    lda shade_chars,x\n    sta SCREEN_RAM + $0190,y\n\n    ; --- Plasma Row 11 ---\n    lda base_x\n    adc wy6\n    and #$1f\n    tax\n    lda shade_chars,x\n    sta SCREEN_RAM + $01b8,y\n\n    ; --- Plasma Row 12 ---\n    lda base_x\n    adc wy7\n    and #$1f\n    tax\n    lda shade_chars,x\n    sta SCREEN_RAM + $01e0,y\n\n    ; --- Plasma Row 13 ---\n    lda base_x\n    adc wy8\n    and #$1f\n    tax\n    lda shade_chars,x\n    sta SCREEN_RAM + $0208,y\n\n    ; --- Plasma Row 14 ---\n    lda base_x\n    adc wy9\n    and #$1f\n    tax\n    lda shade_chars,x\n    sta SCREEN_RAM + $0230,y\n\n    ; --- Plasma Row 15 ---\n    lda base_x\n    adc wy10\n    and #$1f\n    tax\n    lda shade_chars,x\n    sta SCREEN_RAM + $0258,y\n\n    ; --- Plasma Row 16 ---\n    lda base_x\n    adc wy11\n    and #$1f\n    tax\n    lda shade_chars,x\n    sta SCREEN_RAM + $0280,y\n\n    ; --- Plasma Row 17 ---\n    lda base_x\n    adc wy12\n    and #$1f\n    tax\n    lda shade_chars,x\n    sta SCREEN_RAM + $02a8,y\n\n    ; --- Plasma Row 18 ---\n    lda base_x\n    adc wy13\n    and #$1f\n    tax\n    lda shade_chars,x\n    sta SCREEN_RAM + $02d0,y\n\n    ; --- Plasma Row 19 ---\n    lda base_x\n    adc wy14\n    and #$1f\n    tax\n    lda shade_chars,x\n    sta SCREEN_RAM + $02f8,y\n\n    ; --- Plasma Row 20 ---\n    lda base_x\n    adc wy15\n    and #$1f\n    tax\n    lda shade_chars,x\n    sta SCREEN_RAM + $0320,y\n\n    ; --- Plasma Row 21 ---\n    lda base_x\n    adc wy16\n    and #$1f\n    tax\n    lda shade_chars,x\n    sta SCREEN_RAM + $0348,y\n\n    ; --- Plasma Row 22 ---\n    lda base_x\n    adc wy17\n    and #$1f\n    tax\n    lda shade_chars,x\n    sta SCREEN_RAM + $0370,y\n\n    dey\n    bmi col_done      ; If Y went negative ($FF), hop forward to escape\n    jmp col_loop      ; Otherwise, absolute 16-bit jump back to top of column\ncol_done:\n\n    jmp mainloop      ; Spin forever\n\n; --- Subroutine: Wipe Entire Screen Buffer to Empty Spaces ---\nwipe_screen:\n    ldx #$00\n    lda #$00          ; NEW: Clears using your custom charset empty space (Index 0)\nwipe_loop:\n    sta SCREEN_RAM + $0000,x\n    sta SCREEN_RAM + $0100,x\n    sta SCREEN_RAM + $0200,x\n    sta SCREEN_RAM + $02e8,x\n    inx\n    bne wipe_loop\n    rts\n\n; --- Subroutine: Copy 2KB Charset to $2000 ---\ncopy_charset:\n    ldx #$00\ncopy_char_loop:\n    lda bumps_chars + $0000,x\n    sta $2000,x\n    lda bumps_chars + $0100,x\n    sta $2100,x\n    lda bumps_chars + $0200,x\n    sta $2200,x\n    lda bumps_chars + $0300,x\n    sta $2300,x\n    lda bumps_chars + $0400,x\n    sta $2400,x\n    lda bumps_chars + $0500,x\n    sta $2500,x\n    lda bumps_chars + $0600,x\n    sta $2600,x\n    lda bumps_chars + $0700,x\n    sta $2700,x\n    inx\n    bne copy_char_loop\n    rts\n\n; --- Subroutine: Pre-paint Ice Chrome Palette (Shifted 3 rows up) ---\n; --- Subroutine: Pre-paint Ultra-Smooth Ice Chrome ---\npaint_chrome:\n    ldx #$27\n\nchrome_loop:\n    lda #$06          ; Dark Blue (Outer edges)\n    sta COLOR_RAM + $00c8,x   ; Row 5\n    sta COLOR_RAM + $00f0,x   ; Row 6\n    sta COLOR_RAM + $0348,x   ; Row 21\n    sta COLOR_RAM + $0370,x   ; Row 22\n\n    lda #$0e          ; Light Blue\n    sta COLOR_RAM + $0118,x   ; Row 7\n    sta COLOR_RAM + $0140,x   ; Row 8\n    sta COLOR_RAM + $02f8,x   ; Row 19\n    sta COLOR_RAM + $0320,x   ; Row 20\n\n    lda #$03          ; Cyan\n    sta COLOR_RAM + $0168,x   ; Row 9\n    sta COLOR_RAM + $0190,x   ; Row 10\n    sta COLOR_RAM + $02a8,x   ; Row 17\n    sta COLOR_RAM + $02d0,x   ; Row 18\n\n    lda #$01          ; White Highlight (The hot center)\n    sta COLOR_RAM + $01b8,x   ; Row 11\n    sta COLOR_RAM + $01e0,x   ; Row 12\n    sta COLOR_RAM + $0208,x   ; Row 13\n    sta COLOR_RAM + $0230,x   ; Row 14\n    sta COLOR_RAM + $0258,x   ; Row 15\n    sta COLOR_RAM + $0280,x   ; Row 16\n\n    dex\n    bpl chrome_loop\n    rts\n\nanim_step:     .byte $00\ncurrent_phase: .byte $00\nbase_x:        .byte $00\n\nwy0:  .byte $00\nwy1:  .byte $02\nwy2:  .byte $04\nwy3:  .byte $07\nwy4:  .byte $0a\nwy5:  .byte $0d\nwy6:  .byte $10\nwy7:  .byte $13\nwy8:  .byte $16\nwy9:  .byte $18\nwy10: .byte $1a\nwy11: .byte $18\nwy12: .byte $16\nwy13: .byte $13\nwy14: .byte $10\nwy15: .byte $0d\nwy16: .byte $0a\nwy17: .byte $07\nwy18: .byte $04\nwy19: .byte $02\n\n; NEW: Shading lookup using your custom 27-step dither ramp\nshade_chars:\n    ; Reversed! Peak density is now at the start (the core of the plasma)\n    .byte $1a,$1a,$1a,$1a,$1a,$1a,$1a,$1a\n    .byte $17,$16,$15,$14,$13,$12,$11,$10\n    \n    ; Fading out to the empty background\n    .byte $0f,$0e,$0d,$0c,$0b,$0a,$09,$08\n    .byte $07,$06,$05,$04,$03,$02,$01,$00\n\nwave_x:\n    .byte $00,$01,$02,$03,$04,$05,$06,$07,$08,$09,$0a,$0b,$0c,$0d,$0e,$0f\n    .byte $0f,$0e,$0d,$0c,$0b,$0a,$09,$08,$07,$06,$05,$04,$03,$02,$01,$00\n    .byte $00,$01,$02,$03,$04,$05,$06,$07\n\n; --------------------------------------------------\n; Custom Charset Data\n; --------------------------------------------------\n.incbin bumps_chars, \"assets/chars/bumps.chr\"\n#include \"assets/chars/bumps.inc\"\n",
     "selectedEntryLabel": "init"
+  },
+  "c": {
+    "enabled": false,
+    "dialect": "web64-c-v0.1",
+    "abi": "web64-static-v0",
+    "entry": "main.c",
+    "entrySymbol": "",
+    "predefinedDefines": {},
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "screen",
+    "stdin": "keyboard",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native",
+    "stack": {
+      "size": 512,
+      "address": null
+    },
+    "zeroPage": {
+      "reserved": []
+    }
+  },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "compatibilityDefaults": [],
+    "targets": [
+      {
+        "id": "main",
+        "label": "Main",
+        "kind": "prg",
+        "rootPath": "bumps.asm",
+        "inputs": [
+          "bumps.asm"
+        ],
+        "entrySymbol": "init",
+        "origin": "$c000",
+        "outputName": "bumps.prg",
+        "defines": {},
+        "compatibilityModules": [],
+        "c": {
+          "enabled": false
+        },
+        "cartridge": {},
+        "test": {}
+      }
+    ]
   },
   "emulator": {
     "emulatorScale": "fit",
@@ -20,6 +69,77 @@
     "drive9Enabled": true,
     "gamepadEnabled": false,
     "joystickPort": 2
+  },
+  "settings": {
+    "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "fit",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": false,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": true,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": false,
+      "dialect": "web64-c-v0.1",
+      "abi": "web64-static-v0",
+      "entry": "main.c",
+      "entrySymbol": "",
+      "predefinedDefines": {},
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "screen",
+      "stdin": "keyboard",
+      "runtimeProfile": "tiny",
+      "compilerBackend": "web64-native",
+      "stack": {
+        "size": 512,
+        "address": null
+      },
+      "zeroPage": {
+        "reserved": []
+      }
+    },
+    "optimizer": {
+      "profile": "default",
+      "peephole": true,
+      "simplification": true,
+      "runtimeDependencySelection": true,
+      "unsupportedNativeFlags": "diagnostic"
+    }
+  },
+  "workspace": {
+    "selectedFile": null,
+    "editor": null,
+    "emulatorCollapsed": false
+  },
+  "media": {
+    "version": 2,
+    "files": [],
+    "disks": [],
+    "diskSets": []
   },
   "files": [
     {

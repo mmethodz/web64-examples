@@ -1,17 +1,20 @@
 {
   "kind": "web64.ide.project",
-  "version": 2,
-  "savedAt": "2026-07-19T00:00:00.000Z",
+  "version": 4,
+  "savedAt": "2026-08-08T18:48:17.717Z",
   "main": {
     "fileName": "c-fixed-mandelbrot.asm",
     "origin": "$c000",
     "source": "; Web64 IDE Example\n; Name: C Fixed Mandelbrot\n; Description: 8.8 fixed-point Mandelbrot renderer writes to C64 multicolor bitmap memory.\n",
-    "selectedEntryLabel": "_start"
+    "selectedEntryLabel": "auto"
   },
   "c": {
     "enabled": true,
     "dialect": "web64-c-v0.1",
+    "abi": "web64-static-v0",
     "entry": "main.c",
+    "entrySymbol": "",
+    "predefinedDefines": {},
     "includePaths": [
       "include",
       "assets"
@@ -20,9 +23,40 @@
     "stdin": "none",
     "runtimeProfile": "tiny",
     "compilerBackend": "web64-native",
+    "stack": {
+      "size": 512,
+      "address": null
+    },
     "zeroPage": {
       "reserved": []
     }
+  },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "compatibilityDefaults": [],
+    "targets": [
+      {
+        "id": "main",
+        "label": "Main",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c",
+          "c-fixed-mandelbrot.asm"
+        ],
+        "entrySymbol": "",
+        "origin": "$c000",
+        "outputName": "c-fixed-mandelbrot.prg",
+        "defines": {},
+        "compatibilityModules": [],
+        "c": {
+          "enabled": true
+        },
+        "cartridge": {},
+        "test": {}
+      }
+    ]
   },
   "emulator": {
     "emulatorScale": "fit",
@@ -36,6 +70,77 @@
     "drive9Enabled": true,
     "gamepadEnabled": false,
     "joystickPort": 2
+  },
+  "settings": {
+    "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "fit",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": false,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": true,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": true,
+      "dialect": "web64-c-v0.1",
+      "abi": "web64-static-v0",
+      "entry": "main.c",
+      "entrySymbol": "",
+      "predefinedDefines": {},
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "none",
+      "stdin": "none",
+      "runtimeProfile": "tiny",
+      "compilerBackend": "web64-native",
+      "stack": {
+        "size": 512,
+        "address": null
+      },
+      "zeroPage": {
+        "reserved": []
+      }
+    },
+    "optimizer": {
+      "profile": "default",
+      "peephole": true,
+      "simplification": true,
+      "runtimeDependencySelection": true,
+      "unsupportedNativeFlags": "diagnostic"
+    }
+  },
+  "workspace": {
+    "selectedFile": null,
+    "editor": null,
+    "emulatorCollapsed": false
+  },
+  "media": {
+    "version": 2,
+    "files": [],
+    "disks": [],
+    "diskSets": []
   },
   "files": [
     {

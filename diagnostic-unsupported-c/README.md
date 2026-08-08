@@ -1,5 +1,5 @@
-# Diagnostic Unsupported C
+# C Switch Regression
 
-Intentionally includes unsupported C constructs to exercise IDE diagnostics. This one is expected to report compiler diagnostics rather than serve as a runnable demo.
+This project was originally an unsupported-syntax diagnostic. Web64-C now supports its `switch` construct, so the example is retained as a runnable regression project that sets the border to cyan when the expected case executes.
 
 Open diagnostic-unsupported-c.web64proj in Web64 IDE.

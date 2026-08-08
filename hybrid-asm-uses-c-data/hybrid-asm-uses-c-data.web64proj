@@ -1,17 +1,20 @@
 {
   "kind": "web64.ide.project",
-  "version": 2,
-  "savedAt": "2026-07-14T00:00:00.000Z",
+  "version": 4,
+  "savedAt": "2026-08-08T18:48:17.748Z",
   "main": {
     "fileName": "hybrid-asm-uses-c-data.asm",
     "origin": "$c000",
-    "source": "; Web64 IDE Example\n; Name: Hybrid ASM Uses C Data\n; Description: Assembly start code reads a global variable emitted by Web64 C.\n\n* = $c000\n\ninit:\n    sei\n    lda _border_from_c\n    sta $d020\n    lda #0\n    sta $d021\nloop:\n    jmp loop\n",
-    "selectedEntryLabel": "init"
+    "source": "; Web64 IDE Example\n; Name: Hybrid ASM Uses C Data\n; Description: A C-callable assembly routine reads a global variable emitted by Web64 C.\n\nasm_apply_border_from_c:\n    lda _border_from_c\n    sta $d020\n    lda #0\n    sta $d021\n    rts\n",
+    "selectedEntryLabel": "auto"
   },
   "c": {
     "enabled": true,
     "dialect": "web64-c-v0.1",
+    "abi": "web64-static-v0",
     "entry": "main.c",
+    "entrySymbol": "",
+    "predefinedDefines": {},
     "includePaths": [
       "include",
       "assets"
@@ -19,7 +22,41 @@
     "stdout": "none",
     "stdin": "none",
     "runtimeProfile": "tiny",
-    "compilerBackend": "web64-native"
+    "compilerBackend": "web64-native",
+    "stack": {
+      "size": 512,
+      "address": null
+    },
+    "zeroPage": {
+      "reserved": []
+    }
+  },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "compatibilityDefaults": [],
+    "targets": [
+      {
+        "id": "main",
+        "label": "Main",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c",
+          "hybrid-asm-uses-c-data.asm"
+        ],
+        "entrySymbol": "",
+        "origin": "$c000",
+        "outputName": "hybrid-asm-uses-c-data.prg",
+        "defines": {},
+        "compatibilityModules": [],
+        "c": {
+          "enabled": true
+        },
+        "cartridge": {},
+        "test": {}
+      }
+    ]
   },
   "emulator": {
     "emulatorScale": "fit",
@@ -34,12 +71,83 @@
     "gamepadEnabled": false,
     "joystickPort": 2
   },
+  "settings": {
+    "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "fit",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": false,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": true,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": true,
+      "dialect": "web64-c-v0.1",
+      "abi": "web64-static-v0",
+      "entry": "main.c",
+      "entrySymbol": "",
+      "predefinedDefines": {},
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "none",
+      "stdin": "none",
+      "runtimeProfile": "tiny",
+      "compilerBackend": "web64-native",
+      "stack": {
+        "size": 512,
+        "address": null
+      },
+      "zeroPage": {
+        "reserved": []
+      }
+    },
+    "optimizer": {
+      "profile": "default",
+      "peephole": true,
+      "simplification": true,
+      "runtimeDependencySelection": true,
+      "unsupportedNativeFlags": "diagnostic"
+    }
+  },
+  "workspace": {
+    "selectedFile": null,
+    "editor": null,
+    "emulatorCollapsed": false
+  },
+  "media": {
+    "version": 2,
+    "files": [],
+    "disks": [],
+    "diskSets": []
+  },
   "files": [
     {
       "path": "main.c",
       "name": "main.c",
       "kind": "source",
-      "source": "/*\n * Web64 IDE Example\n * Name: Hybrid ASM Uses C Data\n * Description: Declares a C global consumed by the assembly entry point.\n */\n\n#include <stdint.h>\n\nuint8_t border_from_c = 4;\n\nvoid main(void) {\n    border_from_c = 4;\n}\n"
+      "source": "/*\n * Web64 IDE Example\n * Name: Hybrid ASM Uses C Data\n * Description: Calls assembly that reads a global emitted by Web64 C.\n */\n\n#include <stdint.h>\n\nuint8_t border_from_c = 4;\n\nvoid asm_apply_border_from_c(void);\n\nvoid main(void) {\n    border_from_c = 4;\n    asm_apply_border_from_c();\n    while (1) {\n    }\n}\n"
     }
   ]
 }

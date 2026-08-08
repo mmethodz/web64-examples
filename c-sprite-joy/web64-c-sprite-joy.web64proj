@@ -1,17 +1,20 @@
 {
   "kind": "web64.ide.project",
-  "version": 2,
-  "savedAt": "2026-07-16T19:47:50.931Z",
+  "version": 4,
+  "savedAt": "2026-08-08T18:48:17.739Z",
   "main": {
     "fileName": "web64-c-sprite-joy.asm",
     "origin": "$c000",
     "source": "; Web64 C sprite and joystick example.\n; main.c keeps joystick polling, player movement, and sprite positioning in C functions.\n; Inline assembly is limited to raster wait, sprite data copy, and frame-loop glue required by Web64 C v0.1.\n",
-    "selectedEntryLabel": "_start"
+    "selectedEntryLabel": "auto"
   },
   "c": {
     "enabled": true,
     "dialect": "web64-c-v0.1",
+    "abi": "web64-static-v0",
     "entry": "main.c",
+    "entrySymbol": "",
+    "predefinedDefines": {},
     "includePaths": [
       "include",
       "assets"
@@ -19,7 +22,42 @@
     "stdout": "none",
     "stdin": "none",
     "runtimeProfile": "tiny",
-    "compilerBackend": "web64-native"
+    "compilerBackend": "web64-native",
+    "stack": {
+      "size": 512,
+      "address": null
+    },
+    "zeroPage": {
+      "reserved": []
+    }
+  },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "compatibilityDefaults": [],
+    "targets": [
+      {
+        "id": "main",
+        "label": "Main",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c",
+          "sprite_joy.asm",
+          "web64-c-sprite-joy.asm"
+        ],
+        "entrySymbol": "",
+        "origin": "$c000",
+        "outputName": "web64-c-sprite-joy.prg",
+        "defines": {},
+        "compatibilityModules": [],
+        "c": {
+          "enabled": true
+        },
+        "cartridge": {},
+        "test": {}
+      }
+    ]
   },
   "emulator": {
     "emulatorScale": "1",
@@ -33,6 +71,77 @@
     "drive9Enabled": true,
     "gamepadEnabled": true,
     "joystickPort": 2
+  },
+  "settings": {
+    "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "1",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": false,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": true,
+      "gamepadEnabled": true,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": true,
+      "dialect": "web64-c-v0.1",
+      "abi": "web64-static-v0",
+      "entry": "main.c",
+      "entrySymbol": "",
+      "predefinedDefines": {},
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "none",
+      "stdin": "none",
+      "runtimeProfile": "tiny",
+      "compilerBackend": "web64-native",
+      "stack": {
+        "size": 512,
+        "address": null
+      },
+      "zeroPage": {
+        "reserved": []
+      }
+    },
+    "optimizer": {
+      "profile": "default",
+      "peephole": true,
+      "simplification": true,
+      "runtimeDependencySelection": true,
+      "unsupportedNativeFlags": "diagnostic"
+    }
+  },
+  "workspace": {
+    "selectedFile": null,
+    "editor": null,
+    "emulatorCollapsed": false
+  },
+  "media": {
+    "version": 2,
+    "files": [],
+    "disks": [],
+    "diskSets": []
   },
   "files": [
     {
