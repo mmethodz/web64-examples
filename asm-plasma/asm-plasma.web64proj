@@ -1,0 +1,206 @@
+{
+  "kind": "web64.ide.project",
+  "version": 4,
+  "savedAt": "2026-08-05T11:24:24.113Z",
+  "main": {
+    "fileName": "main.asm",
+    "origin": "$c000",
+    "source": "start:\n    sei                         ; Disable interrupts for clean timing\n\n    ; 1. Black border and background\n    lda #0\n    sta $d020                   ; Border color = Black\n    sta $d021                   ; Background color = Black\n\n    ; 2. Setup VIC-II graphics mode (Standard HiRes text mode + Custom charset at $2000)\n    lda $d016\n    and #%11101111              ; Ensure Multicolor mode bit is CLEARED (HiRes Mono)\n    sta $d016\n\n    lda #$18                    ; Screen RAM at $0400, Charset at $2000\n    sta $d018\n\n    ; 3. Copy 2KB character set to $2000\n    lda #<shadechars_chars\n    sta $fb\n    lda #>shadechars_chars\n    sta $fc\n    lda #$00\n    sta $fd\n    lda #$20\n    sta $fe\n\n    ldx #8                      ; 8 pages = 2048 bytes\n    ldy #0\n.copy_chars:\n    lda ($fb),y\n    sta ($fd),y\n    iny\n    bne .copy_chars\n    inc $fc\n    inc $fe\n    dex\n    bne .copy_chars\n\n    ; 4. Fill 1000 bytes of Color RAM ($D800) with solid HiRes foreground color (White = $01)\n    ldx #0\n    lda #$01                    ; High-res foreground color\n.fill_color:\n    sta $d800,x\n    sta $d900,x\n    sta $da00,x\n    sta $dae8,x\n    inx\n    bne .fill_color\n\n; -------------------------------------------------------------------\n; Main Render Loop (50 FPS / 60 FPS)\n; -------------------------------------------------------------------\nmainloop:\n    jsr wait_frame\n\n    lda phase_y\n    sta current_angle           ; Reset vertical angle to starting Y-phase\n\n    ldx #0                      ; Row index (0..24)\n\n.row_loop:\n    stx row_idx                 ; Preserve row counter\n\n    ; Set self-modifying destination address from lookup tables\n    lda screen_lo,x\n    sta .dst_addr+1\n    lda screen_hi,x\n    sta .dst_addr+2\n\n    ; Fetch row offset & calculate starting sine index\n    ldy current_angle\n    lda sine_table,y            ; Fetch vertical wobble offset for this row\n    clc\n    adc phase_x                 ; Add horizontal phase shift\n    tay                         ; Y = starting offset in sine_table (0..255)\n\n    ; Draw 40 columns (Self-modifying STA)\n    ldx #0                      ; Column index (0..39)\n.col_loop:\n    lda sine_table,y            ; Character index (0..15)\n.dst_addr:\n    sta $0400,x                 ; Modified per row\n    iny                         ; Auto-wraps 256 -> 0 across 512-byte table\n    inx\n    cpx #40\n    bne .col_loop\n\n    ; Advance vertical sine angle for next row\n    lda current_angle\n    clc\n    adc #8                      ; Vertical sine frequency step\n    sta current_angle\n\n    ldx row_idx\n    inx\n    cpx #25                     ; 25 rows\n    bne .row_loop\n\n    ; Step phase speeds per frame\n    lda phase_x\n    clc\n    adc #2                      ; Horizontal speed\n    sta phase_x\n\n    lda phase_y\n    clc\n    adc #3                      ; Vertical speed\n    sta phase_y\n\n    jmp mainloop\n\n; -------------------------------------------------------------------\n; Helpers & Variables\n; -------------------------------------------------------------------\nwait_frame:\n    lda $d012\n    cmp #$f8\n    bne wait_frame\n.wait_off:\n    lda $d012\n    cmp #$f8\n    beq .wait_off\n    rts\n\nphase_x:        .byte 0\nphase_y:        .byte 0\ncurrent_angle:  .byte 0\nrow_idx:        .byte 0\n\n; Screen row address lookup tables (25 rows)\nscreen_lo:\n    .byte $00, $28, $50, $78, $a0, $c8, $f0, $18\n    .byte $40, $68, $90, $b8, $e0, $08, $30, $58\n    .byte $80, $a8, $d0, $f8, $20, $48, $70, $98, $c0\n\nscreen_hi:\n    .byte $04, $04, $04, $04, $04, $04, $04, $05\n    .byte $05, $05, $05, $05, $05, $06, $06, $06\n    .byte $06, $06, $06, $06, $07, $07, $07, $07, $07\n\n; -------------------------------------------------------------------\n; Data & Assets\n; -------------------------------------------------------------------\nsine_table:\n    .byte $08, $08, $08, $08, $08, $08, $09, $09, $09, $09, $09, $0a\n    .byte $0a, $0a, $0a, $0a, $0a, $0b, $0b, $0b, $0b, $0b, $0b, $0c\n    .byte $0c, $0c, $0c, $0c, $0c, $0c, $0d, $0d, $0d, $0d, $0d, $0d\n    .byte $0d, $0d, $0e, $0e, $0e, $0e, $0e, $0e, $0e, $0e, $0e, $0e\n    .byte $0e, $0e, $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0f\n    .byte $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0f\n    .byte $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0e, $0e, $0e, $0e, $0e\n    .byte $0e, $0e, $0e, $0e, $0e, $0e, $0e, $0d, $0d, $0d, $0d, $0d\n    .byte $0d, $0d, $0d, $0c, $0c, $0c, $0c, $0c, $0c, $0c, $0b, $0b\n    .byte $0b, $0b, $0b, $0b, $0a, $0a, $0a, $0a, $0a, $0a, $09, $09\n    .byte $09, $09, $09, $08, $08, $08, $08, $08, $08, $07, $07, $07\n    .byte $07, $07, $06, $06, $06, $06, $06, $05, $05, $05, $05, $05\n    .byte $05, $04, $04, $04, $04, $04, $04, $03, $03, $03, $03, $03\n    .byte $03, $03, $02, $02, $02, $02, $02, $02, $02, $02, $01, $01\n    .byte $01, $01, $01, $01, $01, $01, $01, $01, $01, $01, $00, $00\n    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00\n    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00\n    .byte $00, $00, $00, $01, $01, $01, $01, $01, $01, $01, $01, $01\n    .byte $01, $01, $01, $02, $02, $02, $02, $02, $02, $02, $02, $03\n    .byte $03, $03, $03, $03, $03, $03, $04, $04, $04, $04, $04, $04\n    .byte $05, $05, $05, $05, $05, $05, $06, $06, $06, $06, $06, $07\n    .byte $07, $07, $07, $07, $07, $08, $08, $08, $08, $08, $09, $09\n    .byte $09, $09, $09, $0a, $0a, $0a, $0a, $0a, $0a, $0b, $0b, $0b\n    .byte $0b, $0b, $0b, $0c, $0c, $0c, $0c, $0c, $0c, $0c, $0d, $0d\n    .byte $0d, $0d, $0d, $0d, $0d, $0d, $0e, $0e, $0e, $0e, $0e, $0e\n    .byte $0e, $0e, $0e, $0e, $0e, $0e, $0f, $0f, $0f, $0f, $0f, $0f\n    .byte $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0f\n    .byte $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0f, $0e\n    .byte $0e, $0e, $0e, $0e, $0e, $0e, $0e, $0e, $0e, $0e, $0e, $0d\n    .byte $0d, $0d, $0d, $0d, $0d, $0d, $0d, $0c, $0c, $0c, $0c, $0c\n    .byte $0c, $0c, $0b, $0b, $0b, $0b, $0b, $0b, $0a, $0a, $0a, $0a\n    .byte $0a, $0a, $09, $09, $09, $09, $09, $08, $08, $08, $08, $08\n    .byte $08, $07, $07, $07, $07, $07, $06, $06, $06, $06, $06, $05\n    .byte $05, $05, $05, $05, $05, $04, $04, $04, $04, $04, $04, $03\n    .byte $03, $03, $03, $03, $03, $03, $02, $02, $02, $02, $02, $02\n    .byte $02, $02, $01, $01, $01, $01, $01, $01, $01, $01, $01, $01\n    .byte $01, $01, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00\n    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00\n    .byte $00, $00, $00, $00, $00, $00, $00, $01, $01, $01, $01, $01\n    .byte $01, $01, $01, $01, $01, $01, $01, $02, $02, $02, $02, $02\n    .byte $02, $02, $02, $03, $03, $03, $03, $03, $03, $03, $04, $04\n    .byte $04, $04, $04, $04, $05, $05, $05, $05, $05, $05, $06, $06\n    .byte $06, $06, $06, $07, $07, $07, $07, $07\n\n.incbin shadechars_chars, \"assets/shadechars.chr\"\n.include \"assets/shadechars.inc\"",
+    "selectedEntryLabel": "auto"
+  },
+  "c": {
+    "enabled": false,
+    "dialect": "web64-c-v0.1",
+    "abi": "web64-static-v0",
+    "entry": "main.c",
+    "entrySymbol": "",
+    "predefinedDefines": {},
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "screen",
+    "stdin": "keyboard",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native",
+    "stack": {
+      "size": 512,
+      "address": null
+    },
+    "zeroPage": {
+      "reserved": []
+    }
+  },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "targets": [
+      {
+        "id": "main",
+        "label": "Main",
+        "kind": "prg",
+        "rootPath": "main.asm",
+        "inputs": [
+          "main.asm"
+        ],
+        "entrySymbol": "",
+        "origin": "$c000",
+        "outputName": "asm-plasma.prg",
+        "defines": {},
+        "c": {
+          "enabled": false
+        }
+      }
+    ]
+  },
+  "emulator": {
+    "emulatorScale": "1",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "settings": {
+    "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "1",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": false,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": true,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": false,
+      "dialect": "web64-c-v0.1",
+      "abi": "web64-static-v0",
+      "entry": "main.c",
+      "entrySymbol": "",
+      "predefinedDefines": {},
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "screen",
+      "stdin": "keyboard",
+      "runtimeProfile": "tiny",
+      "compilerBackend": "web64-native",
+      "stack": {
+        "size": 512,
+        "address": null
+      },
+      "zeroPage": {
+        "reserved": []
+      }
+    },
+    "optimizer": {
+      "profile": "default",
+      "peephole": true,
+      "simplification": true,
+      "runtimeDependencySelection": true,
+      "unsupportedNativeFlags": "diagnostic"
+    }
+  },
+  "workspace": {
+    "selectedFile": {
+      "scope": "root",
+      "path": "main.asm"
+    },
+    "editor": {
+      "file": {
+        "scope": "root",
+        "path": "main.asm"
+      },
+      "selectionStart": 2101,
+      "selectionEnd": 2101,
+      "scrollTop": 1519,
+      "scrollLeft": 0
+    },
+    "emulatorCollapsed": false
+  },
+  "media": {
+    "version": 2,
+    "files": [],
+    "disks": [],
+    "diskSets": []
+  },
+  "files": [
+    {
+      "path": "assets/shadechars.chr",
+      "name": "shadechars.chr",
+      "kind": "charset",
+      "mode": "mono",
+      "width": 8,
+      "height": 8,
+      "count": 256,
+      "colors": {
+        "background": 0,
+        "multicolor1": 5,
+        "multicolor2": 2,
+        "foreground": 1,
+        "mode": "mono"
+      },
+      "includePath": "assets/shadechars.inc",
+      "dirty": false,
+      "lastCompiledHash": null,
+      "lastPatchedHash": null,
+      "asset": {
+        "schema": "web64.ide.graphicsAsset",
+        "version": 2,
+        "kind": "charset",
+        "mode": "mono",
+        "width": 8,
+        "height": 8,
+        "count": 256,
+        "colors": {
+          "background": 0,
+          "multicolor1": 5,
+          "multicolor2": 2,
+          "foreground": 1,
+          "mode": "mono"
+        },
+        "frames": [],
+        "animations": [],
+        "tiles": [],
+        "paletteProfile": null,
+        "nextFrameSerial": 0,
+        "includePath": "assets/shadechars.inc"
+      },
+      "encoding": "base64",
+      "bytes": "AAAAAAAAAAAAACAAAAACAAAABABAAAQAAAiAAARAAAEBIACEACACEBCCKACkASSBqkEUiCWSJImZZJJlqlRJquwT7FO6Fe2qu2Sbda5V36q671Xudb9qt133u3fu/Vft/Vf97n//912/+v93/v/v/v7v///3//6/////////9/8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    },
+    {
+      "path": "assets/shadechars.inc",
+      "name": "shadechars.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/shadechars.chr",
+      "source": "; Generated by Web64 IDE. Edit the graphics asset, not this file.\nshadechars_chars_size = $0800\n; Editor color references\nshadechars_color_0 = 0\nshadechars_background_color = 0\nshadechars_color_1 = 5\nshadechars_multicolor_1 = 5\nshadechars_color_2 = 2\nshadechars_multicolor_2 = 2\nshadechars_color_3 = 1\nshadechars_foreground_color = 1\nshadechars_char_count = $0100\nshadechars_chars_end = shadechars_chars + shadechars_chars_size\nshadechars_char_0 = 0\nshadechars_char_1 = 1\nshadechars_char_2 = 2\nshadechars_char_3 = 3\nshadechars_char_4 = 4\nshadechars_char_5 = 5\nshadechars_char_6 = 6\nshadechars_char_7 = 7\nshadechars_char_8 = 8\nshadechars_char_9 = 9\nshadechars_char_10 = $0a\nshadechars_char_11 = $0b\nshadechars_char_12 = $0c\nshadechars_char_13 = $0d\nshadechars_char_14 = $0e\nshadechars_char_15 = $0f\n"
+    }
+  ]
+}
