@@ -6,6 +6,10 @@ The suite covers assembly-only projects, Web64 C projects, mixed C/ASM projects,
 
 Open a .web64proj in the Web64 IDE to inspect, build, and run it.
 
+## Web64 Game Runtime: World module
+
+- `WORLD_RUNTIME_EXAMPLES.md` links the native `.w64*` World-module examples: static map, horizontal/vertical/bidirectional scrollers, a Q12.4 subpixel Motion scroller, multicolor scroller, platformer, and World + Motion + Sprites actor/camera composition. World belongs to Web64 Game Runtime alongside Motion, Collision, Animation, Sprites, and Actors, while retaining independent runtime closure. These projects include their editable assets and generated build artifacts, copy charset/sprite data into VIC-visible memory at startup, and are joystick-driven on port 2.
+
 ## Web64 C v1 Coverage
 
 - `c-compiler-conformance` prints PASS/FAIL for parser-backed arithmetic, shifts, bitwise operators, casts, nested calls, `_fastcall` runtime calls, and `printf` argument materialization.
