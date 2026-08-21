@@ -6,6 +6,10 @@ The suite covers assembly-only projects, Web64 C projects, mixed C/ASM projects,
 
 Open a .web64proj in the Web64 IDE to inspect, build, and run it.
 
+## Complete game
+
+- `trike-mania/trike-mania.web64proj` is a complete four-racer C64 championship: title screen, four portrait-driven teddy personalities and stat profiles, three distinct multicolor circuits, ordered checkpoints and laps, boosts, jumps, hazards, AI competitors, results, championship scoring, and replay. The project keeps its 33-frame `.w64spr` bank, `.w64chr` charset, three themed `.w64blk` sets, and three material-backed `.w64map` tracks editable in Web64. Its verification evidence covers all 12 teddy/track combinations, full three-lap races, joystick input, runtime closure, Color RAM rendering, and a measured SID-reserved PAL frame budget.
+
 ## Web64 Game Runtime: World module
 
 - `WORLD_RUNTIME_EXAMPLES.md` links the native `.w64*` World-module examples: static map, horizontal/vertical/bidirectional scrollers, a Q12.4 subpixel Motion scroller, multicolor scroller, platformer, and World + Motion + Sprites actor/camera composition. World belongs to Web64 Game Runtime alongside Motion, Collision, Animation, Sprites, and Actors, while retaining independent runtime closure. These projects include their editable assets and generated build artifacts, copy charset/sprite data into VIC-visible memory at startup, and are joystick-driven on port 2.

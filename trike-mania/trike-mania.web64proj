@@ -1,0 +1,3067 @@
+{
+  "kind": "web64.ide.project",
+  "version": 4,
+  "savedAt": "2026-08-20T14:22:56.899Z",
+  "main": {
+    "fileName": "main.c",
+    "origin": "$2d00",
+    "source": "#include <stdint.h>\n#include <c64.h>\n#include <6502.h>\n#include <assets/generated.h>\n#include <c64lib/vic2.h>\n#include <web64/game.h>\n#include <web64/world.h>\n#include <web64/motion.h>\n#include <web64/collision.h>\n#include <web64/animation.h>\n#include <web64/sprite-runtime.h>\n#include <web64/actors.h>\n\n#define SCREEN ((uint8_t*)0x0400)\n#define COLOR_RAM ((uint8_t*)0xd800)\n#define CHARSET_RAM ((uint8_t*)0x2000)\n#define SPRITE_RAM ((uint8_t*)0x2400)\n#define SPRITE_POINTERS ((uint8_t*)0x07f8)\n#define SPRITE_POINTER_BASE 0x90\n#define SPRITE_SHADOW_FRAME 28\n#define SPRITE_PORTRAIT_BASE 29\n#define HUD_ROWS 5\n#define TRACK_WIDTH 20\n#define TRACK_HEIGHT 10\n#define WAYPOINTS 16\n#define RACERS 4\n#define LAPS 3\n#define STATE_TITLE 0\n#define STATE_SELECT 1\n#define STATE_COUNTDOWN 2\n#define STATE_RACE 3\n#define STATE_RESULTS 4\n#define STATE_CHAMPIONSHIP 5\n#define MATERIAL_ROAD 0\n#define MATERIAL_GRASS 1\n#define MATERIAL_BOOST 2\n#define MATERIAL_RAMP 3\n#define MATERIAL_OIL 4\n#define MATERIAL_BARRIER 5\n#define SID_ORDINARY_RESERVE 2200\n#define SID_WORST_RESERVE 3200\n\nuint8_t teddy_speed[4] = {6,5,4,8};\nuint8_t teddy_acceleration[4] = {6,8,5,4};\nuint8_t teddy_steering[4] = {6,8,7,5};\nuint8_t teddy_grip[4] = {7,5,8,4};\nuint8_t teddy_color[4] = {COLOR_RED,COLOR_CYAN,COLOR_WHITE,COLOR_YELLOW};\n\nuint8_t teddy_park_colors[17] = {13,13,14,15,10,10,10,10,10,10,10,10,15,15,14,11,10};\nuint8_t picnic_panic_colors[17] = {10,8,15,15,10,10,10,10,10,10,10,10,15,13,15,8,9};\nuint8_t toybox_turbo_colors[17] = {14,15,13,15,12,12,12,12,12,12,12,12,15,10,8,14,9};\nuint8_t material_properties[256];\nuint16_t waypoint_x[48] = {88,56,40,24,40,72,136,200,264,296,296,264,200,152,120,104,72,40,40,56,104,152,184,232,280,296,280,232,184,152,120,88,56,24,40,88,136,136,200,200,280,296,280,232,168,168,104,104};\nuint8_t waypoint_y[48] = {136,136,120,88,56,24,24,24,24,56,104,136,136,136,136,136,136,120,72,40,24,56,88,24,40,88,120,136,104,72,104,136,136,104,40,24,24,72,72,24,24,72,120,136,136,104,104,136};\nuint8_t waypoint_cell_x[48] = {5,3,2,1,2,4,8,12,16,18,18,16,12,9,7,6,4,2,2,3,6,9,11,14,17,18,17,14,11,9,7,5,3,1,2,5,8,8,12,12,17,18,17,14,10,10,6,6};\nuint8_t waypoint_cell_y[48] = {8,8,7,5,3,1,1,1,1,3,6,8,8,8,8,8,8,7,4,2,1,3,5,1,2,5,7,8,6,4,6,8,8,6,2,1,1,4,4,1,1,4,7,8,8,6,6,8};\nuint8_t waypoint_gate_axis[48] = {0,0,0,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,1,0,1,1,0,0,0,0,0,0,0,1,0,0,1,0,1,0,1,1,0,0,1,0,1};\nuint8_t teddy_max_speed[4] = {21,20,19,23};\nuint8_t teddy_grass_speed[4] = {15,14,17,13};\nuint8_t teddy_accel_step[4] = {1,2,1,1};\nuint8_t track_speed_bonus[3] = {0,2,4};\nuint8_t track_ai_bonus[3] = {3,3,2};\nuint8_t test_boost_waypoint[3] = {6,4,4};\nuint8_t test_ramp_waypoint[3] = {10,6,6};\nuint8_t test_obstacle_waypoint[3] = {3,9,2};\nuint8_t jump_arc[29] = {0,1,2,4,6,8,10,12,14,15,16,17,18,18,18,17,16,15,14,12,10,8,6,4,3,2,1,0,0};\n\nWeb64SpriteRenderer sprite_renderer;\nWeb64CollisionMap collision_map;\nWeb64Aabb contact_first;\nWeb64Aabb contact_second;\nWeb64AnimationStep pedal_steps_0[2] = {{0,4,0,255},{1,4,0,255}};\nWeb64AnimationStep pedal_steps_1[2] = {{2,4,0,255},{3,4,0,255}};\nWeb64AnimationStep pedal_steps_2[2] = {{4,4,0,255},{5,4,0,255}};\nWeb64AnimationStep pedal_steps_3[2] = {{6,4,0,255},{7,4,0,255}};\nWeb64AnimationStep pedal_steps_4[2] = {{8,4,0,255},{9,4,0,255}};\nWeb64AnimationStep pedal_steps_5[2] = {{10,4,0,255},{11,4,0,255}};\nWeb64AnimationStep pedal_steps_6[2] = {{12,4,0,255},{13,4,0,255}};\nWeb64AnimationStep pedal_steps_7[2] = {{14,4,0,255},{15,4,0,255}};\nWeb64AnimationSequence pedal_sequences[8];\nWeb64AnimationBank pedal_bank;\nWeb64AnimationPlayer racer_animation_0;\nWeb64AnimationPlayer racer_animation_1;\nWeb64AnimationPlayer racer_animation_2;\nWeb64AnimationPlayer racer_animation_3;\n\nWEB64_ACTOR_POOL(racer, RACERS);\n#define racer_speed racer_vx\n#define racer_heading racer_facing\nuint8_t racer_teddy[4];\nuint8_t racer_waypoint[4];\nuint8_t racer_lap[4];\nuint8_t racer_boost[4];\nuint8_t racer_jump[4];\nuint8_t racer_spin[4];\nuint8_t racer_turn_delay[4];\nuint8_t racer_contact_cooldown[4];\nuint8_t racer_frame[4];\nuint8_t racer_last_material[4];\nuint8_t racer_finished[4];\nuint8_t finish_order[4];\nuint8_t championship_points[4];\n\nuint8_t trike_state;\nuint8_t trike_selected_teddy;\nuint8_t trike_current_track;\nuint8_t trike_race_complete;\nuint8_t trike_finish_count;\nuint8_t trike_test_status;\nuint8_t trike_test_cases;\nuint8_t trike_test_events;\nuint8_t trike_test_results;\nuint8_t trike_test_natural_finishes;\nuint8_t trike_test_full_races;\nuint8_t trike_test_championships;\nuint8_t trike_test_joystick;\nuint8_t trike_test_playability;\nuint8_t trike_test_steering;\nuint8_t trike_test_checkpoint_lanes;\nuint8_t trike_test_manual_races;\nuint8_t trike_test_sprite_trace;\nuint8_t trike_test_manual_lap[3];\nuint8_t trike_test_manual_waypoint[3];\nuint16_t trike_test_manual_frames[3];\nuint16_t trike_test_manual_x[3];\nuint16_t trike_test_manual_y[3];\nuint8_t trike_test_manual_heading[3];\nuint16_t trike_test_manual_speed[3];\nuint8_t trike_test_manual_desired[3];\nuint8_t trike_test_manual_joy[3];\nuint8_t trike_test_manual_difference[3];\nuint8_t trike_test_manual_target[3];\nuint8_t trike_test_manual_pixel_y[3];\nuint8_t trike_test_manual_target_y[3];\nuint8_t trike_script_desired;\nuint8_t trike_script_joy;\nuint8_t trike_script_difference;\nuint8_t trike_script_target;\nuint8_t trike_script_pixel_y;\nuint8_t trike_script_target_y;\nuint8_t trike_timeout_used;\nuint8_t trike_autopilot_player;\nuint8_t trike_profile_marker;\nuint16_t race_frames;\nuint8_t previous_joy;\nuint8_t animation_clock;\nuint8_t trike_frame_joy;\n\nvoid trike_render_racers_hot(void);\nvoid trike_render_hud_hot(void);\nvoid trike_update_race_hot(void);\nvoid trike_test_checkpoint_hot(void);\n\nstatic void wait_frame(void) {\n  uint8_t raster;\n  raster = *((uint8_t*)0xd012);\n  while (raster == 250) raster = *((uint8_t*)0xd012);\n  while (raster != 250) raster = *((uint8_t*)0xd012);\n}\n\nstatic void sid_player_todo(void) {\n  /* TODO MUSIC: call the active SID song/effect player once per frame here.\n     The measured budget reserves 2200 cycles normally and 3200 cycles worst-case. */\n}\n\nstatic uint8_t screen_code(uint8_t value) {\n  if (value >= 'A' && value <= 'Z') return value - 'A' + 1;\n  if (value >= 'a' && value <= 'z') return value - 'a' + 1;\n  return value;\n}\n\nstatic void clear_screen(uint8_t color) {\n  uint16_t clear_index;\n  clear_index = 0;\n  while (clear_index < 1000) {\n    SCREEN[clear_index] = 32;\n    COLOR_RAM[clear_index] = color;\n    clear_index++;\n  }\n}\n\nstatic void set_ui_palette(void) {\n  *((uint8_t*)0xd020) = COLOR_BLACK;\n  *((uint8_t*)0xd021) = COLOR_BLACK;\n  *((uint8_t*)0xd022) = COLOR_BROWN;\n  *((uint8_t*)0xd023) = COLOR_YELLOW;\n  *((uint8_t*)0xd025) = COLOR_BROWN;\n  *((uint8_t*)0xd026) = COLOR_YELLOW;\n}\n\nstatic uint8_t hires_text_color(uint8_t color) {\n  if (color == COLOR_LIGHTRED) return COLOR_RED;\n  if (color == COLOR_LIGHTGREEN) return COLOR_GREEN;\n  if (color == COLOR_LIGHTBLUE) return COLOR_CYAN;\n  if (color == COLOR_GRAY1 || color == COLOR_GRAY2 || color == COLOR_GRAY3) return COLOR_WHITE;\n  return color & 7;\n}\n\nstatic void draw_text(uint8_t x, uint8_t y, const char *text, uint8_t color) {\n  uint16_t offset;\n  uint8_t value;\n  color = hires_text_color(color);\n  offset = (uint16_t)y * 40 + x;\n  value = *text;\n  while (value != 0 && x < 40) {\n    SCREEN[offset] = screen_code(value);\n    COLOR_RAM[offset] = color;\n    text++;\n    offset++;\n    x++;\n    value = *text;\n  }\n}\n\nstatic void draw_digit(uint8_t x, uint8_t y, uint8_t value, uint8_t color) {\n  uint16_t offset;\n  color = hires_text_color(color);\n  offset = (uint16_t)y * 40 + x;\n  SCREEN[offset] = 48 + (value % 10);\n  COLOR_RAM[offset] = color;\n}\n\nstatic void draw_bar(uint8_t x, uint8_t y, uint8_t value, uint8_t color) {\n  uint8_t index;\n  uint16_t offset;\n  color = hires_text_color(color);\n  offset = (uint16_t)y * 40 + x;\n  index = 0;\n  while (index < 8) {\n    if (index < value) {\n      SCREEN[offset + index] = 63;\n      COLOR_RAM[offset + index] = color;\n    } else {\n      SCREEN[offset + index] = 45;\n      COLOR_RAM[offset + index] = COLOR_WHITE;\n    }\n    index++;\n  }\n}\n\nstatic void draw_teddy_name(uint8_t teddy, uint8_t x, uint8_t y, uint8_t color) {\n  if (teddy == 0) draw_text(x, y, \"BRAMBLE\", color);\n  else if (teddy == 1) draw_text(x, y, \"COCO\", color);\n  else if (teddy == 2) draw_text(x, y, \"PATCHES\", color);\n  else draw_text(x, y, \"TUMBLES\", color);\n}\n\nstatic void draw_teddy_personality(uint8_t teddy, uint8_t x, uint8_t y, uint8_t color) {\n  if (teddy == 0) draw_text(x, y, \"TRAILBLAZER\", color);\n  else if (teddy == 1) draw_text(x, y, \"TACTICIAN\", color);\n  else if (teddy == 2) draw_text(x, y, \"STEADY ACE\", color);\n  else draw_text(x, y, \"DAREDEVIL\", color);\n}\n\nstatic void draw_track_name(uint8_t track, uint8_t x, uint8_t y, uint8_t color) {\n  if (track == 0) draw_text(x, y, \"TEDDY PARK\", color);\n  else if (track == 1) draw_text(x, y, \"PICNIC PANIC\", color);\n  else draw_text(x, y, \"TOYBOX TURBO\", color);\n}\n\nstatic void install_assets(void) {\n  *((uint8_t*)0xdd00) = (*((uint8_t*)0xdd00) & 0xfc) | 3;\n  web64_world_copy_asset(CHARSET_RAM, trike_mania_chars, trike_mania_chars_size);\n  web64_world_copy_asset(SPRITE_RAM, teddy_trikes_sprites, teddy_trikes_sprites_size);\n  web64_world_apply_video_mode(WEB64_WORLD_MODE_MULTICOLOR, 0x18);\n  *((uint8_t*)0xd020) = COLOR_BLACK;\n  *((uint8_t*)0xd021) = COLOR_BLACK;\n  *((uint8_t*)0xd022) = COLOR_GRAY1;\n  *((uint8_t*)0xd023) = COLOR_GRAY2;\n  *((uint8_t*)0xd025) = COLOR_BROWN;\n  *((uint8_t*)0xd026) = COLOR_YELLOW;\n  web64_sprite_renderer_init(&sprite_renderer, (uint16_t)SPRITE_POINTERS);\n}\n\nstatic void initialize_animation(void) {\n  pedal_sequences[0].steps = WEB64_ADDRESS(pedal_steps_0);\n  pedal_sequences[1].steps = WEB64_ADDRESS(pedal_steps_1);\n  pedal_sequences[2].steps = WEB64_ADDRESS(pedal_steps_2);\n  pedal_sequences[3].steps = WEB64_ADDRESS(pedal_steps_3);\n  pedal_sequences[4].steps = WEB64_ADDRESS(pedal_steps_4);\n  pedal_sequences[5].steps = WEB64_ADDRESS(pedal_steps_5);\n  pedal_sequences[6].steps = WEB64_ADDRESS(pedal_steps_6);\n  pedal_sequences[7].steps = WEB64_ADDRESS(pedal_steps_7);\n  pedal_sequences[0].count = 2;\n  pedal_sequences[1].count = 2;\n  pedal_sequences[2].count = 2;\n  pedal_sequences[3].count = 2;\n  pedal_sequences[4].count = 2;\n  pedal_sequences[5].count = 2;\n  pedal_sequences[6].count = 2;\n  pedal_sequences[7].count = 2;\n  pedal_sequences[0].flags = WEB64_ANIMATION_LOOP;\n  pedal_sequences[1].flags = WEB64_ANIMATION_LOOP;\n  pedal_sequences[2].flags = WEB64_ANIMATION_LOOP;\n  pedal_sequences[3].flags = WEB64_ANIMATION_LOOP;\n  pedal_sequences[4].flags = WEB64_ANIMATION_LOOP;\n  pedal_sequences[5].flags = WEB64_ANIMATION_LOOP;\n  pedal_sequences[6].flags = WEB64_ANIMATION_LOOP;\n  pedal_sequences[7].flags = WEB64_ANIMATION_LOOP;\n  pedal_bank.sequences = WEB64_ADDRESS(pedal_sequences);\n  pedal_bank.count = 8;\n  web64_animation_init(&racer_animation_0, WEB64_ADDRESS(&pedal_bank));\n  web64_animation_init(&racer_animation_1, WEB64_ADDRESS(&pedal_bank));\n  web64_animation_init(&racer_animation_2, WEB64_ADDRESS(&pedal_bank));\n  web64_animation_init(&racer_animation_3, WEB64_ADDRESS(&pedal_bank));\n  web64_animation_play(&racer_animation_0, 0, WEB64_ANIMATION_PLAY_RESTART);\n  web64_animation_play(&racer_animation_1, 0, WEB64_ANIMATION_PLAY_RESTART);\n  web64_animation_play(&racer_animation_2, 0, WEB64_ANIMATION_PLAY_RESTART);\n  web64_animation_play(&racer_animation_3, 0, WEB64_ANIMATION_PLAY_RESTART);\n}\n\nstatic void racer_animation_play(uint8_t racer, uint8_t sequence, uint8_t policy) {\n  if (racer == 0) web64_animation_play(&racer_animation_0, sequence, policy);\n  else if (racer == 1) web64_animation_play(&racer_animation_1, sequence, policy);\n  else if (racer == 2) web64_animation_play(&racer_animation_2, sequence, policy);\n  else web64_animation_play(&racer_animation_3, sequence, policy);\n}\n\nstatic uint8_t joy_pressed(uint8_t joy, uint8_t mask) {\n  return (joy & mask) == 0;\n}\n\nstatic uint8_t fire_edge(uint8_t joy) {\n  return joy_pressed(joy, 16) && !joy_pressed(previous_joy, 16);\n}\n\nstatic void hide_all_sprites(void) {\n  *((uint8_t*)0xd015) = 0;\n}\n\nstatic void render_title_teddies(uint8_t phase) {\n  uint8_t teddy;\n  teddy = 0;\n  while (teddy < 4) {\n    web64_sprite_render(&sprite_renderer, teddy, 48 + (uint16_t)teddy * 72, 146 + ((phase + teddy) & 3), SPRITE_POINTER_BASE + SPRITE_PORTRAIT_BASE + teddy, teddy_color[teddy], WEB64_SPRITE_VISIBLE | WEB64_SPRITE_MULTICOLOR | WEB64_SPRITE_EXPAND_X | WEB64_SPRITE_EXPAND_Y);\n    teddy++;\n  }\n}\n\n#ifndef TRIKE_AUTOTEST\nstatic void title_screen(void) {\n  uint8_t joy;\n  uint8_t phase;\n  trike_state = STATE_TITLE;\n  set_ui_palette();\n  clear_screen(COLOR_WHITE);\n  draw_text(11, 2, \"TRIKE MANIA\", COLOR_YELLOW);\n  draw_text(6, 4, \"TEDDY TRICYCLE CHAMPIONSHIP\", COLOR_CYAN);\n  draw_text(9, 7, \"THREE WILD CIRCUITS\", COLOR_LIGHTGREEN);\n  draw_text(8, 8, \"FOUR TEDDIES ONE TROPHY\", COLOR_LIGHTRED);\n  draw_teddy_name(0, 1, 18, teddy_color[0]);\n  draw_teddy_name(1, 11, 18, teddy_color[1]);\n  draw_teddy_name(2, 20, 18, teddy_color[2]);\n  draw_teddy_name(3, 31, 18, teddy_color[3]);\n  draw_text(11, 21, \"JOYSTICK PORT 2\", COLOR_WHITE);\n  draw_text(13, 23, \"FIRE TO START\", COLOR_YELLOW);\n  /* TODO MUSIC: start the Trike Mania title song here. */\n  previous_joy = 255;\n  phase = 0;\n  while (1) {\n    wait_frame();\n    joy = *((uint8_t*)JOYPORT_2);\n    render_title_teddies(phase);\n    if ((phase & 31) < 20) draw_text(13, 23, \"FIRE TO START\", COLOR_YELLOW);\n    else draw_text(13, 23, \"             \", COLOR_YELLOW);\n    sid_player_todo();\n    if (fire_edge(joy)) {\n      /* TODO SFX: play menu-confirm sound. */\n      previous_joy = joy;\n      return;\n    }\n    previous_joy = joy;\n    phase++;\n  }\n}\n\nstatic void draw_selected_teddy(uint8_t selected) {\n  set_ui_palette();\n  clear_screen(COLOR_WHITE);\n  draw_text(10, 1, \"CHOOSE YOUR TEDDY\", COLOR_YELLOW);\n  draw_text(15, 3, \"SELECTED\", COLOR_GRAY2);\n  draw_teddy_name(selected, 16, 4, teddy_color[selected]);\n  draw_text(2, 7, \"SPEED\", COLOR_WHITE);\n  draw_text(2, 9, \"ACCEL\", COLOR_WHITE);\n  draw_text(2, 11, \"STEER\", COLOR_WHITE);\n  draw_text(2, 13, \"GRIP\", COLOR_WHITE);\n  draw_bar(9, 7, teddy_speed[selected], COLOR_LIGHTRED);\n  draw_bar(9, 9, teddy_acceleration[selected], COLOR_YELLOW);\n  draw_bar(9, 11, teddy_steering[selected], COLOR_CYAN);\n  draw_bar(9, 13, teddy_grip[selected], COLOR_LIGHTGREEN);\n  draw_text(27, 6, \"PORTRAIT\", COLOR_GRAY2);\n  draw_teddy_personality(selected, 25, 14, teddy_color[selected]);\n  if (selected == 0) draw_text(10, 16, \"BRAVE ALL ROUNDER\", COLOR_WHITE);\n  else if (selected == 1) draw_text(10, 16, \"QUICK AND PRECISE\", COLOR_WHITE);\n  else if (selected == 2) draw_text(11, 16, \"STEADY ON GRASS\", COLOR_WHITE);\n  else draw_text(13, 16, \"FAST BUT WILD\", COLOR_WHITE);\n  draw_teddy_name(0, 1, 19, COLOR_GRAY2);\n  draw_teddy_name(1, 11, 19, COLOR_GRAY2);\n  draw_teddy_name(2, 20, 19, COLOR_GRAY2);\n  draw_teddy_name(3, 31, 19, COLOR_GRAY2);\n  if (selected == 0) draw_teddy_name(0, 1, 19, teddy_color[0]);\n  else if (selected == 1) draw_teddy_name(1, 11, 19, teddy_color[1]);\n  else if (selected == 2) draw_teddy_name(2, 20, 19, teddy_color[2]);\n  else draw_teddy_name(3, 31, 19, teddy_color[3]);\n  draw_text(7, 21, \"LEFT RIGHT TO CHOOSE\", COLOR_CYAN);\n  draw_text(13, 23, \"FIRE TO RACE\", COLOR_YELLOW);\n}\n\nstatic void teddy_selection(void) {\n  uint8_t joy;\n  uint8_t selected;\n  uint8_t delay;\n  trike_state = STATE_SELECT;\n  selected = trike_selected_teddy;\n  delay = 0;\n  hide_all_sprites();\n  web64_sprite_renderer_init(&sprite_renderer, (uint16_t)SPRITE_POINTERS);\n  draw_selected_teddy(selected);\n  while (1) {\n    wait_frame();\n    joy = *((uint8_t*)JOYPORT_2);\n    if (delay != 0) delay = delay - 1;\n    if (delay == 0 && joy_pressed(joy, 4)) {\n      selected = (selected + 3) & 3;\n      draw_selected_teddy(selected);\n      /* TODO SFX: play teddy-selection tick. */\n      delay = 10;\n    }\n    if (delay == 0 && joy_pressed(joy, 8)) {\n      selected = (selected + 1) & 3;\n      draw_selected_teddy(selected);\n      /* TODO SFX: play teddy-selection tick. */\n      delay = 10;\n    }\n    web64_sprite_render(&sprite_renderer, 0, 248, 108, SPRITE_POINTER_BASE + SPRITE_PORTRAIT_BASE + selected, teddy_color[selected], WEB64_SPRITE_VISIBLE | WEB64_SPRITE_MULTICOLOR | WEB64_SPRITE_EXPAND_X | WEB64_SPRITE_EXPAND_Y);\n    sid_player_todo();\n    if (fire_edge(joy)) {\n      trike_selected_teddy = selected;\n      /* TODO SFX: play teddy-confirm fanfare. */\n      previous_joy = joy;\n      return;\n    }\n    previous_joy = joy;\n    animation_clock++;\n  }\n}\n#endif\n\nstatic void configure_racer_teddies(void) {\n  uint8_t actor;\n  uint8_t teddy;\n  actor = 1;\n  racer_teddy[0] = trike_selected_teddy;\n  teddy = 0;\n  while (teddy < 4) {\n    if (teddy != trike_selected_teddy) {\n      racer_teddy[actor] = teddy;\n      actor++;\n    }\n    teddy++;\n  }\n}\n\nstatic uint8_t *current_material_map(void) {\n  if (trike_current_track == 0) return teddy_park_material;\n  if (trike_current_track == 1) return picnic_panic_material;\n  return toybox_turbo_material;\n}\n\nstatic void draw_current_track(void) {\n  uint8_t *map;\n  uint8_t *blocks;\n  uint8_t *colors;\n  if (trike_current_track == 0) {\n    map = teddy_park_map;\n    blocks = teddy_park_blocks;\n    colors = teddy_park_colors;\n    *((uint8_t*)0xd021) = COLOR_GREEN;\n  } else if (trike_current_track == 1) {\n    map = picnic_panic_map;\n    blocks = picnic_panic_blocks;\n    colors = picnic_panic_colors;\n    *((uint8_t*)0xd021) = COLOR_BROWN;\n  } else {\n    map = toybox_turbo_map;\n    blocks = toybox_turbo_blocks;\n    colors = toybox_turbo_colors;\n    *((uint8_t*)0xd021) = COLOR_BLUE;\n  }\n  web64_world_draw_block2_view(map, blocks, colors, SCREEN + HUD_ROWS * 40, COLOR_RAM + HUD_ROWS * 40, TRACK_WIDTH, TRACK_HEIGHT, TRACK_WIDTH, WEB64_WORLD_COLOR_PER_CELL, 13);\n}\n\nstatic uint8_t waypoint_index(uint8_t waypoint) {\n  return trike_current_track * WAYPOINTS + waypoint;\n}\n\nstatic uint16_t racer_pixel_x(uint8_t racer) {\n  return racer_x[racer] >> WEB64_SUBPIXEL_BITS;\n}\n\nstatic uint16_t racer_pixel_y(uint8_t racer) {\n  return racer_y[racer] >> WEB64_SUBPIXEL_BITS;\n}\n\nstatic void initialize_race(void) {\n  uint8_t racer;\n  uint8_t base;\n  uint16_t px;\n  uint8_t py;\n  trike_race_complete = 0;\n  trike_finish_count = 0;\n  trike_timeout_used = 0;\n  race_frames = 0;\n  configure_racer_teddies();\n  base = waypoint_index(0);\n  px = waypoint_x[base];\n  py = waypoint_y[base];\n  racer_active_count = 0;\n  racer = 0;\n  while (racer < RACERS) {\n    racer_active[racer] = 0;\n    web64_actor_activate(racer_active, racer_active_ids, &racer_active_count, RACERS, racer);\n    racer_x[racer] = ((uint16_t)(px + (racer & 1) * 12) << WEB64_SUBPIXEL_BITS);\n    racer_y[racer] = ((uint16_t)(py - (racer >> 1) * 16) << WEB64_SUBPIXEL_BITS);\n    racer_speed[racer] = 0;\n    if (trike_current_track == 0) racer_heading[racer] = 6;\n    else racer_heading[racer] = 7;\n    racer_width[racer] = 10;\n    racer_height[racer] = 14;\n    racer_category[racer] = 1;\n    racer_mask[racer] = 1;\n    racer_waypoint[racer] = 1;\n    racer_lap[racer] = 0;\n    racer_boost[racer] = 0;\n    racer_jump[racer] = 0;\n    racer_spin[racer] = 0;\n    racer_turn_delay[racer] = 0;\n    racer_contact_cooldown[racer] = 0;\n    racer_frame[racer] = racer_heading[racer] << 1;\n    racer_last_material[racer] = 255;\n    racer_finished[racer] = 0;\n    finish_order[racer] = 255;\n    racer_animation_play(racer, 0, WEB64_ANIMATION_PLAY_RESTART);\n    racer++;\n  }\n  collision_map.materials = WEB64_ADDRESS(current_material_map());\n  collision_map.properties = WEB64_ADDRESS(material_properties);\n  collision_map.width = TRACK_WIDTH;\n  collision_map.height = TRACK_HEIGHT;\n  collision_map.row_stride = TRACK_WIDTH;\n  collision_map.tile_shift = 4;\n  collision_map.outside_material = MATERIAL_BARRIER;\n  *((uint8_t*)0xd025) = COLOR_BLACK;\n  *((uint8_t*)0xd026) = COLOR_WHITE;\n  racer = 0;\n  while (racer < RACERS) {\n    racer_last_material[racer] = web64_collision_material_at(&collision_map, racer_pixel_x(racer), racer_pixel_y(racer));\n    racer++;\n  }\n  draw_current_track();\n}\n\nstatic void draw_hud(void) {\n  uint8_t position;\n  uint8_t racer;\n  uint8_t player_progress;\n  uint8_t other_progress;\n  draw_text(0, 0, \"                                        \", COLOR_WHITE);\n  draw_text(0, 1, \"                                        \", COLOR_WHITE);\n  draw_text(0, 2, \"                                        \", COLOR_WHITE);\n  draw_text(0, 3, \"                                        \", COLOR_WHITE);\n  draw_text(0, 4, \"----------------------------------------\", COLOR_GRAY1);\n  draw_track_name(trike_current_track, 0, 0, COLOR_CYAN);\n  draw_text(13, 0, \"LAP\", COLOR_WHITE);\n  if (racer_lap[0] + 1 > LAPS) draw_digit(17, 0, LAPS, COLOR_YELLOW);\n  else draw_digit(17, 0, racer_lap[0] + 1, COLOR_YELLOW);\n  draw_text(18, 0, \"/3\", COLOR_WHITE);\n  player_progress = racer_lap[0] * 16 + racer_waypoint[0];\n  position = 1;\n  racer = 1;\n  while (racer < RACERS) {\n    other_progress = racer_lap[racer] * 16 + racer_waypoint[racer];\n    if (other_progress > player_progress) position++;\n    racer++;\n  }\n  draw_text(23, 0, \"POS\", COLOR_WHITE);\n  draw_digit(27, 0, position, COLOR_LIGHTGREEN);\n  draw_text(28, 0, \"/4\", COLOR_WHITE);\n  draw_teddy_name(racer_teddy[0], 0, 1, teddy_color[racer_teddy[0]]);\n  draw_text(10, 1, \"SPD\", COLOR_WHITE);\n  draw_bar(14, 1, (uint8_t)(racer_speed[0] >> 2), COLOR_LIGHTRED);\n  draw_text(24, 1, \"RACING\", COLOR_GRAY2);\n}\n\n#ifdef TRIKE_AUTOTEST\nstatic uint8_t desired_heading(void) {\n  uint8_t target;\n  uint16_t px;\n  uint8_t py;\n  target = trike_current_track << 4;\n  target = target + racer_waypoint[0];\n  px = racer_pixel_x(0);\n  py = racer_pixel_y(0);\n  trike_script_target = target;\n  trike_script_pixel_y = py;\n  trike_script_target_y = waypoint_y[target];\n  /* The deterministic joystick driver takes a free lane around the two\n     barriers that sit directly between consecutive checkpoint centers. */\n  if (trike_current_track == 1 && racer_waypoint[0] == 12) {\n    if (py > waypoint_y[target] + 7) return 0;\n    if (px > waypoint_x[target] + 7) return 6;\n  }\n  if (trike_current_track == 2 && racer_waypoint[0] == 4) {\n    if (py > waypoint_y[target] + 7) return 0;\n    if (px < waypoint_x[target] - 8) return 2;\n  }\n  if (trike_current_track == 2 && racer_waypoint[0] == 11) {\n    if (py < waypoint_y[target] - 8) return 4;\n    if (py > waypoint_y[target] + 7) return 0;\n    if (px < waypoint_x[target] - 8) return 2;\n    return 6;\n  }\n  if (px < waypoint_x[target] - 8) return 2;\n  if (px > waypoint_x[target] + 7) return 6;\n  if (py < waypoint_y[target] - 8) return 4;\n  return 0;\n}\n#endif\n\nstatic void steer_toward(uint8_t racer, uint8_t desired) {\n  uint8_t difference;\n  if (racer_heading[racer] == desired) return;\n  if (racer_turn_delay[racer] != 0) {\n    racer_turn_delay[racer] = racer_turn_delay[racer] - 1;\n    return;\n  }\n  difference = (desired - racer_heading[racer]) & 7;\n  if (difference <= 4) racer_heading[racer] = (racer_heading[racer] + 1) & 7;\n  else racer_heading[racer] = (racer_heading[racer] + 7) & 7;\n  racer_turn_delay[racer] = 8 - teddy_steering[racer_teddy[racer]];\n}\n\nstatic void apply_player_control(uint8_t joy) {\n  uint8_t steering_delay;\n  if (racer_spin[0] != 0) return;\n  if (racer_turn_delay[0] != 0) racer_turn_delay[0] = racer_turn_delay[0] - 1;\n  steering_delay = 14 - teddy_steering[racer_teddy[0]];\n  if (racer_turn_delay[0] == 0 && joy_pressed(joy, 4)) {\n    racer_heading[0] = (racer_heading[0] + 7) & 7;\n    racer_turn_delay[0] = steering_delay;\n  }\n  if (racer_turn_delay[0] == 0 && joy_pressed(joy, 8)) {\n    racer_heading[0] = (racer_heading[0] + 1) & 7;\n    racer_turn_delay[0] = steering_delay;\n  }\n}\n\nstatic void trigger_material(uint8_t racer, uint8_t material) {\n  if (material == racer_last_material[racer]) return;\n  racer_last_material[racer] = material;\n  if (material == MATERIAL_BOOST) {\n    racer_boost[racer] = 30;\n    trike_test_events |= 1;\n    /* TODO SFX: play honey-boost pickup whoosh. */\n  } else if (material == MATERIAL_RAMP) {\n    racer_jump[racer] = 28;\n    trike_test_events |= 2;\n    /* TODO SFX: play tricycle ramp launch. */\n  } else if (material == MATERIAL_OIL) {\n    racer_spin[racer] = 24 - teddy_grip[racer_teddy[racer]];\n    trike_test_events |= 4;\n    /* TODO SFX: play oil-spin wobble. */\n  }\n}\n\nstatic uint16_t maximum_speed(uint8_t racer, uint8_t material) {\n  uint16_t maximum;\n  uint8_t teddy;\n  teddy = racer_teddy[racer];\n  if (material == MATERIAL_GRASS) maximum = teddy_grass_speed[teddy];\n  else maximum = teddy_max_speed[teddy];\n  maximum = maximum + track_speed_bonus[trike_current_track];\n  if (racer != 0) maximum = maximum + track_ai_bonus[trike_current_track];\n  if (racer_boost[racer] != 0) maximum = maximum + 5;\n  return maximum;\n}\n\nstatic void update_speed(uint8_t racer, int8_t intent, uint8_t material) {\n  uint16_t accel_value;\n  uint16_t braking;\n  uint8_t axis_intent;\n  accel_value = teddy_accel_step[racer_teddy[racer]];\n  if (material == MATERIAL_GRASS) braking = 2;\n  else braking = 1;\n  if (intent < 0) braking = braking + 1;\n  if (intent > 0) axis_intent = 1;\n  else axis_intent = 0;\n  racer_speed[racer] = web64_motion_axis(racer_speed[racer], axis_intent, accel_value, braking, maximum_speed(racer, material));\n  if (intent < 0) racer_speed[racer] = web64_motion_axis(racer_speed[racer], 0, 0, braking, 127);\n}\n\nstatic void finish_racer(uint8_t racer) {\n  if (racer_finished[racer] != 0) return;\n  racer_finished[racer] = 1;\n  racer_speed[racer] = 0;\n  finish_order[trike_finish_count] = racer;\n  trike_finish_count++;\n  if (racer == 0) {\n    /* TODO SFX: play player finish-line fanfare. */\n  }\n  if (trike_finish_count == RACERS) trike_race_complete = 1;\n}\n\nstatic void update_waypoint(uint8_t racer) {\n  uint8_t target;\n  uint16_t px;\n  uint8_t py;\n  int16_t dx;\n  int16_t dy;\n  if (racer_finished[racer] != 0) return;\n  target = waypoint_index(racer_waypoint[racer]);\n  px = racer_pixel_x(racer);\n  py = racer_pixel_y(racer);\n  dx = (int16_t)waypoint_x[target] - px;\n  dy = (int16_t)waypoint_y[target] - py;\n  if (dx < -14 || dx > 14 || dy < -14 || dy > 14) return;\n  if (racer_waypoint[racer] == 0) {\n    racer_lap[racer] = racer_lap[racer] + 1;\n    racer_waypoint[racer] = 1;\n    if (racer_lap[racer] >= LAPS) finish_racer(racer);\n    else if (racer == 0) {\n      /* TODO SFX: play completed-lap bell. */\n    }\n  } else {\n    racer_waypoint[racer] = racer_waypoint[racer] + 1;\n    if (racer_waypoint[racer] >= WAYPOINTS) racer_waypoint[racer] = 0;\n  }\n}\n\nstatic void move_racer(uint8_t racer) {\n  int16_t delta;\n  int16_t dx;\n  int16_t dy;\n  uint16_t next_x;\n  uint16_t next_y;\n  uint8_t material;\n  uint16_t pixel_x;\n  uint8_t pixel_y;\n  uint8_t heading;\n  if (racer_finished[racer] != 0) return;\n  heading = racer_heading[racer];\n  delta = racer_speed[racer];\n  if (heading & 1) delta = delta - (delta >> 2);\n  dx = 0;\n  dy = 0;\n  if (heading == 1 || heading == 2 || heading == 3) dx = delta;\n  if (heading == 5 || heading == 6 || heading == 7) dx = -delta;\n  if (heading == 3 || heading == 4 || heading == 5) dy = delta;\n  if (heading == 0 || heading == 1 || heading == 7) dy = -delta;\n  next_x = racer_x[racer];\n  next_y = racer_y[racer];\n  web64_motion_integrate(&next_x, dx);\n  web64_motion_integrate(&next_y, dy);\n  if (next_x < (12 << WEB64_SUBPIXEL_BITS)) next_x = 12 << WEB64_SUBPIXEL_BITS;\n  if (next_x > (307 << WEB64_SUBPIXEL_BITS)) next_x = 307 << WEB64_SUBPIXEL_BITS;\n  if (next_y < (12 << WEB64_SUBPIXEL_BITS)) next_y = 12 << WEB64_SUBPIXEL_BITS;\n  if (next_y > (147 << WEB64_SUBPIXEL_BITS)) next_y = 147 << WEB64_SUBPIXEL_BITS;\n  pixel_x = (uint8_t)(next_x >> WEB64_SUBPIXEL_BITS);\n  pixel_y = (uint8_t)(next_y >> WEB64_SUBPIXEL_BITS);\n  material = web64_collision_material_at(&collision_map, pixel_x, pixel_y);\n  if (material == MATERIAL_BARRIER) {\n    racer_speed[racer] = racer_speed[racer] >> 1;\n    racer_heading[racer] = (racer_heading[racer] + 4) & 7;\n    /* TODO SFX: play soft barrier bump. */\n  } else {\n    racer_x[racer] = next_x;\n    racer_y[racer] = next_y;\n    trigger_material(racer, material);\n  }\n  if (racer_boost[racer] != 0) racer_boost[racer] = racer_boost[racer] - 1;\n  if (racer_jump[racer] != 0) racer_jump[racer] = racer_jump[racer] - 1;\n  if (racer_spin[racer] != 0) {\n    racer_spin[racer] = racer_spin[racer] - 1;\n    if ((racer_spin[racer] & 1) == 0) racer_heading[racer] = (racer_heading[racer] + 1) & 7;\n  }\n  update_waypoint(racer);\n}\n\nstatic void apply_racer_bump(uint8_t racer) {\n  int16_t speed;\n  speed = racer_speed[racer];\n  if (speed > 4) speed = speed - 4;\n  else speed = 0;\n  racer_speed[racer] = speed;\n}\n\nstatic void resolve_racer_contacts(void) {\n  uint8_t a;\n  uint8_t b;\n  uint8_t pair;\n  a = 0;\n  while (a < RACERS) {\n    if (racer_contact_cooldown[a] != 0) racer_contact_cooldown[a] = racer_contact_cooldown[a] - 1;\n    a++;\n  }\n  pair = animation_clock & 7;\n  if (pair == 0) { a = 0; b = 1; }\n  else if (pair == 1) { a = 0; b = 2; }\n  else if (pair == 2) { a = 0; b = 3; }\n  else if (pair == 3) { a = 1; b = 2; }\n  else if (pair == 4) { a = 1; b = 3; }\n  else { a = 2; b = 3; }\n  if (racer_contact_cooldown[a] != 0 || racer_contact_cooldown[b] != 0) return;\n  contact_first.x = racer_pixel_x(a);\n  contact_first.y = racer_pixel_y(a);\n  contact_first.width = 10;\n  contact_first.height = 14;\n  contact_first.category = 1;\n  contact_first.mask = 1;\n  contact_second.x = racer_pixel_x(b);\n  contact_second.y = racer_pixel_y(b);\n  contact_second.width = 10;\n  contact_second.height = 14;\n  contact_second.category = 1;\n  contact_second.mask = 1;\n  if (web64_collision_aabb(&contact_first, &contact_second) != 0) {\n    apply_racer_bump(a);\n    apply_racer_bump(b);\n    racer_contact_cooldown[a] = 8;\n    racer_contact_cooldown[b] = 8;\n  }\n}\n\nstatic void force_timeout_finish(void) {\n  uint8_t pass;\n  uint8_t racer;\n  uint8_t best;\n  uint8_t best_progress;\n  uint8_t progress;\n  pass = trike_finish_count;\n  while (pass < RACERS) {\n    best = 255;\n    best_progress = 0;\n    racer = 0;\n    while (racer < RACERS) {\n      if (racer_finished[racer] == 0) {\n        progress = racer_lap[racer] * 16 + racer_waypoint[racer];\n        if (best == 255 || progress > best_progress) {\n          best = racer;\n          best_progress = progress;\n        }\n      }\n      racer++;\n    }\n    if (best != 255) finish_racer(best);\n    pass++;\n  }\n}\n\nstatic void update_race_frame(uint8_t joy) {\n  trike_frame_joy = joy;\n  trike_update_race_hot();\n  resolve_racer_contacts();\n}\n\nstatic void countdown(void) {\n  uint8_t count;\n  uint8_t frames;\n  trike_state = STATE_COUNTDOWN;\n  count = 3;\n  while (count != 0) {\n    frames = 0;\n    draw_text(17, 2, \"   \", COLOR_WHITE);\n    draw_digit(18, 2, count, COLOR_YELLOW);\n    /* TODO SFX: play countdown tick. */\n    while (frames < 45) {\n      wait_frame();\n      trike_render_racers_hot();\n      sid_player_todo();\n      frames++;\n    }\n    count--;\n  }\n  draw_text(17, 2, \"GO!\", COLOR_LIGHTGREEN);\n  /* TODO SFX: play race-start horn. */\n}\n\n#ifndef TRIKE_AUTOTEST\nstatic void run_race(void) {\n  uint8_t joy;\n  initialize_race();\n  draw_hud();\n  trike_render_hud_hot();\n  trike_render_racers_hot();\n  countdown();\n  trike_state = STATE_RACE;\n  /* TODO MUSIC: start the selected track racing song here. */\n  while (trike_race_complete == 0) {\n    wait_frame();\n    joy = *((uint8_t*)JOYPORT_2);\n    update_race_frame(joy);\n    trike_render_hud_hot();\n    trike_render_racers_hot();\n    sid_player_todo();\n  }\n}\n#endif\n\nstatic void apply_results_points(void) {\n  uint8_t awards[4] = {9,6,3,1};\n  uint8_t place;\n  uint8_t racer;\n  uint8_t teddy;\n  place = 0;\n  while (place < RACERS) {\n    racer = finish_order[place];\n    teddy = racer_teddy[racer];\n    championship_points[teddy] = championship_points[teddy] + awards[place];\n    place++;\n  }\n}\n\n#ifndef TRIKE_AUTOTEST\nstatic uint8_t championship_leader(void) {\n  uint8_t teddy;\n  uint8_t leader;\n  leader = 0;\n  teddy = 1;\n  while (teddy < 4) {\n    if (championship_points[teddy] > championship_points[leader]) leader = teddy;\n    teddy++;\n  }\n  return leader;\n}\n\nstatic void draw_results_content(void) {\n  uint8_t place;\n  uint8_t racer;\n  uint8_t y;\n  uint8_t award;\n  uint8_t leader;\n  if (trike_current_track == 2) trike_state = STATE_CHAMPIONSHIP;\n  else trike_state = STATE_RESULTS;\n  hide_all_sprites();\n  set_ui_palette();\n  clear_screen(COLOR_WHITE);\n  if (trike_current_track == 2) draw_text(8, 2, \"CHAMPIONSHIP COMPLETE\", COLOR_YELLOW);\n  else draw_text(12, 2, \"RACE RESULTS\", COLOR_YELLOW);\n  draw_track_name(trike_current_track, 12, 4, COLOR_CYAN);\n  place = 0;\n  while (place < RACERS) {\n    racer = finish_order[place];\n    y = 7 + place * 3;\n    draw_digit(5, y, place + 1, COLOR_WHITE);\n    draw_text(7, y, \".\", COLOR_WHITE);\n    draw_teddy_name(racer_teddy[racer], 10, y, teddy_color[racer_teddy[racer]]);\n    draw_text(24, y, \"+\", COLOR_GRAY2);\n    if (place == 0) award = 9;\n    else if (place == 1) award = 6;\n    else if (place == 2) award = 3;\n    else award = 1;\n    draw_digit(26, y, award, COLOR_YELLOW);\n    place++;\n  }\n  if (trike_current_track == 2) {\n    draw_text(8, 20, \"CHAMPION\", COLOR_LIGHTGREEN);\n    leader = championship_leader();\n    draw_teddy_name(leader, 18, 20, teddy_color[leader]);\n    draw_text(8, 23, \"FIRE TO REPLAY\", COLOR_YELLOW);\n    /* TODO MUSIC: start championship podium fanfare here. */\n  } else {\n    draw_text(6, 22, \"FIRE FOR THE NEXT RACE\", COLOR_YELLOW);\n    /* TODO MUSIC: start race-results jingle here. */\n  }\n}\n\nstatic void results_screen(void) {\n  uint8_t joy;\n  apply_results_points();\n  draw_results_content();\n  previous_joy = 255;\n  while (1) {\n    wait_frame();\n    joy = *((uint8_t*)JOYPORT_2);\n    sid_player_todo();\n    if (fire_edge(joy)) {\n      previous_joy = joy;\n      return;\n    }\n    previous_joy = joy;\n  }\n}\n#endif\n\nstatic void initialize_game(void) {\n  uint8_t game_index;\n  SEI();\n  install_assets();\n  initialize_animation();\n  game_index = 0;\n  while (game_index < 4) {\n    championship_points[game_index] = 0;\n    game_index++;\n  }\n  material_properties[MATERIAL_GRASS] = WEB64_MATERIAL_MODIFIER;\n  material_properties[MATERIAL_BOOST] = WEB64_MATERIAL_COLLECTIBLE;\n  material_properties[MATERIAL_RAMP] = WEB64_MATERIAL_TRIGGER;\n  material_properties[MATERIAL_OIL] = WEB64_MATERIAL_HAZARD;\n  material_properties[MATERIAL_BARRIER] = WEB64_MATERIAL_SOLID;\n  trike_selected_teddy = 0;\n  trike_current_track = 0;\n  trike_autopilot_player = 0;\n  previous_joy = 255;\n}\n\n#ifdef TRIKE_AUTOTEST\nstatic void move_test_racer_to_waypoint(uint8_t waypoint) {\n  uint8_t target;\n  target = waypoint_index(waypoint);\n  racer_x[0] = (uint16_t)waypoint_x[target] << WEB64_SUBPIXEL_BITS;\n  racer_y[0] = (uint16_t)waypoint_y[target] << WEB64_SUBPIXEL_BITS;\n  racer_last_material[0] = 255;\n}\n\nstatic void profile_test_frame(uint8_t joy) {\n  trike_profile_marker = 1;\n  trike_profile_marker = 10;\n  update_race_frame(joy);\n  trike_profile_marker = 11;\n  trike_profile_marker = 12;\n  trike_render_hud_hot();\n  trike_profile_marker = 13;\n  trike_profile_marker = 14;\n  trike_render_racers_hot();\n  trike_profile_marker = 15;\n  sid_player_todo();\n  trike_profile_marker = 2;\n}\n\nstatic uint8_t scripted_player_joy(void) {\n  uint8_t desired;\n  uint8_t difference;\n  uint8_t joy;\n  uint16_t speed_limit;\n  desired = desired_heading();\n  difference = (desired + 8 - racer_heading[0]) & 7;\n  speed_limit = 21;\n  if (trike_current_track == 1) speed_limit = 23;\n  else if (trike_current_track == 2) speed_limit = 25;\n  joy = 0xff;\n  if (difference != 0) {\n    joy = 0xfd;\n    if (difference >= 5) joy = joy & 0xfb;\n    else joy = joy & 0xf7;\n  } else if (racer_speed[0] < speed_limit) joy = 0xef;\n  trike_script_desired = desired;\n  trike_script_difference = difference;\n  trike_script_joy = joy;\n  return joy;\n}\n\nstatic void verify_player_speed_profile(void) {\n  uint8_t racer;\n  uint8_t teddy;\n  uint8_t frames;\n  uint16_t before_brake;\n  trike_selected_teddy = 0;\n  trike_current_track = 0;\n  trike_autopilot_player = 0;\n  initialize_race();\n  racer = 1;\n  while (racer < RACERS) {\n    racer_x[racer] = ((uint16_t)(260 + racer * 12) << WEB64_SUBPIXEL_BITS);\n    racer_y[racer] = ((uint16_t)(120 + racer * 4) << WEB64_SUBPIXEL_BITS);\n    racer++;\n  }\n  update_race_frame(0xef);\n  if (racer_speed[0] > 0 && racer_speed[0] <= 2) trike_test_playability |= 1;\n  frames = 0;\n  while (frames < 7) {\n    update_race_frame(0xef);\n    frames++;\n  }\n  if (racer_speed[0] >= 6 && racer_speed[0] <= 10) trike_test_playability |= 2;\n  frames = 0;\n  while (frames < 24) {\n    update_race_frame(0xef);\n    frames++;\n  }\n  if (racer_speed[0] == teddy_max_speed[0]) trike_test_playability |= 4;\n  racer_boost[0] = 30;\n  frames = 0;\n  while (frames < 6) {\n    update_race_frame(0xef);\n    frames++;\n  }\n  if (racer_speed[0] > teddy_max_speed[0] && racer_speed[0] <= teddy_max_speed[0] + 5) trike_test_playability |= 8;\n  before_brake = racer_speed[0];\n  frames = 0;\n  while (frames < 4) {\n    update_race_frame(0xfd);\n    frames++;\n  }\n  if (racer_speed[0] + 4 < before_brake) trike_test_playability |= 16;\n  racer_x[1] = racer_x[0];\n  racer_y[1] = racer_y[0];\n  racer_speed[0] = 10;\n  racer_speed[1] = 10;\n  racer_contact_cooldown[0] = 0;\n  racer_contact_cooldown[1] = 0;\n  animation_clock = 0;\n  resolve_racer_contacts();\n  if (racer_speed[0] == 6 && racer_speed[1] == 6 && racer_contact_cooldown[0] == 8) trike_test_playability |= 32;\n  teddy = 0;\n  while (teddy < 4) {\n    trike_selected_teddy = teddy;\n    trike_current_track = 0;\n    initialize_race();\n    racer_heading[0] = 0;\n    racer_turn_delay[0] = 0;\n    update_race_frame(0xfb);\n    if (racer_heading[0] == 7 && racer_turn_delay[0] == 14 - teddy_steering[teddy]) trike_test_steering |= 1 << teddy;\n    teddy++;\n  }\n}\n\nstatic void verify_sprite_projection(void) {\n  trike_selected_teddy = 0;\n  trike_current_track = 0;\n  initialize_race();\n  racer_x[0] = (uint16_t)200 << WEB64_SUBPIXEL_BITS;\n  racer_y[0] = (uint16_t)24 << WEB64_SUBPIXEL_BITS;\n  racer_jump[0] = 0;\n  racer_spin[0] = 0;\n  trike_render_racers_hot();\n  if (*((uint8_t*)0xd000) == 212 && (*((uint8_t*)0xd010) & 17) == 0) trike_test_sprite_trace |= 1;\n  if (*((uint8_t*)0xd001) == 104) trike_test_sprite_trace |= 2;\n  if (*((uint8_t*)0xd009) == 109) trike_test_sprite_trace |= 4;\n  if (*((uint8_t*)0xd015) == 255) trike_test_sprite_trace |= 8;\n  if (*((uint8_t*)0xd01b) == 240) trike_test_sprite_trace |= 16;\n  if (*((uint8_t*)0xd027) == COLOR_RED && *((uint8_t*)0x07f8) == 0x9c && *((uint8_t*)0x07f9) == 0x9c && *((uint8_t*)0x07fa) == 0x9c && *((uint8_t*)0x07fb) == 0x9c) trike_test_sprite_trace |= 32;\n  if (*((uint8_t*)0xd01c) == 255) trike_test_sprite_trace |= 64;\n  racer_x[0] = (uint16_t)264 << WEB64_SUBPIXEL_BITS;\n  trike_render_racers_hot();\n  if (*((uint8_t*)0xd000) == 20 && (*((uint8_t*)0xd010) & 17) == 17) trike_test_sprite_trace |= 128;\n}\n\nstatic void verify_checkpoint_lanes(void) {\n  trike_current_track = 0;\n  trike_selected_teddy = 0;\n  initialize_race();\n  racer_waypoint[0] = 0;\n  racer_lap[0] = 0;\n  racer_x[0] = 1408;\n  racer_y[0] = 2432;\n  trike_test_checkpoint_hot();\n  if (racer_lap[0] == 1 && racer_waypoint[0] == 1) trike_test_checkpoint_lanes |= 1;\n  racer_waypoint[0] = 0;\n  racer_lap[0] = 0;\n  racer_x[0] = 1408;\n  racer_y[0] = 1920;\n  trike_test_checkpoint_hot();\n  if (racer_lap[0] == 1 && racer_waypoint[0] == 1) trike_test_checkpoint_lanes |= 2;\n  racer_waypoint[0] = 0;\n  racer_lap[0] = 0;\n  racer_x[0] = 1408;\n  racer_y[0] = 2176;\n  trike_test_checkpoint_hot();\n  if (racer_lap[0] == 1 && racer_waypoint[0] == 1) trike_test_checkpoint_lanes |= 4;\n  racer_waypoint[0] = 0;\n  racer_lap[0] = 0;\n  racer_x[0] = 1664;\n  racer_y[0] = 2176;\n  trike_test_checkpoint_hot();\n  if (racer_lap[0] == 0 && racer_waypoint[0] == 0) trike_test_checkpoint_lanes |= 8;\n  racer_waypoint[0] = 0;\n  racer_lap[0] = 0;\n  racer_x[0] = 1152;\n  racer_y[0] = 2176;\n  trike_test_checkpoint_hot();\n  if (racer_lap[0] == 0 && racer_waypoint[0] == 0) trike_test_checkpoint_lanes |= 16;\n  racer_waypoint[0] = 0;\n  racer_lap[0] = 0;\n  racer_x[0] = 1408;\n  racer_y[0] = 2432;\n  trike_test_checkpoint_hot();\n  trike_render_hud_hot();\n  if (racer_lap[0] == 1 && *((uint8_t*)0x0411) == 50) trike_test_checkpoint_lanes |= 32;\n}\n\nstatic void verify_manual_races(void) {\n  uint8_t track;\n  uint8_t racer;\n  uint8_t manual_joy;\n  trike_selected_teddy = 0;\n  track = 0;\n  while (track < 3) {\n    trike_current_track = track;\n    trike_autopilot_player = 0;\n    initialize_race();\n    racer = 1;\n    while (racer < RACERS) {\n      racer_lap[racer] = LAPS - 1;\n      racer++;\n    }\n    while (racer_finished[0] == 0 && race_frames < 3500) {\n      manual_joy = scripted_player_joy();\n      update_race_frame(manual_joy);\n    }\n    if (racer_finished[0] != 0 && trike_timeout_used == 0) {\n      trike_test_manual_races++;\n      trike_test_full_races++;\n    }\n    trike_test_manual_lap[track] = racer_lap[0];\n    trike_test_manual_waypoint[track] = racer_waypoint[0];\n    trike_test_manual_frames[track] = race_frames;\n    trike_test_manual_x[track] = racer_x[0];\n    trike_test_manual_y[track] = racer_y[0];\n    trike_test_manual_heading[track] = racer_heading[0];\n    trike_test_manual_speed[track] = racer_speed[0];\n    trike_test_manual_desired[track] = trike_script_desired;\n    trike_test_manual_joy[track] = trike_script_joy;\n    trike_test_manual_difference[track] = trike_script_difference;\n    trike_test_manual_target[track] = trike_script_target;\n    trike_test_manual_pixel_y[track] = trike_script_pixel_y;\n    trike_test_manual_target_y[track] = trike_script_target_y;\n    track++;\n  }\n  trike_autopilot_player = 1;\n}\n\nstatic void run_autotest(void) {\n  uint8_t teddy;\n  uint8_t track;\n  uint8_t racer;\n  trike_test_status = 1;\n  trike_test_cases = 0;\n  trike_test_events = 0;\n  trike_test_results = 0;\n  trike_test_natural_finishes = 0;\n  trike_test_full_races = 0;\n  trike_test_championships = 0;\n  trike_test_joystick = 0;\n  trike_test_playability = 0;\n  trike_test_steering = 0;\n  trike_test_checkpoint_lanes = 0;\n  trike_test_manual_races = 0;\n  trike_test_sprite_trace = 0;\n  verify_player_speed_profile();\n  verify_sprite_projection();\n  verify_checkpoint_lanes();\n  verify_manual_races();\n  if (trike_test_manual_races != 3) {\n    trike_test_status = 0xe1;\n    return;\n  }\n  trike_autopilot_player = 1;\n  teddy = 0;\n  while (teddy < 4) {\n    racer = 0;\n    while (racer < RACERS) {\n      championship_points[racer] = 0;\n      racer++;\n    }\n    track = 0;\n    while (track < 3) {\n      trike_selected_teddy = teddy;\n      trike_current_track = track;\n      initialize_race();\n      move_test_racer_to_waypoint(test_boost_waypoint[track]);\n      profile_test_frame(0xef);\n      move_test_racer_to_waypoint(test_ramp_waypoint[track]);\n      profile_test_frame(0xef);\n      move_test_racer_to_waypoint(test_obstacle_waypoint[track]);\n      profile_test_frame(0xef);\n      profile_test_frame(0xff);\n      initialize_race();\n      trike_autopilot_player = 0;\n      racer_speed[0] = 0;\n      racer_heading[0] = 0;\n      racer_turn_delay[0] = 0;\n      racer_spin[0] = 0;\n      update_race_frame(0xeb);\n      if (racer_heading[0] == 7) trike_test_joystick++;\n      trike_autopilot_player = 1;\n      initialize_race();\n      racer = 0;\n      while (racer < RACERS) {\n        racer_lap[racer] = LAPS - 1;\n        racer++;\n      }\n      while (trike_race_complete == 0 && race_frames < 3500) update_race_frame(0xff);\n      if (trike_finish_count == RACERS && trike_race_complete != 0 && trike_timeout_used == 0) {\n        apply_results_points();\n        trike_test_results++;\n        trike_test_natural_finishes++;\n      }\n      trike_test_cases++;\n      track++;\n    }\n    if (track == 3) trike_test_championships++;\n    teddy++;\n  }\n  trike_test_status = 0xa5;\n  trike_autopilot_player = 0;\n  *((uint8_t*)0xd020) = COLOR_GREEN;\n  return;\n}\n#endif\n\nvoid main(void) {\n  uint8_t teddy;\n  uint8_t visual_target;\n  initialize_game();\n#ifdef TRIKE_AUTOTEST\n  run_autotest();\n#elif defined(TRIKE_VISUAL_TITLE)\n  set_ui_palette();\n  clear_screen(COLOR_WHITE);\n  draw_text(11, 2, \"TRIKE MANIA\", COLOR_YELLOW);\n  draw_text(6, 4, \"TEDDY TRICYCLE CHAMPIONSHIP\", COLOR_CYAN);\n  draw_text(9, 7, \"THREE WILD CIRCUITS\", COLOR_LIGHTGREEN);\n  draw_text(8, 8, \"FOUR TEDDIES ONE TROPHY\", COLOR_LIGHTRED);\n  draw_teddy_name(0, 1, 18, teddy_color[0]);\n  draw_teddy_name(1, 11, 18, teddy_color[1]);\n  draw_teddy_name(2, 20, 18, teddy_color[2]);\n  draw_teddy_name(3, 31, 18, teddy_color[3]);\n  draw_text(11, 21, \"JOYSTICK PORT 2\", COLOR_WHITE);\n  draw_text(13, 23, \"FIRE TO START\", COLOR_YELLOW);\n  render_title_teddies(0);\n#elif defined(TRIKE_VISUAL_SELECTION)\n  trike_selected_teddy = TRIKE_VISUAL_TEDDY;\n  draw_selected_teddy(trike_selected_teddy);\n  web64_sprite_render(&sprite_renderer, 0, 248, 108, SPRITE_POINTER_BASE + SPRITE_PORTRAIT_BASE + trike_selected_teddy, teddy_color[trike_selected_teddy], WEB64_SPRITE_VISIBLE | WEB64_SPRITE_MULTICOLOR | WEB64_SPRITE_EXPAND_X | WEB64_SPRITE_EXPAND_Y);\n#elif defined(TRIKE_VISUAL_TRACK)\n  trike_selected_teddy = TRIKE_VISUAL_TEDDY;\n  trike_current_track = TRIKE_VISUAL_TRACK;\n  trike_autopilot_player = 1;\n  initialize_race();\n  visual_target = test_boost_waypoint[trike_current_track];\n  teddy = waypoint_index(visual_target);\n  racer_x[0] = (uint16_t)waypoint_x[teddy] << WEB64_SUBPIXEL_BITS;\n  racer_y[0] = (uint16_t)waypoint_y[teddy] << WEB64_SUBPIXEL_BITS;\n  racer_waypoint[0] = (visual_target + 1) & 15;\n  visual_target = test_ramp_waypoint[trike_current_track];\n  teddy = waypoint_index(visual_target);\n  racer_x[1] = (uint16_t)waypoint_x[teddy] << WEB64_SUBPIXEL_BITS;\n  racer_y[1] = (uint16_t)waypoint_y[teddy] << WEB64_SUBPIXEL_BITS;\n  racer_waypoint[1] = (visual_target + 1) & 15;\n  visual_target = test_obstacle_waypoint[trike_current_track];\n  teddy = waypoint_index(visual_target);\n  racer_x[2] = (uint16_t)waypoint_x[teddy] << WEB64_SUBPIXEL_BITS;\n  racer_y[2] = (uint16_t)waypoint_y[teddy] << WEB64_SUBPIXEL_BITS;\n  racer_waypoint[2] = (visual_target + 1) & 15;\n  visual_target = (visual_target + 2) & 15;\n  teddy = waypoint_index(visual_target);\n  racer_x[3] = (uint16_t)waypoint_x[teddy] << WEB64_SUBPIXEL_BITS;\n  racer_y[3] = (uint16_t)waypoint_y[teddy] << WEB64_SUBPIXEL_BITS;\n  racer_waypoint[3] = (visual_target + 1) & 15;\n  draw_hud();\n  trike_render_hud_hot();\n  trike_render_racers_hot();\n#elif defined(TRIKE_VISUAL_RESULTS)\n  trike_selected_teddy = 0;\n  trike_current_track = 2;\n  configure_racer_teddies();\n  finish_order[0] = 2;\n  finish_order[1] = 0;\n  finish_order[2] = 3;\n  finish_order[3] = 1;\n  apply_results_points();\n  draw_results_content();\n#else\n  while (1) {\n    title_screen();\n    teddy_selection();\n    teddy = 0;\n    while (teddy < 4) {\n      championship_points[teddy] = 0;\n      teddy++;\n    }\n    trike_current_track = 0;\n    while (trike_current_track < 3) {\n      run_race();\n      results_screen();\n      trike_current_track++;\n    }\n  }\n#endif\n}\n",
+    "selectedEntryLabel": "auto"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c90",
+    "abi": "web64-stack-v1",
+    "entry": "main.c",
+    "entrySymbol": "",
+    "predefinedDefines": {},
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "freestanding",
+    "compilerBackend": "web64-native",
+    "startup": {
+      "processorPort": 53,
+      "disableInterrupts": true
+    },
+    "stack": {
+      "size": 512,
+      "address": 2048
+    },
+    "zeroPage": {
+      "reserved": [
+        {
+          "start": 224,
+          "end": 243,
+          "owner": "project"
+        }
+      ]
+    },
+    "ir": {
+      "schemaVersion": 1,
+      "enabled": false,
+      "verifyLegacyEquivalence": true,
+      "emitSnapshots": false
+    },
+    "optimize": {
+      "schemaVersion": 2,
+      "mode": "debug",
+      "enabled": false,
+      "passGates": {
+        "generatorPeephole": true,
+        "registerTemporaryStack": true,
+        "constantStrengthReduction": true,
+        "fixedPointSpecialization": true,
+        "booleanBranch": true,
+        "controlFlowLoop": true,
+        "cc65Peephole": true,
+        "zeroPagePromotion": false,
+        "deadCode": true,
+        "conditionalInlining": false,
+        "hardwareAware": true,
+        "runtimeData": true
+      },
+      "frameCriticalFunctions": [
+        "update_race_frame",
+        "move_racer",
+        "render_racers"
+      ],
+      "zeroPageReserved": [],
+      "budgets": {
+        "maxBuildByteGrowth": 2048,
+        "maxFunctionByteGrowth": 256,
+        "maxWorstCaseCycles": 16456
+      },
+      "diagnostics": {
+        "trace": "summary",
+        "missedOptimizationRemarks": true
+      }
+    }
+  },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "compatibilityDefaults": [],
+    "targets": [
+      {
+        "id": "main",
+        "label": "Trike Mania",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c",
+          "src/race-hot.asm"
+        ],
+        "entrySymbol": "main",
+        "origin": "$2d00",
+        "outputName": "trike-mania.prg",
+        "artifactContribution": "",
+        "defines": {},
+        "compatibilityModules": [
+          "c64lib.common",
+          "c64lib.chipset"
+        ],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
+        "c": {
+          "enabled": true,
+          "abi": "web64-stack-v1"
+        },
+        "cartridge": {},
+        "test": {}
+      },
+      {
+        "id": "verification",
+        "label": "Trike Mania Verification",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c",
+          "src/race-hot.asm"
+        ],
+        "entrySymbol": "main",
+        "origin": "$2c40",
+        "outputName": "trike-mania-verification.prg",
+        "artifactContribution": "",
+        "defines": {
+          "TRIKE_AUTOTEST": "1"
+        },
+        "compatibilityModules": [
+          "c64lib.common",
+          "c64lib.chipset"
+        ],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
+        "c": {
+          "enabled": true,
+          "abi": "web64-stack-v1"
+        },
+        "cartridge": {},
+        "test": {
+          "kind": "runtime",
+          "expectedStatusSymbol": "trike_test_status",
+          "expectedStatus": 165
+        }
+      },
+      {
+        "id": "visual-title",
+        "label": "Visual Evidence - Title",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c",
+          "src/race-hot.asm"
+        ],
+        "entrySymbol": "main",
+        "origin": "$2d00",
+        "outputName": "trike-mania-visual-title.prg",
+        "artifactContribution": "",
+        "defines": {
+          "TRIKE_VISUAL_TITLE": "1"
+        },
+        "compatibilityModules": [
+          "c64lib.common",
+          "c64lib.chipset"
+        ],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
+        "c": {
+          "enabled": true,
+          "abi": "web64-stack-v1"
+        },
+        "cartridge": {},
+        "test": {
+          "kind": "visual-evidence"
+        }
+      },
+      {
+        "id": "visual-selection",
+        "label": "Visual Evidence - Teddy Selection",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c",
+          "src/race-hot.asm"
+        ],
+        "entrySymbol": "main",
+        "origin": "$2d00",
+        "outputName": "trike-mania-visual-selection.prg",
+        "artifactContribution": "",
+        "defines": {
+          "TRIKE_VISUAL_SELECTION": "1",
+          "TRIKE_VISUAL_TEDDY": "2"
+        },
+        "compatibilityModules": [
+          "c64lib.common",
+          "c64lib.chipset"
+        ],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
+        "c": {
+          "enabled": true,
+          "abi": "web64-stack-v1"
+        },
+        "cartridge": {},
+        "test": {
+          "kind": "visual-evidence"
+        }
+      },
+      {
+        "id": "visual-results",
+        "label": "Visual Evidence - Results",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c",
+          "src/race-hot.asm"
+        ],
+        "entrySymbol": "main",
+        "origin": "$2d00",
+        "outputName": "trike-mania-visual-results.prg",
+        "artifactContribution": "",
+        "defines": {
+          "TRIKE_VISUAL_RESULTS": "1"
+        },
+        "compatibilityModules": [
+          "c64lib.common",
+          "c64lib.chipset"
+        ],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
+        "c": {
+          "enabled": true,
+          "abi": "web64-stack-v1"
+        },
+        "cartridge": {},
+        "test": {
+          "kind": "visual-evidence"
+        }
+      },
+      {
+        "id": "visual-track-1",
+        "label": "Visual Evidence - Teddy Park",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c",
+          "src/race-hot.asm"
+        ],
+        "entrySymbol": "main",
+        "origin": "$2d00",
+        "outputName": "trike-mania-visual-track-1.prg",
+        "artifactContribution": "",
+        "defines": {
+          "TRIKE_VISUAL_TEDDY": "0",
+          "TRIKE_VISUAL_TRACK": "0"
+        },
+        "compatibilityModules": [
+          "c64lib.common",
+          "c64lib.chipset"
+        ],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
+        "c": {
+          "enabled": true,
+          "abi": "web64-stack-v1"
+        },
+        "cartridge": {},
+        "test": {
+          "kind": "visual-evidence"
+        }
+      },
+      {
+        "id": "visual-track-2",
+        "label": "Visual Evidence - Picnic Panic",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c",
+          "src/race-hot.asm"
+        ],
+        "entrySymbol": "main",
+        "origin": "$2d00",
+        "outputName": "trike-mania-visual-track-2.prg",
+        "artifactContribution": "",
+        "defines": {
+          "TRIKE_VISUAL_TEDDY": "1",
+          "TRIKE_VISUAL_TRACK": "1"
+        },
+        "compatibilityModules": [
+          "c64lib.common",
+          "c64lib.chipset"
+        ],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
+        "c": {
+          "enabled": true,
+          "abi": "web64-stack-v1"
+        },
+        "cartridge": {},
+        "test": {
+          "kind": "visual-evidence"
+        }
+      },
+      {
+        "id": "visual-track-3",
+        "label": "Visual Evidence - Toybox Turbo",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c",
+          "src/race-hot.asm"
+        ],
+        "entrySymbol": "main",
+        "origin": "$2d00",
+        "outputName": "trike-mania-visual-track-3.prg",
+        "artifactContribution": "",
+        "defines": {
+          "TRIKE_VISUAL_TEDDY": "2",
+          "TRIKE_VISUAL_TRACK": "2"
+        },
+        "compatibilityModules": [
+          "c64lib.common",
+          "c64lib.chipset"
+        ],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
+        "c": {
+          "enabled": true,
+          "abi": "web64-stack-v1"
+        },
+        "cartridge": {},
+        "test": {
+          "kind": "visual-evidence"
+        }
+      }
+    ]
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": true,
+    "joystickPort": 2
+  },
+  "settings": {
+    "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "fit",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": false,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": true,
+      "gamepadEnabled": true,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": true,
+      "dialect": "web64-c90",
+      "abi": "web64-stack-v1",
+      "entry": "main.c",
+      "entrySymbol": "",
+      "predefinedDefines": {},
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "none",
+      "stdin": "none",
+      "runtimeProfile": "freestanding",
+      "compilerBackend": "web64-native",
+      "startup": {
+        "processorPort": 53,
+        "disableInterrupts": true
+      },
+      "stack": {
+        "size": 512,
+        "address": 2048
+      },
+      "zeroPage": {
+        "reserved": [
+          {
+            "start": 224,
+            "end": 243,
+            "owner": "project"
+          }
+        ]
+      },
+      "ir": {
+        "schemaVersion": 1,
+        "enabled": false,
+        "verifyLegacyEquivalence": true,
+        "emitSnapshots": false
+      }
+    }
+  },
+  "workspace": {
+    "selectedFile": null,
+    "editor": null,
+    "emulatorCollapsed": false
+  },
+  "template": {
+    "templateId": "trike-mania",
+    "templateVersion": 1,
+    "catalogVersion": 4,
+    "contentHash": "trike-mania-v1"
+  },
+  "media": {
+    "version": 2,
+    "files": [],
+    "disks": [],
+    "diskSets": []
+  },
+  "files": [
+    {
+      "path": "assets/chars/trike-mania.w64chr",
+      "name": "trike-mania.w64chr",
+      "kind": "charset",
+      "mode": "multicolor",
+      "width": 8,
+      "height": 8,
+      "count": 128,
+      "colors": {
+        "background": 0,
+        "multicolor1": 11,
+        "multicolor2": 12,
+        "foreground": 1,
+        "mode": "multicolor"
+      },
+      "includePath": "assets/chars/trike-mania.inc",
+      "dirty": false,
+      "lastCompiledHash": null,
+      "lastPatchedHash": null,
+      "asset": {
+        "schema": "web64.ide.graphicsAsset",
+        "version": 3,
+        "kind": "charset",
+        "assetId": "w64-f6622805",
+        "mode": "multicolor",
+        "displayMode": "text-multicolor",
+        "coloringMethod": "per-project",
+        "displayProfile": {
+          "version": 1,
+          "mode": "text-multicolor",
+          "coloringMethod": "per-project",
+          "background0": 0,
+          "background1": 11,
+          "background2": 12,
+          "background3": 6,
+          "foreground": 1,
+          "paletteProfile": null
+        },
+        "width": 8,
+        "height": 8,
+        "count": 128,
+        "colors": {
+          "background": 0,
+          "multicolor1": 11,
+          "multicolor2": 12,
+          "foreground": 1,
+          "mode": "multicolor"
+        },
+        "characterColors": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "screenColors": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "materials": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "characterNames": [
+          "HUD glyph 0",
+          "HUD glyph 1",
+          "HUD glyph 2",
+          "HUD glyph 3",
+          "HUD glyph 4",
+          "HUD glyph 5",
+          "HUD glyph 6",
+          "HUD glyph 7",
+          "HUD glyph 8",
+          "HUD glyph 9",
+          "HUD glyph 10",
+          "HUD glyph 11",
+          "HUD glyph 12",
+          "HUD glyph 13",
+          "HUD glyph 14",
+          "HUD glyph 15",
+          "HUD glyph 16",
+          "HUD glyph 17",
+          "HUD glyph 18",
+          "HUD glyph 19",
+          "HUD glyph 20",
+          "HUD glyph 21",
+          "HUD glyph 22",
+          "HUD glyph 23",
+          "HUD glyph 24",
+          "HUD glyph 25",
+          "HUD glyph 26",
+          "HUD glyph 27",
+          "HUD glyph 28",
+          "HUD glyph 29",
+          "HUD glyph 30",
+          "HUD glyph 31",
+          "HUD glyph 32",
+          "HUD glyph 33",
+          "HUD glyph 34",
+          "HUD glyph 35",
+          "HUD glyph 36",
+          "HUD glyph 37",
+          "HUD glyph 38",
+          "HUD glyph 39",
+          "HUD glyph 40",
+          "HUD glyph 41",
+          "HUD glyph 42",
+          "HUD glyph 43",
+          "HUD glyph 44",
+          "HUD glyph 45",
+          "HUD glyph 46",
+          "HUD glyph 47",
+          "HUD glyph 48",
+          "HUD glyph 49",
+          "HUD glyph 50",
+          "HUD glyph 51",
+          "HUD glyph 52",
+          "HUD glyph 53",
+          "HUD glyph 54",
+          "HUD glyph 55",
+          "HUD glyph 56",
+          "HUD glyph 57",
+          "HUD glyph 58",
+          "HUD glyph 59",
+          "HUD glyph 60",
+          "HUD glyph 61",
+          "HUD glyph 62",
+          "HUD glyph 63",
+          "Track glyph 0",
+          "Track glyph 1",
+          "Track glyph 2",
+          "Track glyph 3",
+          "Track glyph 4",
+          "Track glyph 5",
+          "Track glyph 6",
+          "Track glyph 7",
+          "Track glyph 8",
+          "Track glyph 9",
+          "Track glyph 10",
+          "Track glyph 11",
+          "Track glyph 12",
+          "Track glyph 13",
+          "Track glyph 14",
+          "Track glyph 15",
+          "Track glyph 16",
+          "Track glyph 17",
+          "Track glyph 18",
+          "Track glyph 19",
+          "Track glyph 20",
+          "Track glyph 21",
+          "Track glyph 22",
+          "Track glyph 23",
+          "Track glyph 24",
+          "Track glyph 25",
+          "Track glyph 26",
+          "Track glyph 27",
+          "Track glyph 28",
+          "Track glyph 29",
+          "Track glyph 30",
+          "Track glyph 31",
+          "Track glyph 32",
+          "Track glyph 33",
+          "Track glyph 34",
+          "Track glyph 35",
+          "Track glyph 36",
+          "Track glyph 37",
+          "Track glyph 38",
+          "Track glyph 39",
+          "Track glyph 40",
+          "Track glyph 41",
+          "Track glyph 42",
+          "Track glyph 43",
+          "Track glyph 44",
+          "Track glyph 45",
+          "Track glyph 46",
+          "Track glyph 47",
+          "Track glyph 48",
+          "Track glyph 49",
+          "Track glyph 50",
+          "Track glyph 51",
+          "Track glyph 52",
+          "Track glyph 53",
+          "Track glyph 54",
+          "Track glyph 55",
+          "Track glyph 56",
+          "Track glyph 57",
+          "Track glyph 58",
+          "Track glyph 59",
+          "Track glyph 60",
+          "Track glyph 61",
+          "Track glyph 62",
+          "Track glyph 63"
+        ],
+        "characterTags": [
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "font",
+            "hud"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ],
+          [
+            "track",
+            "multicolor"
+          ]
+        ],
+        "frames": [],
+        "animations": [],
+        "tiles": [],
+        "paletteProfile": null,
+        "nextFrameSerial": 0,
+        "includePath": "assets/chars/trike-mania.inc"
+      },
+      "assetId": "w64-f6622805",
+      "encoding": "base64",
+      "bytes": "AAAAAAAAAAA4RER8REREAHhERHhERHgAPEBAQEBAPAB4RERERER4AHxAQHhAQHwAfEBAeEBAQAA8QEBcREQ8AERERHxEREQAfBAQEBAQfAAcCAgISEgwAERIUGBQSEQAQEBAQEBAfABEbFRUREREAERkVExEREQAOEREREREOAB4RER4QEBAADhERERUSDQAeEREeFBIRAA8QEA4BAR4AHwQEBAQEBAAREREREREOABERERERCgQAERERFRUbEQAREQoEChERABERCgQEBAQAHwECBAgQHwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfAAAAAAAAAAAABAQAAQIECBAAAAAOERMVGREOAAQMBAQEBA4ADhEBAgQIHwAeAQEOAQEeAAIGChIfAgIAHxAQHgEBHgAOEBAeEREOAB8BAgQICAgADhERDhERDgAOEREPAQEOAAAEBAAEBAAAAAAAAAAAAAAEDh8fDgQAAAQODh8EBA4ABBUOHw4VBAAVChUKFQoVADAAAAIAAAAAAAAAAAAAMAAAAAAAAAAAAAACAAAAAAAAMAAAAgAAAAAAAAAAAAAwAAAAAAAAAAAAAAIAAAAAAAAAAAAMAAAAAAAAAAMAAAAAAAAAAAwAAAAAAAAAAwAAABVVVVWVVVVVVVVVZVVVVVVVVVVVlVVVVVVVVWVVVVVVQAA/1VVVVVVAAD/VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/wAAVVVVVVX/AAA1NTU1NTU1NVVVVVVVVVVVNTU1NTU1NTVVVVVVVVVVVVVVVVVVVVVVXFxcXFxcXFxVVVVVVVVVVVxcXFxcXFxcAAAAAAMCDgkAAi66lZVVVTkpJTU1JSWlVVVVVVVVVVUAAOy7W1ZVVQAAAAAAwMCwVVVVVVVVVVVwYGxYWFxcaJUlJTU1JSU5VVVVVVVVVVUJDgIDAAAAAFVVVZa5LgIAVVVVVVVVVVVYXFxYWGxgcFVVVlu77AAAsMDAAAAAAACvr6+v+vr6+q+vr6/6+vr6r6+vr/r6+vqvr6+v+vr6+lVVV1555VVVVVXVtW1bVVVVV1555VVVVVXVtW1bVVVVVVV/dnlwfntVVf1tnQ3tvX5wf39/f1VV7Q39/f39VVVVVVVVUFBMQFVVVVUFBTEBQEBIUFBVVVUBASEFBVVVVQ=="
+    },
+    {
+      "path": "assets/chars/trike-mania.inc",
+      "name": "trike-mania.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/chars/trike-mania.w64chr",
+      "source": "; Generated by Web64 IDE. Edit the graphics asset, not this file.\ntrike_mania_chars_size = $0400\n; Editor color references\ntrike_mania_color_0 = 0\ntrike_mania_background_color = 0\ntrike_mania_color_1 = $0b\ntrike_mania_multicolor_1 = $0b\ntrike_mania_color_2 = $0c\ntrike_mania_multicolor_2 = $0c\ntrike_mania_color_3 = 1\ntrike_mania_foreground_color = 1\ntrike_mania_char_count = $80\ntrike_mania_char_bytes = 8\ntrike_mania_display_mode = 1\ntrike_mania_coloring_method = 0\ntrike_mania_chars_end = trike_mania_chars + trike_mania_chars_size\ntrike_mania_char_0 = 0\ntrike_mania_char_1 = 1\ntrike_mania_char_2 = 2\ntrike_mania_char_3 = 3\ntrike_mania_char_4 = 4\ntrike_mania_char_5 = 5\ntrike_mania_char_6 = 6\ntrike_mania_char_7 = 7\ntrike_mania_char_8 = 8\ntrike_mania_char_9 = 9\ntrike_mania_char_10 = $0a\ntrike_mania_char_11 = $0b\ntrike_mania_char_12 = $0c\ntrike_mania_char_13 = $0d\ntrike_mania_char_14 = $0e\ntrike_mania_char_15 = $0f\n"
+    },
+    {
+      "path": "assets/sprites/teddy-trikes.w64spr",
+      "name": "teddy-trikes.w64spr",
+      "kind": "spritebank",
+      "mode": "multicolor",
+      "width": 24,
+      "height": 21,
+      "count": 33,
+      "colors": {
+        "background": 0,
+        "multicolor1": 0,
+        "foreground": 2,
+        "multicolor2": 1,
+        "mode": "multicolor"
+      },
+      "includePath": "assets/sprites/teddy-trikes.inc",
+      "dirty": false,
+      "lastCompiledHash": null,
+      "lastPatchedHash": null,
+      "asset": {
+        "schema": "web64.ide.graphicsAsset",
+        "version": 3,
+        "kind": "spritebank",
+        "assetId": "w64-c8e8ac73",
+        "mode": "multicolor",
+        "displayMode": "text-multicolor",
+        "coloringMethod": "per-project",
+        "displayProfile": null,
+        "width": 24,
+        "height": 21,
+        "count": 33,
+        "colors": {
+          "background": 0,
+          "multicolor1": 0,
+          "foreground": 2,
+          "multicolor2": 1,
+          "mode": "multicolor"
+        },
+        "characterColors": [],
+        "screenColors": [],
+        "materials": [],
+        "characterNames": [],
+        "characterTags": [],
+        "frames": [
+          {
+            "id": "trike-frame-0",
+            "name": "Pedal 0 0",
+            "tags": [
+              "race",
+              "pedal",
+              "direction-0"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-1",
+            "name": "Pedal 0 1",
+            "tags": [
+              "race",
+              "pedal",
+              "direction-0"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-2",
+            "name": "Pedal 1 0",
+            "tags": [
+              "race",
+              "pedal",
+              "direction-1"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-3",
+            "name": "Pedal 1 1",
+            "tags": [
+              "race",
+              "pedal",
+              "direction-1"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-4",
+            "name": "Pedal 2 0",
+            "tags": [
+              "race",
+              "pedal",
+              "direction-2"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-5",
+            "name": "Pedal 2 1",
+            "tags": [
+              "race",
+              "pedal",
+              "direction-2"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-6",
+            "name": "Pedal 3 0",
+            "tags": [
+              "race",
+              "pedal",
+              "direction-3"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-7",
+            "name": "Pedal 3 1",
+            "tags": [
+              "race",
+              "pedal",
+              "direction-3"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-8",
+            "name": "Pedal 4 0",
+            "tags": [
+              "race",
+              "pedal",
+              "direction-4"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-9",
+            "name": "Pedal 4 1",
+            "tags": [
+              "race",
+              "pedal",
+              "direction-4"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-10",
+            "name": "Pedal 5 0",
+            "tags": [
+              "race",
+              "pedal",
+              "direction-5"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-11",
+            "name": "Pedal 5 1",
+            "tags": [
+              "race",
+              "pedal",
+              "direction-5"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-12",
+            "name": "Pedal 6 0",
+            "tags": [
+              "race",
+              "pedal",
+              "direction-6"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-13",
+            "name": "Pedal 6 1",
+            "tags": [
+              "race",
+              "pedal",
+              "direction-6"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-14",
+            "name": "Pedal 7 0",
+            "tags": [
+              "race",
+              "pedal",
+              "direction-7"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-15",
+            "name": "Pedal 7 1",
+            "tags": [
+              "race",
+              "pedal",
+              "direction-7"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-16",
+            "name": "Jump 0",
+            "tags": [
+              "race",
+              "jump",
+              "direction-0"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-17",
+            "name": "Jump 1",
+            "tags": [
+              "race",
+              "jump",
+              "direction-1"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-18",
+            "name": "Jump 2",
+            "tags": [
+              "race",
+              "jump",
+              "direction-2"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-19",
+            "name": "Jump 3",
+            "tags": [
+              "race",
+              "jump",
+              "direction-3"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-20",
+            "name": "Jump 4",
+            "tags": [
+              "race",
+              "jump",
+              "direction-4"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-21",
+            "name": "Jump 5",
+            "tags": [
+              "race",
+              "jump",
+              "direction-5"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-22",
+            "name": "Jump 6",
+            "tags": [
+              "race",
+              "jump",
+              "direction-6"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-23",
+            "name": "Jump 7",
+            "tags": [
+              "race",
+              "jump",
+              "direction-7"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-24",
+            "name": "Spin 0",
+            "tags": [
+              "race",
+              "spin"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-25",
+            "name": "Spin 1",
+            "tags": [
+              "race",
+              "spin"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-26",
+            "name": "Spin 2",
+            "tags": [
+              "race",
+              "spin"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-27",
+            "name": "Spin 3",
+            "tags": [
+              "race",
+              "spin"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-28",
+            "name": "Shadow",
+            "tags": [
+              "shadow"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-29",
+            "name": "Bramble portrait",
+            "tags": [
+              "portrait",
+              "teddy-0"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-30",
+            "name": "Coco portrait",
+            "tags": [
+              "portrait",
+              "teddy-1"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-31",
+            "name": "Patches portrait",
+            "tags": [
+              "portrait",
+              "teddy-2"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trike-frame-32",
+            "name": "Tumbles portrait",
+            "tags": [
+              "portrait",
+              "teddy-3"
+            ],
+            "mode": "multicolor",
+            "foreground": 2,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          }
+        ],
+        "animations": [
+          {
+            "id": "pedal-0",
+            "name": "Pedal 0",
+            "frameIds": [
+              "trike-frame-0",
+              "trike-frame-1"
+            ],
+            "durations": [
+              4,
+              4
+            ],
+            "playback": "loop",
+            "fps": 12
+          },
+          {
+            "id": "pedal-1",
+            "name": "Pedal 1",
+            "frameIds": [
+              "trike-frame-2",
+              "trike-frame-3"
+            ],
+            "durations": [
+              4,
+              4
+            ],
+            "playback": "loop",
+            "fps": 12
+          },
+          {
+            "id": "pedal-2",
+            "name": "Pedal 2",
+            "frameIds": [
+              "trike-frame-4",
+              "trike-frame-5"
+            ],
+            "durations": [
+              4,
+              4
+            ],
+            "playback": "loop",
+            "fps": 12
+          },
+          {
+            "id": "pedal-3",
+            "name": "Pedal 3",
+            "frameIds": [
+              "trike-frame-6",
+              "trike-frame-7"
+            ],
+            "durations": [
+              4,
+              4
+            ],
+            "playback": "loop",
+            "fps": 12
+          },
+          {
+            "id": "pedal-4",
+            "name": "Pedal 4",
+            "frameIds": [
+              "trike-frame-8",
+              "trike-frame-9"
+            ],
+            "durations": [
+              4,
+              4
+            ],
+            "playback": "loop",
+            "fps": 12
+          },
+          {
+            "id": "pedal-5",
+            "name": "Pedal 5",
+            "frameIds": [
+              "trike-frame-10",
+              "trike-frame-11"
+            ],
+            "durations": [
+              4,
+              4
+            ],
+            "playback": "loop",
+            "fps": 12
+          },
+          {
+            "id": "pedal-6",
+            "name": "Pedal 6",
+            "frameIds": [
+              "trike-frame-12",
+              "trike-frame-13"
+            ],
+            "durations": [
+              4,
+              4
+            ],
+            "playback": "loop",
+            "fps": 12
+          },
+          {
+            "id": "pedal-7",
+            "name": "Pedal 7",
+            "frameIds": [
+              "trike-frame-14",
+              "trike-frame-15"
+            ],
+            "durations": [
+              4,
+              4
+            ],
+            "playback": "loop",
+            "fps": 12
+          },
+          {
+            "id": "spin",
+            "name": "Spin out",
+            "frameIds": [
+              "trike-frame-24",
+              "trike-frame-25",
+              "trike-frame-26",
+              "trike-frame-27"
+            ],
+            "durations": [
+              2,
+              2,
+              2,
+              2
+            ],
+            "playback": "loop",
+            "fps": 25
+          }
+        ],
+        "tiles": [],
+        "paletteProfile": null,
+        "nextFrameSerial": 33,
+        "includePath": "assets/sprites/teddy-trikes.inc"
+      },
+      "assetId": "w64-c8e8ac73",
+      "encoding": "base64",
+      "bytes": "AAAAAAAAAAQAABUAAFlAABkAACYAACYAACYAAKqAALqAAZ2QAG5ABWtUBZuUBWpUAGpAABUAAAAAAAAAAAAAAAAAAAAAAAAEAAAVAABZQAAZAAAmAAAmAAAmAACqgACrgAGdkABuQAV6VAW5lAVqVABqQAAVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAYAACkAApYAKRYAlEgFuRhSuiBV6mCa6oBa2QCrlQCrVABplAAVVAAAVAAAAAAAAAAAAAAAAAAAAAAAAAABAAAGAAApAAKWACkWAJRIBakYUqogVa9gm/qAfpkAqpUAqVQAaZQAFVQAAFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABUAABVUAFlqAKaeqar6Vq+aqVlqABVUABUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVAAAVVABZagCvmqmq+lamnqlZagAVVAAVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFQAFVQAaZQAqVQAqpUAfpkAm/qAVa9gUqogBakYAJRIACkWAAKWAAApAAAGAAABAAAAAAAAAAAAAAAAAAAAAABUABVUAGmUAKtUAKuVAFrZAJrqgFXqYFK6IAW5GACUSAApFgAClgAAKQAABgAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAFQAAakAFalQFuZQFelQAbkABnZAAq4AAqoAAJgAAJgAAJgAAGQAAWUAAFQAABAAAAAAAAAAAAAAAAAAAAAAAABUAAGpABWpUBZuUBWtUAG5AAZ2QALqAAKqAACYAACYAACYAABkAAFlAABUAAAQAAAAAAAAAAAAAAAAAAAAFQAAFVQAFmgAFegAVugAZ6QCq6QJq1QIroQkblAhFgCUaAGWgAJoAAKQAAFAAAEAAAAAAAAAAAAAAAAAAAAAABUAABVUABZoABVoAFaoAGa8Aq/kCfpUCKqEJGpQIRYAlGgBloACaAACkAABQAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVAAVVQCpZWqm+pWvqWq2mQCpZAAVVAAAVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFQAFVUAqWVqtpqVr6lqpvkAqWQAFVQAAFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAABQAACkAACaAABloAAlGgAIRYAJGpQCKqECfpUAq/kAGa8AFaoABVoABZoABVUABUAAAAAAAAAAAAAAAAAAQAAAUAAApAAAmgAAZaAAJRoACEWACRuUAiuhAmrVAKrpABnpABW6AAV6AAWaAAVVAAVAAAAAAAAAAAAAAAAAAAAAAAAEAAAVAAB7QAAZAAAmAAAmAACqgAC6gAGdkABuQAVrVAWblAVqVABqQAAVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAA0AABoAAKYAChkApEgFqSBSqiBVr4Cb+oB+mQCqlQCpVABplAAVVAAAVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFQAAFVQAWWoBpp6nqvpar5qnWWoBFVQAFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABUABVUAGmUAKtUAKuVAFrZAJrqgFXqgFK6IAW5IACkSAAKGQAApgAAGgAADQAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAFQAAakAFalQFuZQFelQAbkABnZAAq4AAqoAAJgAAJgAAGQAAe0AAFQAABAAAAAAAAAAAAAAAAAAAAAAAAAVAAAVVAAWaAAVaABWqABmvAKv5AL6VAiqhAhqUCEaAGSgA5oAAaQAAXAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFQAFVRAqWXapvmlr6natphAqWQAFVQAAFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAABcAABpAADmgAAZKAAIRoACG5QCK6EAqtUAqukAGekAFboABXoABZoABVUABUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXVABbpQFrqUFrqUH//0FrqUFrqUBbpQAXVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAF1QA26cBe61Bb7lB//9Bb7lBe61A26cAF1QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABdUAFulAWupQWupQf//QWupQWupQFulABdUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXVADbpwF7rUFvuUH//0FvuUF7rUDbpwAXVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACqAAqqoCqqqAqqoACqAAAAAAAAAAAAAAAAAAAAAAAAAAAVAFQVAFRdVXUVVVQVVVQqVagUVRQVfVQX/9QXw9QH/9AFPFABQUAKqqAFVWAFVVgFVVIFVVAAVQAAAAAAAAAAPqq8Kqqo9//fP//8P//8P//8Or6sP9f8PVV8PUF8DVVwDxTwA8PAAOsAD//wD//wD//wD//wAP8AAAAAAAAAACoAqCoAqK6quiqqqGqqqBVqaBVaKCVeqCv36CvD6Av/4Ao8YAKCgACqABVVVAqqoAqqoAqqoACqAAAAAAAAPAAWvpQavqRqvqkqvqgqvqgVVWQUVSQVfWQX/+QXw+QH/+AFPFABQUAAVQAFVVAFVVAFVVAFVVAAVQAA"
+    },
+    {
+      "path": "assets/sprites/teddy-trikes.inc",
+      "name": "teddy-trikes.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/sprites/teddy-trikes.w64spr",
+      "source": "; Generated by Web64 IDE. Edit the graphics asset, not this file.\nteddy_trikes_sprites_size = $0840\n; Editor color references\nteddy_trikes_color_0 = 0\nteddy_trikes_background_color = 0\nteddy_trikes_color_1 = 0\nteddy_trikes_multicolor_1 = 0\nteddy_trikes_color_2 = 2\nteddy_trikes_sprite_color = 2\nteddy_trikes_color_3 = 1\nteddy_trikes_multicolor_2 = 1\nteddy_trikes_sprite_count = $21\nteddy_trikes_sprites_end = teddy_trikes_sprites + teddy_trikes_sprites_size\nteddy_trikes_frame_0 = teddy_trikes_sprites + 0\nteddy_trikes_frame_0_color = 2\nteddy_trikes_frame_0_flags = 1\nteddy_trikes_frame_1 = teddy_trikes_sprites + $40\nteddy_trikes_frame_1_color = 2\nteddy_trikes_frame_1_flags = 1\nteddy_trikes_frame_2 = teddy_trikes_sprites + $80\nteddy_trikes_frame_2_color = 2\nteddy_trikes_frame_2_flags = 1\nteddy_trikes_frame_3 = teddy_trikes_sprites + $c0\nteddy_trikes_frame_3_color = 2\nteddy_trikes_frame_3_flags = 1\nteddy_trikes_frame_4 = teddy_trikes_sprites + $0100\nteddy_trikes_frame_4_color = 2\nteddy_trikes_frame_4_flags = 1\nteddy_trikes_frame_5 = teddy_trikes_sprites + $0140\nteddy_trikes_frame_5_color = 2\nteddy_trikes_frame_5_flags = 1\nteddy_trikes_frame_6 = teddy_trikes_sprites + $0180\nteddy_trikes_frame_6_color = 2\nteddy_trikes_frame_6_flags = 1\nteddy_trikes_frame_7 = teddy_trikes_sprites + $01c0\nteddy_trikes_frame_7_color = 2\nteddy_trikes_frame_7_flags = 1\nteddy_trikes_frame_8 = teddy_trikes_sprites + $0200\nteddy_trikes_frame_8_color = 2\nteddy_trikes_frame_8_flags = 1\nteddy_trikes_frame_9 = teddy_trikes_sprites + $0240\nteddy_trikes_frame_9_color = 2\nteddy_trikes_frame_9_flags = 1\nteddy_trikes_frame_10 = teddy_trikes_sprites + $0280\nteddy_trikes_frame_10_color = 2\nteddy_trikes_frame_10_flags = 1\nteddy_trikes_frame_11 = teddy_trikes_sprites + $02c0\nteddy_trikes_frame_11_color = 2\nteddy_trikes_frame_11_flags = 1\nteddy_trikes_frame_12 = teddy_trikes_sprites + $0300\nteddy_trikes_frame_12_color = 2\nteddy_trikes_frame_12_flags = 1\nteddy_trikes_frame_13 = teddy_trikes_sprites + $0340\nteddy_trikes_frame_13_color = 2\nteddy_trikes_frame_13_flags = 1\nteddy_trikes_frame_14 = teddy_trikes_sprites + $0380\nteddy_trikes_frame_14_color = 2\nteddy_trikes_frame_14_flags = 1\nteddy_trikes_frame_15 = teddy_trikes_sprites + $03c0\nteddy_trikes_frame_15_color = 2\nteddy_trikes_frame_15_flags = 1\nteddy_trikes_frame_16 = teddy_trikes_sprites + $0400\nteddy_trikes_frame_16_color = 2\nteddy_trikes_frame_16_flags = 1\nteddy_trikes_frame_17 = teddy_trikes_sprites + $0440\nteddy_trikes_frame_17_color = 2\nteddy_trikes_frame_17_flags = 1\nteddy_trikes_frame_18 = teddy_trikes_sprites + $0480\nteddy_trikes_frame_18_color = 2\nteddy_trikes_frame_18_flags = 1\nteddy_trikes_frame_19 = teddy_trikes_sprites + $04c0\nteddy_trikes_frame_19_color = 2\nteddy_trikes_frame_19_flags = 1\nteddy_trikes_frame_20 = teddy_trikes_sprites + $0500\nteddy_trikes_frame_20_color = 2\nteddy_trikes_frame_20_flags = 1\nteddy_trikes_frame_21 = teddy_trikes_sprites + $0540\nteddy_trikes_frame_21_color = 2\nteddy_trikes_frame_21_flags = 1\nteddy_trikes_frame_22 = teddy_trikes_sprites + $0580\nteddy_trikes_frame_22_color = 2\nteddy_trikes_frame_22_flags = 1\nteddy_trikes_frame_23 = teddy_trikes_sprites + $05c0\nteddy_trikes_frame_23_color = 2\nteddy_trikes_frame_23_flags = 1\nteddy_trikes_frame_24 = teddy_trikes_sprites + $0600\nteddy_trikes_frame_24_color = 2\nteddy_trikes_frame_24_flags = 1\nteddy_trikes_frame_25 = teddy_trikes_sprites + $0640\nteddy_trikes_frame_25_color = 2\nteddy_trikes_frame_25_flags = 1\nteddy_trikes_frame_26 = teddy_trikes_sprites + $0680\nteddy_trikes_frame_26_color = 2\nteddy_trikes_frame_26_flags = 1\nteddy_trikes_frame_27 = teddy_trikes_sprites + $06c0\nteddy_trikes_frame_27_color = 2\nteddy_trikes_frame_27_flags = 1\nteddy_trikes_frame_28 = teddy_trikes_sprites + $0700\nteddy_trikes_frame_28_color = 2\nteddy_trikes_frame_28_flags = 1\nteddy_trikes_frame_29 = teddy_trikes_sprites + $0740\nteddy_trikes_frame_29_color = 2\nteddy_trikes_frame_29_flags = 1\nteddy_trikes_frame_30 = teddy_trikes_sprites + $0780\nteddy_trikes_frame_30_color = 2\nteddy_trikes_frame_30_flags = 1\nteddy_trikes_frame_31 = teddy_trikes_sprites + $07c0\nteddy_trikes_frame_31_color = 2\nteddy_trikes_frame_31_flags = 1\nteddy_trikes_frame_32 = teddy_trikes_sprites + $0800\nteddy_trikes_frame_32_color = 2\nteddy_trikes_frame_32_flags = 1\nteddy_trikes_animation_pedal_0_count = 2\nteddy_trikes_animation_pedal_0_frame_0 = 0\nteddy_trikes_animation_pedal_0_duration_0 = 4\nteddy_trikes_animation_pedal_0_frame_1 = 1\nteddy_trikes_animation_pedal_0_duration_1 = 4\nteddy_trikes_animation_pedal_1_count = 2\nteddy_trikes_animation_pedal_1_frame_0 = 2\nteddy_trikes_animation_pedal_1_duration_0 = 4\nteddy_trikes_animation_pedal_1_frame_1 = 3\nteddy_trikes_animation_pedal_1_duration_1 = 4\nteddy_trikes_animation_pedal_2_count = 2\nteddy_trikes_animation_pedal_2_frame_0 = 4\nteddy_trikes_animation_pedal_2_duration_0 = 4\nteddy_trikes_animation_pedal_2_frame_1 = 5\nteddy_trikes_animation_pedal_2_duration_1 = 4\nteddy_trikes_animation_pedal_3_count = 2\nteddy_trikes_animation_pedal_3_frame_0 = 6\nteddy_trikes_animation_pedal_3_duration_0 = 4\nteddy_trikes_animation_pedal_3_frame_1 = 7\nteddy_trikes_animation_pedal_3_duration_1 = 4\nteddy_trikes_animation_pedal_4_count = 2\nteddy_trikes_animation_pedal_4_frame_0 = 8\nteddy_trikes_animation_pedal_4_duration_0 = 4\nteddy_trikes_animation_pedal_4_frame_1 = 9\nteddy_trikes_animation_pedal_4_duration_1 = 4\nteddy_trikes_animation_pedal_5_count = 2\nteddy_trikes_animation_pedal_5_frame_0 = $0a\nteddy_trikes_animation_pedal_5_duration_0 = 4\nteddy_trikes_animation_pedal_5_frame_1 = $0b\nteddy_trikes_animation_pedal_5_duration_1 = 4\nteddy_trikes_animation_pedal_6_count = 2\nteddy_trikes_animation_pedal_6_frame_0 = $0c\nteddy_trikes_animation_pedal_6_duration_0 = 4\nteddy_trikes_animation_pedal_6_frame_1 = $0d\nteddy_trikes_animation_pedal_6_duration_1 = 4\nteddy_trikes_animation_pedal_7_count = 2\nteddy_trikes_animation_pedal_7_frame_0 = $0e\nteddy_trikes_animation_pedal_7_duration_0 = 4\nteddy_trikes_animation_pedal_7_frame_1 = $0f\nteddy_trikes_animation_pedal_7_duration_1 = 4\nteddy_trikes_animation_spin_out_count = 4\nteddy_trikes_animation_spin_out_frame_0 = $18\nteddy_trikes_animation_spin_out_duration_0 = 2\nteddy_trikes_animation_spin_out_frame_1 = $19\nteddy_trikes_animation_spin_out_duration_1 = 2\nteddy_trikes_animation_spin_out_frame_2 = $1a\nteddy_trikes_animation_spin_out_duration_2 = 2\nteddy_trikes_animation_spin_out_frame_3 = $1b\nteddy_trikes_animation_spin_out_duration_3 = 2\n"
+    },
+    {
+      "path": "assets/blocks/teddy-park.w64blk",
+      "name": "teddy-park.w64blk",
+      "kind": "blockset",
+      "count": 17,
+      "includePath": "assets/blocks/teddy-park.inc",
+      "dirty": false,
+      "lastCompiledHash": null,
+      "lastPatchedHash": null,
+      "asset": {
+        "schema": "web64.ide.tileAsset",
+        "version": 2,
+        "assetId": "w64-6dbdd933",
+        "kind": "blockset",
+        "includePath": "assets/blocks/teddy-park.inc",
+        "charsetPath": "assets/chars/trike-mania.w64chr",
+        "charsetAssetId": "w64-f6622805",
+        "blockWidthChars": 2,
+        "blockHeightChars": 2,
+        "blockCount": 17,
+        "indexSize": 1,
+        "labels": [
+          "park_grass",
+          "flower_bed",
+          "duck_pond",
+          "road",
+          "curb_north",
+          "curb_south",
+          "curb_west",
+          "curb_east",
+          "turn_nw",
+          "turn_ne",
+          "turn_sw",
+          "turn_se",
+          "finish",
+          "honey_boost",
+          "garden_ramp",
+          "mud_puddle",
+          "hay_bales"
+        ],
+        "names": [
+          "Park grass",
+          "Flower bed",
+          "Duck pond",
+          "Road",
+          "North garden curb",
+          "South garden curb",
+          "West garden curb",
+          "East garden curb",
+          "North-west turn",
+          "North-east turn",
+          "South-west turn",
+          "South-east turn",
+          "Start and finish",
+          "Honey boost",
+          "Garden bridge ramp",
+          "Mud puddle",
+          "Hay-bale barrier"
+        ],
+        "tags": [
+          [
+            "offroad"
+          ],
+          [
+            "offroad",
+            "landmark"
+          ],
+          [
+            "offroad",
+            "landmark"
+          ],
+          [
+            "road"
+          ],
+          [
+            "road",
+            "edge"
+          ],
+          [
+            "road",
+            "edge"
+          ],
+          [
+            "road",
+            "edge"
+          ],
+          [
+            "road",
+            "edge"
+          ],
+          [
+            "road",
+            "corner"
+          ],
+          [
+            "road",
+            "corner"
+          ],
+          [
+            "road",
+            "corner"
+          ],
+          [
+            "road",
+            "corner"
+          ],
+          [
+            "road",
+            "finish"
+          ],
+          [
+            "road",
+            "boost"
+          ],
+          [
+            "road",
+            "jump"
+          ],
+          [
+            "road",
+            "obstacle"
+          ],
+          [
+            "solid",
+            "landmark"
+          ]
+        ],
+        "colors": [
+          13,
+          13,
+          14,
+          15,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10,
+          15,
+          15,
+          14,
+          11,
+          10
+        ],
+        "screenColors": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "materials": [
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "charsetPath": "assets/chars/trike-mania.w64chr",
+      "blockWidthChars": 2,
+      "blockHeightChars": 2,
+      "blockCount": 17,
+      "labels": [
+        "park_grass",
+        "flower_bed",
+        "duck_pond",
+        "road",
+        "curb_north",
+        "curb_south",
+        "curb_west",
+        "curb_east",
+        "turn_nw",
+        "turn_ne",
+        "turn_sw",
+        "turn_se",
+        "finish",
+        "honey_boost",
+        "garden_ramp",
+        "mud_puddle",
+        "hay_bales"
+      ],
+      "indexSize": 1,
+      "assetId": "w64-6dbdd933",
+      "encoding": "base64",
+      "bytes": "QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f1BRVFU="
+    },
+    {
+      "path": "assets/blocks/teddy-park.inc",
+      "name": "teddy-park.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/blocks/teddy-park.w64blk",
+      "source": "; Generated by Web64 IDE. Edit the tile asset, not this file.\n; Import binary as: .import binary teddy_park_blocks, \"assets/blocks/teddy-park.w64blk\"\nteddy_park_blocks_size = $44\nteddy_park_block_width = 2\nteddy_park_block_height = 2\nteddy_park_block_cell_count = 4\nteddy_park_block_index_size = 1\nteddy_park_block_stride = 4\nteddy_park_block_count = $11\nteddy_park_blocks_end = teddy_park_blocks + teddy_park_blocks_size\nteddy_park_block_0 = teddy_park_blocks + 0\nteddy_park_block_1 = teddy_park_blocks + 4\nteddy_park_block_2 = teddy_park_blocks + 8\nteddy_park_block_3 = teddy_park_blocks + $0c\nteddy_park_block_4 = teddy_park_blocks + $10\nteddy_park_block_5 = teddy_park_blocks + $14\nteddy_park_block_6 = teddy_park_blocks + $18\nteddy_park_block_7 = teddy_park_blocks + $1c\nteddy_park_block_8 = teddy_park_blocks + $20\nteddy_park_block_9 = teddy_park_blocks + $24\nteddy_park_block_10 = teddy_park_blocks + $28\nteddy_park_block_11 = teddy_park_blocks + $2c\nteddy_park_block_12 = teddy_park_blocks + $30\nteddy_park_block_13 = teddy_park_blocks + $34\nteddy_park_block_14 = teddy_park_blocks + $38\nteddy_park_block_15 = teddy_park_blocks + $3c\nteddy_park_block_16 = teddy_park_blocks + $40\n; Charset: assets/chars/trike-mania.w64chr\n"
+    },
+    {
+      "path": "assets/blocks/picnic-panic.w64blk",
+      "name": "picnic-panic.w64blk",
+      "kind": "blockset",
+      "count": 17,
+      "includePath": "assets/blocks/picnic-panic.inc",
+      "dirty": false,
+      "lastCompiledHash": null,
+      "lastPatchedHash": null,
+      "asset": {
+        "schema": "web64.ide.tileAsset",
+        "version": 2,
+        "assetId": "w64-91660dac",
+        "kind": "blockset",
+        "includePath": "assets/blocks/picnic-panic.inc",
+        "charsetPath": "assets/chars/trike-mania.w64chr",
+        "charsetAssetId": "w64-f6622805",
+        "blockWidthChars": 2,
+        "blockHeightChars": 2,
+        "blockCount": 17,
+        "indexSize": 1,
+        "labels": [
+          "picnic_rug",
+          "sandwiches",
+          "lemonade",
+          "road",
+          "napkin_north",
+          "napkin_south",
+          "napkin_west",
+          "napkin_east",
+          "turn_nw",
+          "turn_ne",
+          "turn_sw",
+          "turn_se",
+          "finish",
+          "jam_boost",
+          "basket_ramp",
+          "spilled_jelly",
+          "picnic_table"
+        ],
+        "names": [
+          "Picnic blanket",
+          "Sandwich display",
+          "Lemonade stand",
+          "Road",
+          "North napkin curb",
+          "South napkin curb",
+          "West napkin curb",
+          "East napkin curb",
+          "North-west turn",
+          "North-east turn",
+          "South-west turn",
+          "South-east turn",
+          "Start and finish",
+          "Jam boost",
+          "Picnic-basket ramp",
+          "Spilled jelly",
+          "Picnic-table barrier"
+        ],
+        "tags": [
+          [
+            "offroad"
+          ],
+          [
+            "offroad",
+            "landmark"
+          ],
+          [
+            "offroad",
+            "landmark"
+          ],
+          [
+            "road"
+          ],
+          [
+            "road",
+            "edge"
+          ],
+          [
+            "road",
+            "edge"
+          ],
+          [
+            "road",
+            "edge"
+          ],
+          [
+            "road",
+            "edge"
+          ],
+          [
+            "road",
+            "corner"
+          ],
+          [
+            "road",
+            "corner"
+          ],
+          [
+            "road",
+            "corner"
+          ],
+          [
+            "road",
+            "corner"
+          ],
+          [
+            "road",
+            "finish"
+          ],
+          [
+            "road",
+            "boost"
+          ],
+          [
+            "road",
+            "jump"
+          ],
+          [
+            "road",
+            "obstacle"
+          ],
+          [
+            "solid",
+            "landmark"
+          ]
+        ],
+        "colors": [
+          10,
+          8,
+          15,
+          15,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10,
+          15,
+          13,
+          15,
+          8,
+          9
+        ],
+        "screenColors": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "materials": [
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "charsetPath": "assets/chars/trike-mania.w64chr",
+      "blockWidthChars": 2,
+      "blockHeightChars": 2,
+      "blockCount": 17,
+      "labels": [
+        "picnic_rug",
+        "sandwiches",
+        "lemonade",
+        "road",
+        "napkin_north",
+        "napkin_south",
+        "napkin_west",
+        "napkin_east",
+        "turn_nw",
+        "turn_ne",
+        "turn_sw",
+        "turn_se",
+        "finish",
+        "jam_boost",
+        "basket_ramp",
+        "spilled_jelly",
+        "picnic_table"
+      ],
+      "indexSize": 1,
+      "assetId": "w64-91660dac",
+      "encoding": "base64",
+      "bytes": "REVGR0hJSktAQUJDTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f1BRVFU="
+    },
+    {
+      "path": "assets/blocks/picnic-panic.inc",
+      "name": "picnic-panic.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/blocks/picnic-panic.w64blk",
+      "source": "; Generated by Web64 IDE. Edit the tile asset, not this file.\n; Import binary as: .import binary picnic_panic_blocks, \"assets/blocks/picnic-panic.w64blk\"\npicnic_panic_blocks_size = $44\npicnic_panic_block_width = 2\npicnic_panic_block_height = 2\npicnic_panic_block_cell_count = 4\npicnic_panic_block_index_size = 1\npicnic_panic_block_stride = 4\npicnic_panic_block_count = $11\npicnic_panic_blocks_end = picnic_panic_blocks + picnic_panic_blocks_size\npicnic_panic_block_0 = picnic_panic_blocks + 0\npicnic_panic_block_1 = picnic_panic_blocks + 4\npicnic_panic_block_2 = picnic_panic_blocks + 8\npicnic_panic_block_3 = picnic_panic_blocks + $0c\npicnic_panic_block_4 = picnic_panic_blocks + $10\npicnic_panic_block_5 = picnic_panic_blocks + $14\npicnic_panic_block_6 = picnic_panic_blocks + $18\npicnic_panic_block_7 = picnic_panic_blocks + $1c\npicnic_panic_block_8 = picnic_panic_blocks + $20\npicnic_panic_block_9 = picnic_panic_blocks + $24\npicnic_panic_block_10 = picnic_panic_blocks + $28\npicnic_panic_block_11 = picnic_panic_blocks + $2c\npicnic_panic_block_12 = picnic_panic_blocks + $30\npicnic_panic_block_13 = picnic_panic_blocks + $34\npicnic_panic_block_14 = picnic_panic_blocks + $38\npicnic_panic_block_15 = picnic_panic_blocks + $3c\npicnic_panic_block_16 = picnic_panic_blocks + $40\n; Charset: assets/chars/trike-mania.w64chr\n"
+    },
+    {
+      "path": "assets/blocks/toybox-turbo.w64blk",
+      "name": "toybox-turbo.w64blk",
+      "kind": "blockset",
+      "count": 17,
+      "includePath": "assets/blocks/toybox-turbo.inc",
+      "dirty": false,
+      "lastCompiledHash": null,
+      "lastPatchedHash": null,
+      "asset": {
+        "schema": "web64.ide.tileAsset",
+        "version": 2,
+        "assetId": "w64-5f35ac74",
+        "kind": "blockset",
+        "includePath": "assets/blocks/toybox-turbo.inc",
+        "charsetPath": "assets/chars/trike-mania.w64chr",
+        "charsetAssetId": "w64-f6622805",
+        "blockWidthChars": 2,
+        "blockHeightChars": 2,
+        "blockCount": 17,
+        "indexSize": 1,
+        "labels": [
+          "toy_floor",
+          "building_blocks",
+          "clockwork_train",
+          "road",
+          "brick_north",
+          "brick_south",
+          "brick_west",
+          "brick_east",
+          "turn_nw",
+          "turn_ne",
+          "turn_sw",
+          "turn_se",
+          "finish",
+          "rocket_boost",
+          "launch_ramp",
+          "spinning_top",
+          "block_wall"
+        ],
+        "names": [
+          "Toy-room floor",
+          "Building blocks",
+          "Clockwork train",
+          "Road",
+          "North brick curb",
+          "South brick curb",
+          "West brick curb",
+          "East brick curb",
+          "North-west turn",
+          "North-east turn",
+          "South-west turn",
+          "South-east turn",
+          "Start and finish",
+          "Rocket boost",
+          "Launch ramp",
+          "Spinning top",
+          "Construction-block wall"
+        ],
+        "tags": [
+          [
+            "offroad"
+          ],
+          [
+            "offroad",
+            "landmark"
+          ],
+          [
+            "offroad",
+            "landmark"
+          ],
+          [
+            "road"
+          ],
+          [
+            "road",
+            "edge"
+          ],
+          [
+            "road",
+            "edge"
+          ],
+          [
+            "road",
+            "edge"
+          ],
+          [
+            "road",
+            "edge"
+          ],
+          [
+            "road",
+            "corner"
+          ],
+          [
+            "road",
+            "corner"
+          ],
+          [
+            "road",
+            "corner"
+          ],
+          [
+            "road",
+            "corner"
+          ],
+          [
+            "road",
+            "finish"
+          ],
+          [
+            "road",
+            "boost"
+          ],
+          [
+            "road",
+            "jump"
+          ],
+          [
+            "road",
+            "obstacle"
+          ],
+          [
+            "solid",
+            "landmark"
+          ]
+        ],
+        "colors": [
+          14,
+          15,
+          13,
+          15,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          15,
+          10,
+          8,
+          14,
+          9
+        ],
+        "screenColors": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "materials": [
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "charsetPath": "assets/chars/trike-mania.w64chr",
+      "blockWidthChars": 2,
+      "blockHeightChars": 2,
+      "blockCount": 17,
+      "labels": [
+        "toy_floor",
+        "building_blocks",
+        "clockwork_train",
+        "road",
+        "brick_north",
+        "brick_south",
+        "brick_west",
+        "brick_east",
+        "turn_nw",
+        "turn_ne",
+        "turn_sw",
+        "turn_se",
+        "finish",
+        "rocket_boost",
+        "launch_ramp",
+        "spinning_top",
+        "block_wall"
+      ],
+      "indexSize": 1,
+      "assetId": "w64-5f35ac74",
+      "encoding": "base64",
+      "bytes": "SElKS0BBQkNERUZHTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f1BRVFU="
+    },
+    {
+      "path": "assets/blocks/toybox-turbo.inc",
+      "name": "toybox-turbo.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/blocks/toybox-turbo.w64blk",
+      "source": "; Generated by Web64 IDE. Edit the tile asset, not this file.\n; Import binary as: .import binary toybox_turbo_blocks, \"assets/blocks/toybox-turbo.w64blk\"\ntoybox_turbo_blocks_size = $44\ntoybox_turbo_block_width = 2\ntoybox_turbo_block_height = 2\ntoybox_turbo_block_cell_count = 4\ntoybox_turbo_block_index_size = 1\ntoybox_turbo_block_stride = 4\ntoybox_turbo_block_count = $11\ntoybox_turbo_blocks_end = toybox_turbo_blocks + toybox_turbo_blocks_size\ntoybox_turbo_block_0 = toybox_turbo_blocks + 0\ntoybox_turbo_block_1 = toybox_turbo_blocks + 4\ntoybox_turbo_block_2 = toybox_turbo_blocks + 8\ntoybox_turbo_block_3 = toybox_turbo_blocks + $0c\ntoybox_turbo_block_4 = toybox_turbo_blocks + $10\ntoybox_turbo_block_5 = toybox_turbo_blocks + $14\ntoybox_turbo_block_6 = toybox_turbo_blocks + $18\ntoybox_turbo_block_7 = toybox_turbo_blocks + $1c\ntoybox_turbo_block_8 = toybox_turbo_blocks + $20\ntoybox_turbo_block_9 = toybox_turbo_blocks + $24\ntoybox_turbo_block_10 = toybox_turbo_blocks + $28\ntoybox_turbo_block_11 = toybox_turbo_blocks + $2c\ntoybox_turbo_block_12 = toybox_turbo_blocks + $30\ntoybox_turbo_block_13 = toybox_turbo_blocks + $34\ntoybox_turbo_block_14 = toybox_turbo_blocks + $38\ntoybox_turbo_block_15 = toybox_turbo_blocks + $3c\ntoybox_turbo_block_16 = toybox_turbo_blocks + $40\n; Charset: assets/chars/trike-mania.w64chr\n"
+    },
+    {
+      "path": "assets/maps/teddy-park.w64map",
+      "name": "teddy-park.w64map",
+      "kind": "map",
+      "includePath": "assets/maps/teddy-park.inc",
+      "dirty": false,
+      "lastCompiledHash": null,
+      "lastPatchedHash": null,
+      "asset": {
+        "schema": "web64.ide.tileAsset",
+        "version": 2,
+        "assetId": "w64-f06a6923",
+        "kind": "map",
+        "includePath": "assets/maps/teddy-park.inc",
+        "blocksetPath": "assets/blocks/teddy-park.w64blk",
+        "blocksetAssetId": "w64-6dbdd933",
+        "charsetPath": "assets/chars/trike-mania.w64chr",
+        "charsetAssetId": "w64-f6622805",
+        "mapWidth": 20,
+        "mapHeight": 10,
+        "indexSize": 1,
+        "cellKind": "block",
+        "mapName": "Teddy Park",
+        "planes": {
+          "material": {
+            "kind": "material",
+            "bytesPerCell": 1,
+            "encoding": "base64",
+            "bytes": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQAAAAAAAAIAAAAAAAAAAAAAAQEAAAAAAAAAAAAAAAAAAAAAAAABAQAAAAABAQEBAQEBAQEBAQAAAAEBAAAAAQEBAQEBAQEBAQEBAQUAAQEEAAABAQEBAQEBAQEBAQEBAAABAQAABQEBAQEBAQEBAQEBAQAAAwEBAAAAAAAAAAAAAAAAAAAAAAAAAQEAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQEBAQEBAQEBAQEBAQE="
+          }
+        },
+        "flexGrid": null,
+        "keyMap": null
+      },
+      "charsetPath": "assets/chars/trike-mania.w64chr",
+      "blocksetPath": "assets/blocks/teddy-park.w64blk",
+      "mapWidth": 20,
+      "mapHeight": 10,
+      "indexSize": 1,
+      "mapName": "Teddy Park",
+      "assetId": "w64-f06a6923",
+      "cellKind": "block",
+      "encoding": "base64",
+      "bytes": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgEBAQEBA0EBAQEBAQEBAQJAAAIAwMDBQUFBQUFBQUFBQUDAwcAAAYDAwsAAAAAAAAAAAAAAAoDBwAABgMHAAEAAAACAgAAAAAAABAHAAAPAwcAAAAAAAICAAAAAQAABgcAAAYDEAAAAAAAAAAAAAAAAAgDDgAABgMDBAQEBAQEBAQEBAQEAwMHAAAKBQUFDAUFBQUFBQUFBQUFBQsAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    },
+    {
+      "path": "assets/maps/teddy-park.material.bin",
+      "name": "teddy-park.material.bin",
+      "kind": "binary",
+      "generated": true,
+      "generatedFrom": "assets/maps/teddy-park.w64map",
+      "mapPlane": "material",
+      "encoding": "base64",
+      "bytes": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQAAAAAAAAIAAAAAAAAAAAAAAQEAAAAAAAAAAAAAAAAAAAAAAAABAQAAAAABAQEBAQEBAQEBAQAAAAEBAAAAAQEBAQEBAQEBAQEBAQUAAQEEAAABAQEBAQEBAQEBAQEBAAABAQAABQEBAQEBAQEBAQEBAQAAAwEBAAAAAAAAAAAAAAAAAAAAAAAAAQEAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQEBAQEBAQEBAQEBAQE="
+    },
+    {
+      "path": "assets/maps/teddy-park.inc",
+      "name": "teddy-park.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/maps/teddy-park.w64map",
+      "source": "; Generated by Web64 IDE. Edit the tile asset, not this file.\n; Import binary as: .import binary teddy_park_map, \"assets/maps/teddy-park.w64map\"\nteddy_park_map_width = $14\nteddy_park_map_height = $0a\nteddy_park_map_index_size = 1\nteddy_park_map_cell_kind = 0\nteddy_park_map_cell_count = teddy_park_map_width * teddy_park_map_height\nteddy_park_map_size = $c8\nteddy_park_map_end = teddy_park_map + teddy_park_map_size\n; Import binary as: .import binary teddy_park_material, \"assets/maps/teddy-park.material.bin\"\nteddy_park_material_size = $c8\nteddy_park_material_end = teddy_park_material + teddy_park_material_size\n; Block set: assets/blocks/teddy-park.w64blk\n; Charset: assets/chars/trike-mania.w64chr\n"
+    },
+    {
+      "path": "assets/maps/picnic-panic.w64map",
+      "name": "picnic-panic.w64map",
+      "kind": "map",
+      "includePath": "assets/maps/picnic-panic.inc",
+      "dirty": false,
+      "lastCompiledHash": null,
+      "lastPatchedHash": null,
+      "asset": {
+        "schema": "web64.ide.tileAsset",
+        "version": 2,
+        "assetId": "w64-96588e24",
+        "kind": "map",
+        "includePath": "assets/maps/picnic-panic.inc",
+        "blocksetPath": "assets/blocks/picnic-panic.w64blk",
+        "blocksetAssetId": "w64-91660dac",
+        "charsetPath": "assets/chars/trike-mania.w64chr",
+        "charsetAssetId": "w64-f6622805",
+        "mapWidth": 20,
+        "mapHeight": 10,
+        "indexSize": 1,
+        "cellKind": "block",
+        "mapName": "Picnic Panic",
+        "planes": {
+          "material": {
+            "kind": "material",
+            "bytesPerCell": 1,
+            "encoding": "base64",
+            "bytes": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQAAAAACAAAAAQEAAAAAAAAAAQEBAAAAAAAAAAAAAQAAAAAAAAABAQAAAAUAAAAAAAAAAAAAAAAAAAEBAAAAAAEBAAAEAAAAAAABAAAAAQEAAAABAQAAAAAAAwAAAQEAAAQBAQAAAAAAAAMAAAAAAAAAAAUAAAEBAAAAAAAAAAABAAAFAAAAAAAAAQEAAAAAAAAAAQEBAAAAAgAAAAABAQEBAQEBAQEBAQEBAQEBAQEBAQE="
+          }
+        },
+        "flexGrid": null,
+        "keyMap": null
+      },
+      "charsetPath": "assets/chars/trike-mania.w64chr",
+      "blocksetPath": "assets/blocks/picnic-panic.w64blk",
+      "mapWidth": 20,
+      "mapHeight": 10,
+      "indexSize": 1,
+      "mapName": "Picnic Panic",
+      "assetId": "w64-96588e24",
+      "cellKind": "block",
+      "encoding": "base64",
+      "bytes": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgEBAQNBAQJAQAIBAQEBAQJAAAABgMDAwMDAwMJAAYDAwMDAwcAAAgDAxAFBQMDAwMEAwMDBQMDBwAABgMDCwEBBgMPAwMDAwsABgMHAAAGAwcAAAgDAwMDDgMHAgIGAw8AAAYDAwQEAw4DBQMDAwMEBBADBwAABgMDAwMDAwsCCgMQAwMDAwMHAAAKBQUMBQULAAAACgUFDQUFBQsAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    },
+    {
+      "path": "assets/maps/picnic-panic.material.bin",
+      "name": "picnic-panic.material.bin",
+      "kind": "binary",
+      "generated": true,
+      "generatedFrom": "assets/maps/picnic-panic.w64map",
+      "mapPlane": "material",
+      "encoding": "base64",
+      "bytes": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQAAAAACAAAAAQEAAAAAAAAAAQEBAAAAAAAAAAAAAQAAAAAAAAABAQAAAAUAAAAAAAAAAAAAAAAAAAEBAAAAAAEBAAAEAAAAAAABAAAAAQEAAAABAQAAAAAAAwAAAQEAAAQBAQAAAAAAAAMAAAAAAAAAAAUAAAEBAAAAAAAAAAABAAAFAAAAAAAAAQEAAAAAAAAAAQEBAAAAAgAAAAABAQEBAQEBAQEBAQEBAQEBAQEBAQE="
+    },
+    {
+      "path": "assets/maps/picnic-panic.inc",
+      "name": "picnic-panic.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/maps/picnic-panic.w64map",
+      "source": "; Generated by Web64 IDE. Edit the tile asset, not this file.\n; Import binary as: .import binary picnic_panic_map, \"assets/maps/picnic-panic.w64map\"\npicnic_panic_map_width = $14\npicnic_panic_map_height = $0a\npicnic_panic_map_index_size = 1\npicnic_panic_map_cell_kind = 0\npicnic_panic_map_cell_count = picnic_panic_map_width * picnic_panic_map_height\npicnic_panic_map_size = $c8\npicnic_panic_map_end = picnic_panic_map + picnic_panic_map_size\n; Import binary as: .import binary picnic_panic_material, \"assets/maps/picnic-panic.material.bin\"\npicnic_panic_material_size = $c8\npicnic_panic_material_end = picnic_panic_material + picnic_panic_material_size\n; Block set: assets/blocks/picnic-panic.w64blk\n; Charset: assets/chars/trike-mania.w64chr\n"
+    },
+    {
+      "path": "assets/maps/toybox-turbo.w64map",
+      "name": "toybox-turbo.w64map",
+      "kind": "map",
+      "includePath": "assets/maps/toybox-turbo.inc",
+      "dirty": false,
+      "lastCompiledHash": null,
+      "lastPatchedHash": null,
+      "asset": {
+        "schema": "web64.ide.tileAsset",
+        "version": 2,
+        "assetId": "w64-e77d8a84",
+        "kind": "map",
+        "includePath": "assets/maps/toybox-turbo.inc",
+        "blocksetPath": "assets/blocks/toybox-turbo.w64blk",
+        "blocksetAssetId": "w64-5f35ac74",
+        "charsetPath": "assets/chars/trike-mania.w64chr",
+        "charsetAssetId": "w64-f6622805",
+        "mapWidth": 20,
+        "mapHeight": 10,
+        "indexSize": 1,
+        "cellKind": "block",
+        "mapName": "Toybox Turbo",
+        "planes": {
+          "material": {
+            "kind": "material",
+            "bytesPerCell": 1,
+            "encoding": "base64",
+            "bytes": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAIAAQAAAAAAAAIAAQEABAAAAAUAAAABAAAAAAAAAAABAQAAAAABAQAAAAAAAAABAQAFAAEBAAAAAQEBAAAAAAADAAEBAQAAAQEAAAABAAAAAAUAAAAAAQEAAAABAQAAAAEABAAAAAAAAQEBAAAAAAEBAAAAAAAAAAAAAAAAAAAFAAMAAQEAAAAAAAAAAQACAAAAAAAAAAABAQEBAQEBAQEBAQEBAQEBAQEBAQE="
+          }
+        },
+        "flexGrid": null,
+        "keyMap": null
+      },
+      "charsetPath": "assets/chars/trike-mania.w64chr",
+      "blocksetPath": "assets/blocks/toybox-turbo.w64blk",
+      "mapWidth": 20,
+      "mapHeight": 10,
+      "indexSize": 1,
+      "mapName": "Toybox Turbo",
+      "assetId": "w64-e77d8a84",
+      "cellKind": "block",
+      "encoding": "base64",
+      "bytes": "AAAAAAAAAAAAAAAAAAAAAAAAAAAACAQEBAQEBA0JAAgEBAQEBA0JAAAGDwMDBRADAwcABgMDBQUDAwcAAAYDAwsAAAYDAwQDAwcCAgoQBwAABgMHAQAABgMDAwMOBwAAAAYHAAAGAwcACAQDAxADAwULAAAIAwcAAAYDBwAGDwMDAwMHAgAACAMDBwAABgMDBAMDAwUDAwMEBAQQAw4HAAAKBQwFBQULAAoNBQUFBQUFBQsAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    },
+    {
+      "path": "assets/maps/toybox-turbo.material.bin",
+      "name": "toybox-turbo.material.bin",
+      "kind": "binary",
+      "generated": true,
+      "generatedFrom": "assets/maps/toybox-turbo.w64map",
+      "mapPlane": "material",
+      "encoding": "base64",
+      "bytes": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAIAAQAAAAAAAAIAAQEABAAAAAUAAAABAAAAAAAAAAABAQAAAAABAQAAAAAAAAABAQAFAAEBAAAAAQEBAAAAAAADAAEBAQAAAQEAAAABAAAAAAUAAAAAAQEAAAABAQAAAAEABAAAAAAAAQEBAAAAAAEBAAAAAAAAAAAAAAAAAAAFAAMAAQEAAAAAAAAAAQACAAAAAAAAAAABAQEBAQEBAQEBAQEBAQEBAQEBAQE="
+    },
+    {
+      "path": "assets/maps/toybox-turbo.inc",
+      "name": "toybox-turbo.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/maps/toybox-turbo.w64map",
+      "source": "; Generated by Web64 IDE. Edit the tile asset, not this file.\n; Import binary as: .import binary toybox_turbo_map, \"assets/maps/toybox-turbo.w64map\"\ntoybox_turbo_map_width = $14\ntoybox_turbo_map_height = $0a\ntoybox_turbo_map_index_size = 1\ntoybox_turbo_map_cell_kind = 0\ntoybox_turbo_map_cell_count = toybox_turbo_map_width * toybox_turbo_map_height\ntoybox_turbo_map_size = $c8\ntoybox_turbo_map_end = toybox_turbo_map + toybox_turbo_map_size\n; Import binary as: .import binary toybox_turbo_material, \"assets/maps/toybox-turbo.material.bin\"\ntoybox_turbo_material_size = $c8\ntoybox_turbo_material_end = toybox_turbo_material + toybox_turbo_material_size\n; Block set: assets/blocks/toybox-turbo.w64blk\n; Charset: assets/chars/trike-mania.w64chr\n"
+    },
+    {
+      "path": "src/race-hot.asm",
+      "name": "race-hot.asm",
+      "kind": "source",
+      "source": "; Trike Mania measured hot-path renderer and HUD writer.\n; Profile before replacement: sprite rendering 15,638 cycles and full HUD 247,399 cycles.\n; This routine owns only $e0-$e8, reserved by the project compiler configuration.\n\nHOT_ACTOR = $e0\nHOT_WORD = $e1\nHOT_X_LOW = $e2\nHOT_X_HIGH = $e3\nHOT_Y = $e4\nHOT_JUMP = $e5\nHOT_X_MSB = $e6\nHOT_POSITION = $e7\nHOT_PROGRESS = $e8\nHOT_JOY = $e9\nHOT_MAP_LO = $ea\nHOT_MAP_HI = $eb\nHOT_NEXT_X_LO = $ec\nHOT_NEXT_X_HI = $ed\nHOT_NEXT_Y_LO = $ee\nHOT_NEXT_Y_HI = $ef\nHOT_DELTA = $f0\nHOT_MATERIAL = $f1\nHOT_TARGET = $f2\nHOT_DESIRED = $f3\n\n; Profiled fused update for the fixed four-racer championship. The generic C\n; composition measured 79,491 cycles. This preserves the Game Runtime data\n; contracts while removing call/stack materialization from the frame loop.\n_trike_update_race_hot:\n    lda _trike_frame_joy\n    sta HOT_JOY\n    lda _trike_current_track\n    beq trike_update_map_teddy_park\n    cmp #$01\n    beq trike_update_map_picnic\n    lda #<toybox_turbo_material\n    sta HOT_MAP_LO\n    lda #>toybox_turbo_material\n    bne trike_update_map_ready\ntrike_update_map_teddy_park:\n    lda #<teddy_park_material\n    sta HOT_MAP_LO\n    lda #>teddy_park_material\n    bne trike_update_map_ready\ntrike_update_map_picnic:\n    lda #<picnic_panic_material\n    sta HOT_MAP_LO\n    lda #>picnic_panic_material\ntrike_update_map_ready:\n    sta HOT_MAP_HI\n    lda #$00\n    sta HOT_ACTOR\ntrike_update_actor_loop:\n    ldx HOT_ACTOR\n    lda _racer_finished,x\n    beq trike_update_actor_active\n    jmp trike_update_actor_next\ntrike_update_actor_active:\n    cpx #$00\n    bne trike_update_ai_steer\n    lda _trike_autopilot_player\n    bne trike_update_ai_steer\n    jmp trike_update_player_steer\n\n; AI selects one of eight headings from the next checkpoint cell.\ntrike_update_ai_steer:\n    lda _racer_turn_delay,x\n    beq trike_update_ai_target\n    sec\n    sbc #$01\n    sta _racer_turn_delay,x\n    jmp trike_update_after_steer\ntrike_update_ai_target:\n    lda _trike_current_track\n    asl\n    asl\n    asl\n    asl\n    clc\n    adc _racer_waypoint,x\n    sta HOT_TARGET\n    txa\n    asl\n    tay\n    sty HOT_WORD\n    ldy HOT_TARGET\n    lda _waypoint_cell_x,y\n    ldy HOT_WORD\n    cmp _racer_x+1,y\n    bne trike_update_ai_x_differs\n    ldy HOT_TARGET\n    lda _waypoint_cell_y,y\n    ldy HOT_WORD\n    cmp _racer_y+1,y\n    bcc trike_update_ai_wants_up\n    lda #$04\n    bne trike_update_ai_desired_ready\ntrike_update_ai_wants_up:\n    lda #$00\n    beq trike_update_ai_desired_ready\ntrike_update_ai_x_differs:\n    sta HOT_X_LOW\n    ldy HOT_TARGET\n    lda _waypoint_cell_y,y\n    ldy HOT_WORD\n    cmp _racer_y+1,y\n    beq trike_update_ai_horizontal\n    bcc trike_update_ai_upper\n    lda HOT_X_LOW\n    cmp _racer_x+1,y\n    bcc trike_update_ai_lower_left\n    lda #$03\n    bne trike_update_ai_desired_ready\ntrike_update_ai_lower_left:\n    lda #$05\n    bne trike_update_ai_desired_ready\ntrike_update_ai_upper:\n    lda HOT_X_LOW\n    cmp _racer_x+1,y\n    bcc trike_update_ai_upper_left\n    lda #$01\n    bne trike_update_ai_desired_ready\ntrike_update_ai_upper_left:\n    lda #$07\n    bne trike_update_ai_desired_ready\ntrike_update_ai_horizontal:\n    lda HOT_X_LOW\n    cmp _racer_x+1,y\n    bcc trike_update_ai_wants_left\n    lda #$02\n    bne trike_update_ai_desired_ready\ntrike_update_ai_wants_left:\n    lda #$06\ntrike_update_ai_desired_ready:\n    sta HOT_DESIRED\n    ldx HOT_ACTOR\n    cmp _racer_facing,x\n    beq trike_update_after_steer\n    sec\n    sbc _racer_facing,x\n    and #$07\n    cmp #$05\n    bcs trike_update_ai_turn_left\n    lda _racer_facing,x\n    clc\n    adc #$01\n    and #$07\n    sta _racer_facing,x\n    jmp trike_update_ai_turn_delay\ntrike_update_ai_turn_left:\n    lda _racer_facing,x\n    clc\n    adc #$07\n    and #$07\n    sta _racer_facing,x\ntrike_update_ai_turn_delay:\n    lda _racer_teddy,x\n    tay\n    lda #$08\n    sec\n    sbc _teddy_steering,y\n    sta _racer_turn_delay,x\n    jmp trike_update_after_steer\n\n; Player steering is active-low joystick port 2 input.\ntrike_update_player_steer:\n    lda _racer_spin\n    bne trike_update_after_steer\n    lda _racer_turn_delay\n    beq trike_update_player_read\n    sec\n    sbc #$01\n    sta _racer_turn_delay\n    jmp trike_update_after_steer\ntrike_update_player_read:\n    lda HOT_JOY\n    and #$04\n    bne trike_update_player_right\n    lda _racer_facing\n    clc\n    adc #$07\n    and #$07\n    sta _racer_facing\n    jmp trike_update_player_delay\ntrike_update_player_right:\n    lda HOT_JOY\n    and #$08\n    bne trike_update_after_steer\n    lda _racer_facing\n    clc\n    adc #$01\n    and #$07\n    sta _racer_facing\ntrike_update_player_delay:\n    ldy _racer_teddy\n    lda #$0e\n    sec\n    sbc _teddy_steering,y\n    sta _racer_turn_delay\n\ntrike_update_after_steer:\n    jsr trike_hot_read_current_material\n    jsr trike_hot_update_speed\n    jsr trike_hot_move\n    jsr trike_hot_tick_effects\n    jsr trike_hot_checkpoint\n    jsr trike_hot_animation_frame\ntrike_update_actor_next:\n    inc HOT_ACTOR\n    lda HOT_ACTOR\n    cmp #$04\n    beq trike_update_actors_done\n    jmp trike_update_actor_loop\ntrike_update_actors_done:\n    inc _animation_clock\n    inc _race_frames\n    bne trike_update_timeout_check\n    inc _race_frames+1\ntrike_update_timeout_check:\n    lda _race_frames+1\n    cmp #$0e\n    bcc trike_update_done\n    bne trike_update_timeout\n    lda _race_frames\n    cmp #$11\n    bcc trike_update_done\ntrike_update_timeout:\n    lda #$01\n    sta _trike_timeout_used\n    lda #$00\n    sta HOT_ACTOR\ntrike_update_timeout_loop:\n    ldx HOT_ACTOR\n    jsr trike_hot_finish_racer\n    inc HOT_ACTOR\n    lda HOT_ACTOR\n    cmp #$04\n    bne trike_update_timeout_loop\ntrike_update_done:\n    rts\n\ntrike_hot_read_current_material:\n    ldx HOT_ACTOR\n    txa\n    asl\n    tay\n    lda _racer_x+1,y\n    sta HOT_NEXT_X_HI\n    lda _racer_y+1,y\n    sta HOT_NEXT_Y_HI\n    jmp trike_hot_read_candidate_material\n\ntrike_hot_read_candidate_material:\n    lda HOT_NEXT_Y_HI\n    asl\n    asl\n    sta HOT_Y\n    asl\n    asl\n    clc\n    adc HOT_Y\n    clc\n    adc HOT_NEXT_X_HI\n    tay\n    lda (HOT_MAP_LO),y\n    sta HOT_MATERIAL\n    rts\n\ntrike_hot_update_speed:\n    ldx HOT_ACTOR\n    lda _racer_teddy,x\n    tay\n    lda HOT_MATERIAL\n    cmp #$01\n    bne trike_hot_speed_road_max\n    lda _teddy_grass_speed,y\n    bne trike_hot_speed_max_ready\ntrike_hot_speed_road_max:\n    lda _teddy_max_speed,y\ntrike_hot_speed_max_ready:\n    sta HOT_X_HIGH\n    ldy _trike_current_track\n    lda HOT_X_HIGH\n    clc\n    adc _track_speed_bonus,y\n    sta HOT_X_HIGH\n    ldx HOT_ACTOR\n    beq trike_hot_speed_boost_check\n    ldy _trike_current_track\n    lda HOT_X_HIGH\n    clc\n    adc _track_ai_bonus,y\n    sta HOT_X_HIGH\ntrike_hot_speed_boost_check:\n    ldx HOT_ACTOR\n    lda _racer_boost,x\n    beq trike_hot_speed_select_intent\n    lda HOT_X_HIGH\n    clc\n    adc #$05\n    sta HOT_X_HIGH\ntrike_hot_speed_select_intent:\n    cpx #$00\n    bne trike_hot_speed_pedal\n    lda _trike_autopilot_player\n    bne trike_hot_speed_pedal\n    lda HOT_JOY\n    and #$01\n    beq trike_hot_speed_pedal\n    lda HOT_JOY\n    and #$10\n    beq trike_hot_speed_pedal\n    lda HOT_MATERIAL\n    cmp #$01\n    beq trike_hot_speed_grass_coast\n    lda #$01\n    bne trike_hot_speed_brake_ready\ntrike_hot_speed_grass_coast:\n    lda #$03\ntrike_hot_speed_brake_ready:\n    sta HOT_X_LOW\n    lda HOT_JOY\n    and #$02\n    bne trike_hot_speed_coast\n    lda HOT_X_LOW\n    asl\n    sta HOT_X_LOW\ntrike_hot_speed_coast:\n    txa\n    asl\n    tay\n    lda _racer_vx,y\n    cmp HOT_X_LOW\n    bcc trike_hot_speed_zero\n    sec\n    sbc HOT_X_LOW\n    bcs trike_hot_speed_store\ntrike_hot_speed_zero:\n    lda #$00\n    beq trike_hot_speed_store\ntrike_hot_speed_pedal:\n    lda _racer_teddy,x\n    tay\n    lda _teddy_accel_step,y\n    sta HOT_X_LOW\n    txa\n    asl\n    tay\n    lda _racer_vx,y\n    clc\n    adc HOT_X_LOW\n    cmp HOT_X_HIGH\n    bcc trike_hot_speed_store\n    lda HOT_X_HIGH\ntrike_hot_speed_store:\n    ldx HOT_ACTOR\n    pha\n    txa\n    asl\n    tay\n    pla\n    sta _racer_vx,y\n    lda #$00\n    sta _racer_vx+1,y\n    rts\n\ntrike_hot_move:\n    ldx HOT_ACTOR\n    txa\n    asl\n    tay\n    sty HOT_WORD\n    lda _racer_x,y\n    sta HOT_NEXT_X_LO\n    lda _racer_x+1,y\n    sta HOT_NEXT_X_HI\n    lda _racer_y,y\n    sta HOT_NEXT_Y_LO\n    lda _racer_y+1,y\n    sta HOT_NEXT_Y_HI\n    lda _racer_vx,y\n    sta HOT_DELTA\n    lda _racer_facing,x\n    and #$01\n    beq trike_hot_delta_ready\n    lda HOT_DELTA\n    lsr\n    lsr\n    sta HOT_X_LOW\n    lda HOT_DELTA\n    sec\n    sbc HOT_X_LOW\n    sta HOT_DELTA\ntrike_hot_delta_ready:\n    lda _racer_facing,x\n    cmp #$00\n    beq trike_hot_move_up\n    cmp #$01\n    beq trike_hot_move_up_right\n    cmp #$02\n    beq trike_hot_move_right\n    cmp #$03\n    beq trike_hot_move_down_right\n    cmp #$04\n    beq trike_hot_move_down\n    cmp #$05\n    beq trike_hot_move_down_left\n    cmp #$06\n    beq trike_hot_move_left\n    jsr trike_hot_sub_x\n    jsr trike_hot_sub_y\n    jmp trike_hot_move_clamp\ntrike_hot_move_up:\n    jsr trike_hot_sub_y\n    jmp trike_hot_move_clamp\ntrike_hot_move_up_right:\n    jsr trike_hot_add_x\n    jsr trike_hot_sub_y\n    jmp trike_hot_move_clamp\ntrike_hot_move_right:\n    jsr trike_hot_add_x\n    jmp trike_hot_move_clamp\ntrike_hot_move_down_right:\n    jsr trike_hot_add_x\n    jsr trike_hot_add_y\n    jmp trike_hot_move_clamp\ntrike_hot_move_down:\n    jsr trike_hot_add_y\n    jmp trike_hot_move_clamp\ntrike_hot_move_down_left:\n    jsr trike_hot_sub_x\n    jsr trike_hot_add_y\n    jmp trike_hot_move_clamp\ntrike_hot_move_left:\n    jsr trike_hot_sub_x\ntrike_hot_move_clamp:\n    jsr trike_hot_clamp_x\n    jsr trike_hot_clamp_y\n    jsr trike_hot_read_candidate_material\n    lda HOT_MATERIAL\n    cmp #$05\n    bne trike_hot_commit_move\n    ldy HOT_WORD\n    lda _racer_vx,y\n    lsr\n    sta _racer_vx,y\n    ldx HOT_ACTOR\n    lda _racer_facing,x\n    clc\n    adc #$04\n    and #$07\n    sta _racer_facing,x\n    ; TODO SFX: play soft barrier bump.\n    rts\ntrike_hot_commit_move:\n    ldy HOT_WORD\n    lda HOT_NEXT_X_LO\n    sta _racer_x,y\n    lda HOT_NEXT_X_HI\n    sta _racer_x+1,y\n    lda HOT_NEXT_Y_LO\n    sta _racer_y,y\n    lda HOT_NEXT_Y_HI\n    sta _racer_y+1,y\n    ldx HOT_ACTOR\n    lda HOT_MATERIAL\n    cmp _racer_last_material,x\n    beq trike_hot_move_done\n    sta _racer_last_material,x\n    cmp #$02\n    beq trike_hot_trigger_boost\n    cmp #$03\n    beq trike_hot_trigger_ramp\n    cmp #$04\n    beq trike_hot_trigger_oil\ntrike_hot_move_done:\n    rts\ntrike_hot_trigger_boost:\n    ; TODO SFX: play honey-boost pickup whoosh.\n    lda #30\n    sta _racer_boost,x\n    lda _trike_test_events\n    ora #$01\n    sta _trike_test_events\n    rts\ntrike_hot_trigger_ramp:\n    ; TODO SFX: play tricycle ramp launch.\n    lda #28\n    sta _racer_jump,x\n    lda _trike_test_events\n    ora #$02\n    sta _trike_test_events\n    rts\ntrike_hot_trigger_oil:\n    ; TODO SFX: play oil-spin wobble.\n    lda _racer_teddy,x\n    tay\n    lda #24\n    sec\n    sbc _teddy_grip,y\n    ldx HOT_ACTOR\n    sta _racer_spin,x\n    lda _trike_test_events\n    ora #$04\n    sta _trike_test_events\n    rts\n\ntrike_hot_add_x:\n    lda HOT_NEXT_X_LO\n    clc\n    adc HOT_DELTA\n    sta HOT_NEXT_X_LO\n    lda HOT_NEXT_X_HI\n    adc #$00\n    sta HOT_NEXT_X_HI\n    rts\ntrike_hot_sub_x:\n    lda HOT_NEXT_X_LO\n    sec\n    sbc HOT_DELTA\n    sta HOT_NEXT_X_LO\n    lda HOT_NEXT_X_HI\n    sbc #$00\n    sta HOT_NEXT_X_HI\n    rts\ntrike_hot_add_y:\n    lda HOT_NEXT_Y_LO\n    clc\n    adc HOT_DELTA\n    sta HOT_NEXT_Y_LO\n    lda HOT_NEXT_Y_HI\n    adc #$00\n    sta HOT_NEXT_Y_HI\n    rts\ntrike_hot_sub_y:\n    lda HOT_NEXT_Y_LO\n    sec\n    sbc HOT_DELTA\n    sta HOT_NEXT_Y_LO\n    lda HOT_NEXT_Y_HI\n    sbc #$00\n    sta HOT_NEXT_Y_HI\n    rts\n\ntrike_hot_clamp_x:\n    lda HOT_NEXT_X_HI\n    bmi trike_hot_clamp_x_min\n    bne trike_hot_clamp_x_max_check\n    lda HOT_NEXT_X_LO\n    cmp #$c0\n    bcs trike_hot_clamp_x_done\ntrike_hot_clamp_x_min:\n    lda #$c0\n    sta HOT_NEXT_X_LO\n    lda #$00\n    sta HOT_NEXT_X_HI\n    rts\ntrike_hot_clamp_x_max_check:\n    cmp #$13\n    bcc trike_hot_clamp_x_done\n    bne trike_hot_clamp_x_max\n    lda HOT_NEXT_X_LO\n    cmp #$31\n    bcc trike_hot_clamp_x_done\ntrike_hot_clamp_x_max:\n    lda #$30\n    sta HOT_NEXT_X_LO\n    lda #$13\n    sta HOT_NEXT_X_HI\ntrike_hot_clamp_x_done:\n    rts\n\ntrike_hot_clamp_y:\n    lda HOT_NEXT_Y_HI\n    bmi trike_hot_clamp_y_min\n    bne trike_hot_clamp_y_max_check\n    lda HOT_NEXT_Y_LO\n    cmp #$c0\n    bcs trike_hot_clamp_y_done\ntrike_hot_clamp_y_min:\n    lda #$c0\n    sta HOT_NEXT_Y_LO\n    lda #$00\n    sta HOT_NEXT_Y_HI\n    rts\ntrike_hot_clamp_y_max_check:\n    cmp #$09\n    bcc trike_hot_clamp_y_done\n    bne trike_hot_clamp_y_max\n    lda HOT_NEXT_Y_LO\n    cmp #$31\n    bcc trike_hot_clamp_y_done\ntrike_hot_clamp_y_max:\n    lda #$30\n    sta HOT_NEXT_Y_LO\n    lda #$09\n    sta HOT_NEXT_Y_HI\ntrike_hot_clamp_y_done:\n    rts\n\ntrike_hot_tick_effects:\n    ldx HOT_ACTOR\n    lda _racer_boost,x\n    beq trike_hot_tick_jump\n    sec\n    sbc #$01\n    sta _racer_boost,x\ntrike_hot_tick_jump:\n    lda _racer_jump,x\n    beq trike_hot_tick_spin\n    sec\n    sbc #$01\n    sta _racer_jump,x\ntrike_hot_tick_spin:\n    lda _racer_spin,x\n    beq trike_hot_tick_done\n    sec\n    sbc #$01\n    sta _racer_spin,x\n    and #$01\n    bne trike_hot_tick_done\n    lda _racer_facing,x\n    clc\n    adc #$01\n    and #$07\n    sta _racer_facing,x\ntrike_hot_tick_done:\n    rts\n\ntrike_hot_checkpoint:\n    ldx HOT_ACTOR\n    lda _trike_current_track\n    asl\n    asl\n    asl\n    asl\n    clc\n    adc _racer_waypoint,x\n    sta HOT_TARGET\n    txa\n    asl\n    tay\n    sty HOT_WORD\n    ldy HOT_TARGET\n    lda _waypoint_gate_axis,y\n    bne trike_hot_checkpoint_vertical_gate\n\n; Horizontal approach: the racer must cross this X column, but any of the\n; three road lanes (checkpoint Y - 1 through checkpoint Y + 1) are valid.\ntrike_hot_checkpoint_horizontal_gate:\n    ldy HOT_TARGET\n    lda _waypoint_cell_x,y\n    sta HOT_X_LOW\n    ldy HOT_WORD\n    lda _racer_x+1,y\n    cmp HOT_X_LOW\n    beq trike_hot_checkpoint_horizontal_x_ok\n    jmp trike_hot_checkpoint_done\ntrike_hot_checkpoint_horizontal_x_ok:\n    ldy HOT_TARGET\n    lda _waypoint_cell_y,y\n    sta HOT_Y\n    ldy HOT_WORD\n    lda _racer_y+1,y\n    sec\n    sbc HOT_Y\n    clc\n    adc #$01\n    cmp #$03\n    bcc trike_hot_checkpoint_hit\n    jmp trike_hot_checkpoint_done\n\n; Vertical approach: the racer must cross this Y row, but any of the three\n; road lanes (checkpoint X - 1 through checkpoint X + 1) are valid.\ntrike_hot_checkpoint_vertical_gate:\n    ldy HOT_TARGET\n    lda _waypoint_cell_y,y\n    sta HOT_Y\n    ldy HOT_WORD\n    lda _racer_y+1,y\n    cmp HOT_Y\n    beq trike_hot_checkpoint_vertical_y_ok\n    jmp trike_hot_checkpoint_done\ntrike_hot_checkpoint_vertical_y_ok:\n    ldy HOT_TARGET\n    lda _waypoint_cell_x,y\n    sta HOT_X_LOW\n    ldy HOT_WORD\n    lda _racer_x+1,y\n    sec\n    sbc HOT_X_LOW\n    clc\n    adc #$01\n    cmp #$03\n    bcc trike_hot_checkpoint_hit\n    jmp trike_hot_checkpoint_done\n\ntrike_hot_checkpoint_hit:\n    ldx HOT_ACTOR\n    lda _racer_waypoint,x\n    beq trike_hot_new_lap\n    clc\n    adc #$01\n    cmp #16\n    bcc trike_hot_store_waypoint\n    lda #$00\ntrike_hot_store_waypoint:\n    sta _racer_waypoint,x\ntrike_hot_checkpoint_done:\n    rts\n\n_trike_test_checkpoint_hot:\n    lda #$00\n    sta HOT_ACTOR\n    jsr trike_hot_checkpoint\n    rts\ntrike_hot_new_lap:\n    ; TODO SFX: play completed-lap bell for the player.\n    inc _racer_lap,x\n    lda #$01\n    sta _racer_waypoint,x\n    lda _racer_lap,x\n    cmp #$03\n    bcc trike_hot_checkpoint_done\n    jsr trike_hot_finish_racer\n    rts\n\ntrike_hot_finish_racer:\n    ; TODO SFX: play player finish-line fanfare when HOT_ACTOR is zero.\n    ldx HOT_ACTOR\n    lda _racer_finished,x\n    bne trike_hot_finish_done\n    lda #$01\n    sta _racer_finished,x\n    txa\n    asl\n    tay\n    lda #$00\n    sta _racer_vx,y\n    sta _racer_vx+1,y\n    ldy _trike_finish_count\n    txa\n    sta _finish_order,y\n    inc _trike_finish_count\n    lda _trike_finish_count\n    cmp #$04\n    bne trike_hot_finish_done\n    lda #$01\n    sta _trike_race_complete\ntrike_hot_finish_done:\n    rts\n\ntrike_hot_animation_frame:\n    ldx HOT_ACTOR\n    lda _racer_facing,x\n    asl\n    sta HOT_X_LOW\n    lda _animation_clock\n    lsr\n    lsr\n    and #$01\n    ora HOT_X_LOW\n    sta _racer_frame,x\n    rts\n\n_trike_render_racers_hot:\n    lda #$00\n    sta HOT_ACTOR\n    sta HOT_X_MSB\ntrike_render_actor_loop:\n    lda HOT_ACTOR\n    asl\n    tay\n    sty HOT_WORD\n\n    lda _racer_x+1,y\n    sta HOT_X_HIGH\n    asl\n    asl\n    asl\n    asl\n    sta HOT_X_LOW\n    lda _racer_x,y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora HOT_X_LOW\n    clc\n    adc #12\n    sta HOT_X_LOW\n    php\n    lda HOT_X_HIGH\n    lsr\n    lsr\n    lsr\n    lsr\n    plp\n    adc #$00\n    and #$01\n    sta HOT_X_HIGH\n\n    ldy HOT_WORD\n    lda _racer_y+1,y\n    asl\n    asl\n    asl\n    asl\n    sta HOT_Y\n    lda _racer_y,y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora HOT_Y\n    clc\n    adc #80\n    sta HOT_Y\n\n    ldy HOT_WORD\n    lda HOT_X_LOW\n    sta $d000,y\n    sta $d008,y\n    lda HOT_Y\n    clc\n    adc #5\n    sta $d009,y\n\n    ldx HOT_ACTOR\n    lda _racer_jump,x\n    beq trike_render_no_jump\n    eor #$ff\n    clc\n    adc #29\n    tay\n    lda _jump_arc,y\n    sta HOT_JUMP\n    lda _racer_facing,x\n    clc\n    adc #16\n    jmp trike_render_frame_ready\ntrike_render_no_jump:\n    lda #$00\n    sta HOT_JUMP\n    lda _racer_spin,x\n    beq trike_render_pedal_frame\n    lsr\n    and #$03\n    clc\n    adc #24\n    jmp trike_render_frame_ready\ntrike_render_pedal_frame:\n    lda _racer_frame,x\ntrike_render_frame_ready:\n    clc\n    adc #$90\n    ldx HOT_ACTOR\n    sta $07f8,x\n    lda #$ac\n    sta $07fc,x\n\n    ldy HOT_WORD\n    lda HOT_Y\n    sec\n    sbc HOT_JUMP\n    sta $d001,y\n\n    ldx HOT_ACTOR\n    lda _racer_teddy,x\n    tay\n    lda _teddy_color,y\n    sta $d027,x\n    lda #11\n    ldx HOT_ACTOR\n    sta $d02b,x\n\n    lda HOT_X_HIGH\n    beq trike_render_no_msb\n    ldx HOT_ACTOR\n    lda trike_x_msb_pair,x\n    ora HOT_X_MSB\n    sta HOT_X_MSB\ntrike_render_no_msb:\n    inc HOT_ACTOR\n    lda HOT_ACTOR\n    cmp #4\n    beq trike_render_actor_done\n    jmp trike_render_actor_loop\ntrike_render_actor_done:\n\n    lda HOT_X_MSB\n    sta $d010\n    lda #$ff\n    sta $d015\n    sta $d01c\n    lda #$f0\n    sta $d01b\n    lda #$00\n    sta $d017\n    sta $d01d\n    rts\n\ntrike_x_msb_pair:\n    .byte $11,$22,$44,$88\n\n_trike_render_hud_hot:\n    lda _racer_lap\n    clc\n    adc #1\n    cmp #4\n    bcc trike_hud_lap_ready\n    lda #3\ntrike_hud_lap_ready:\n    clc\n    adc #48\n    sta $0411\n\n    lda _racer_lap\n    asl\n    asl\n    asl\n    asl\n    clc\n    adc _racer_waypoint\n    sta HOT_PROGRESS\n    lda #1\n    sta HOT_POSITION\n    ldx #1\ntrike_hud_position_loop:\n    lda _racer_lap,x\n    asl\n    asl\n    asl\n    asl\n    clc\n    adc _racer_waypoint,x\n    cmp HOT_PROGRESS\n    bcc trike_hud_position_next\n    beq trike_hud_position_next\n    inc HOT_POSITION\ntrike_hud_position_next:\n    inx\n    cpx #4\n    bne trike_hud_position_loop\n    lda HOT_POSITION\n    clc\n    adc #48\n    sta $041b\n\n    lda _racer_vx\n    lsr\n    lsr\n    sta HOT_WORD\n    ldx #0\ntrike_hud_speed_loop:\n    cpx HOT_WORD\n    bcc trike_hud_speed_full\n    lda #32\n    bne trike_hud_speed_store\ntrike_hud_speed_full:\n    lda #63\ntrike_hud_speed_store:\n    sta $0436,x\n    lda #2\n    sta $d836,x\n    inx\n    cpx #8\n    bne trike_hud_speed_loop\n\n    lda #18\n    sta $0440\n    lda #1\n    sta $0441\n    lda #3\n    sta $0442\n    lda #9\n    sta $0443\n    lda #14\n    sta $0444\n    lda #7\n    sta $0445\n    ldy #5\n    ldx _racer_spin\n    bne trike_hud_status_spin\n    ldx _racer_jump\n    bne trike_hud_status_jump\n    ldx _racer_boost\n    beq trike_hud_status_color\n    lda #2\n    sta $0440\n    lda #15\n    sta $0441\n    sta $0442\n    lda #19\n    sta $0443\n    lda #20\n    sta $0444\n    lda #32\n    sta $0445\n    ldy #7\n    bne trike_hud_status_color\ntrike_hud_status_jump:\n    lda #1\n    sta $0440\n    lda #9\n    sta $0441\n    lda #18\n    sta $0442\n    lda #32\n    sta $0443\n    sta $0444\n    sta $0445\n    ldy #3\n    bne trike_hud_status_color\ntrike_hud_status_spin:\n    lda #19\n    sta $0440\n    lda #16\n    sta $0441\n    lda #9\n    sta $0442\n    lda #14\n    sta $0443\n    lda #32\n    sta $0444\n    sta $0445\n    ldy #2\ntrike_hud_status_color:\n    tya\n    ldx #0\ntrike_hud_status_color_loop:\n    sta $d840,x\n    inx\n    cpx #6\n    bne trike_hud_status_color_loop\n    rts\n"
+    },
+    {
+      "path": "README.md",
+      "name": "README.md",
+      "kind": "source",
+      "source": "# Trike Mania\n\nTrike Mania is a complete four-racer Commodore 64 championship created for Web64 IDE. Teddy bears race tricycles around three editable multicolor circuits, with distinct driver statistics, AI rivals, honey boosts, ramps, oil hazards, barriers, three-lap races, results, championship points, and replay.\n\n## Controls\n\n- Joystick port 2\n- Left/right: steer\n- Up or fire: pedal\n- Down: brake\n- Fire: confirm menus\n\n## Championship\n\n1. Teddy Park - broad garden bends, a honey boost, a dithered bridge ramp, mud, hay bales, flowers, and a duck pond\n2. Picnic Panic - a technical crossing route with jam boosts, basket ramps, spilled jelly, picnic tables, lemonade, and sandwich landmarks\n3. Toybox Turbo - the sharp final circuit with rocket boosts, launch ramps, spinning tops, block walls, trains, and construction chicanes\n\nChoose Bramble the Trailblazer, Coco the Tactician, Patches the Steady Ace, or Tumbles the Daredevil. Each has an individual portrait, face, accessory, race color, and meaningfully different speed, acceleration, steering, and grip. All four teddies compete in every race.\n\n## Editable native assets\n\n- `assets/chars/trike-mania.w64chr`: custom HUD font and multicolor track charset\n- `assets/blocks/*.w64blk`: three separate editable 2x2 themed block vocabularies with curved road edges and dithered ramps\n- `assets/maps/*.w64map`: three editable track maps with material planes\n- `assets/sprites/teddy-trikes.w64spr`: 33 multicolor frames: 16 pedal, eight jump, four spin, one shadow, and four teddy portraits, plus nine named animation sequences\n\nAll circuits are static 40x20-character worlds below the five-row HUD, so the renderer uses per-cell Color RAM without any scrolling tax. Each map has its own visual layout, block vocabulary, material plane, special-surface placement, start grid, and 16 ordered checkpoints.\n\n## Runtime composition\n\nThe game explicitly composes Web64 Motion, Collision, Animation, Direct Sprite, Actor, and World modules. The static circuit and its Color RAM are rendered only when a race begins. Ordinary race frames update four subpixel racers, ordered checkpoints, AI, material interactions, animation frames, HUD deltas, and eight hardware sprites.\n\nThe project uses Web64-native c64lib VIC-II names for hardware-facing setup. A baseline first proved the generic C composition too expensive in this compiler configuration: update 79,491 cycles, full HUD 247,399 cycles, and sprite rendering 15,638 cycles. Only then were those fixed four-racer frame operations fused in `src/race-hot.asm`; track/world construction, actor storage, animation data, collision setup, and all game flow remain in C and the Game Runtime. Racer contact pairs are distributed deterministically across frames so collision behavior remains complete without paying for all six AABB pairs in one frame.\n\n## CPU and SID budget\n\nPAL provides 19,656 CPU cycles per frame. Verification reserves 2,200 cycles for an ordinary SID player call and 3,200 cycles on the worst frame. The measured worst game frame is 8,607 cycles; with the worst SID reserve it uses 11,807 cycles and leaves 7,849 cycles free. See `PERFORMANCE.md` for reproducible evidence.\n\nEvery planned music or sound trigger is marked with a `TODO MUSIC` or `TODO SFX` comment in `main.c`. The per-frame placeholder is `sid_player_todo()`.\n\n## Build targets\n\n- **Trike Mania**: playable release game, starting at `$2d00`\n- **Trike Mania Verification**: deterministic twelve-case exercise target covering every teddy on every track, boost/jump/oil behavior, four natural checkpoint-validated finishes per race, results, and cycle markers\n- **Visual Evidence** targets: deterministic title, selection, and three-track screenshots used by the repository acceptance route\n\nThe memory plan keeps the software C stack at `$0800-$09ff`, reserves `$1000-$1fff` for the future SID, stores the charset at `$2000-$23ff`, stores 33 sprite frames at `$2400-$2c3f`, and places code at `$2d00+`. Startup selects processor-port value `$35`, exposing RAM beneath BASIC/KERNAL ROM while keeping C64 I/O visible. The generator rejects any target that would reach the C64 I/O window at `$d000`.\n"
+    },
+    {
+      "path": "PERFORMANCE.md",
+      "name": "PERFORMANCE.md",
+      "kind": "source",
+      "source": "# Trike Mania frame budget\n\nThe generator compiles the release, verification, and visual-evidence targets before publishing this project. The dedicated verification route profiles production-equivalent race frames after initializing all four racers.\n\nBudget contract:\n\n- PAL frame: 19,656 cycles\n- Ordinary SID reserve: 2,200 cycles\n- Worst-case SID reserve: 3,200 cycles\n- Maximum game-logic/render budget on a worst frame: 16,456 cycles\n- Static map rendering, title construction, selection construction, and results construction occur outside the race-frame loop\n- Baseline generic C update: 79,491 cycles\n- Baseline full HUD: 247,399 cycles\n- Baseline direct sprite composition: 15,638 cycles\n- Fused four-racer update plus distributed contact maximum: 6,801 cycles\n- Dirty HUD writer maximum: 591 cycles\n- Eight-sprite race renderer maximum: 1,090 cycles\n- Complete measured worst game frame: 8,607 cycles\n- Worst game frame plus 3,200-cycle SID reserve: 11,807 cycles\n- Remaining PAL worst-frame headroom: 7,849 cycles\n- Bespoke assembly was accepted only after those baseline measurements demonstrated the breach\n\nAcceptance also completes one natural, ordered-checkpoint circuit with all four active racers for every teddy/track combination. A timeout fallback is present for the playable game but is forbidden by the verification target.\n\nReproduce with `npm run test:trike-mania` and `npm run test:trike-mania-visual` in the Web64 IDE repository.\n"
+    }
+  ]
+}

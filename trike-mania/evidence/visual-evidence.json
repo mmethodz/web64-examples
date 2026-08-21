@@ -1,0 +1,76 @@
+[
+  {
+    "target": "visual-title",
+    "fileName": "visual-title-runtime.bmp",
+    "cycles": 532511,
+    "trackColors": [
+      1,
+      2,
+      3,
+      5,
+      7
+    ]
+  },
+  {
+    "target": "visual-selection",
+    "fileName": "visual-selection-runtime.bmp",
+    "cycles": 574431,
+    "trackColors": [
+      1,
+      2,
+      3,
+      5,
+      7
+    ]
+  },
+  {
+    "target": "visual-results",
+    "fileName": "visual-results-runtime.bmp",
+    "cycles": 533079,
+    "trackColors": [
+      1,
+      2,
+      3,
+      5,
+      7
+    ]
+  },
+  {
+    "target": "visual-track-1",
+    "fileName": "visual-track-1-runtime.bmp",
+    "cycles": 377607,
+    "trackColors": [
+      10,
+      11,
+      13,
+      14,
+      15
+    ]
+  },
+  {
+    "target": "visual-track-2",
+    "fileName": "visual-track-2-runtime.bmp",
+    "cycles": 377221,
+    "trackColors": [
+      8,
+      9,
+      10,
+      13,
+      15
+    ]
+  },
+  {
+    "target": "visual-track-3",
+    "fileName": "visual-track-3-runtime.bmp",
+    "cycles": 379504,
+    "trackColors": [
+      8,
+      9,
+      10,
+      12,
+      13,
+      14,
+      15
+    ]
+  }
+]
