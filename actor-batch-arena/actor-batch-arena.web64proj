@@ -1,0 +1,212 @@
+{
+  "kind": "web64.ide.project",
+  "version": 4,
+  "savedAt": "2026-08-23T23:30:56.471Z",
+  "main": {
+    "fileName": "main.c",
+    "origin": "$6000",
+    "source": "#include <stdint.h>\n#include <web64/actor-batch.h>\n\n#define ACTOR_COUNT 32\n#define VISIBLE_ACTORS 21\n#define POINTER_TABLE 0x07f8\n#define BASE_POINTER 0xc0\n#define OVERLAY_POINTER 0xc4\n#define MUX_OWNED_SLOTS 0xfc\n#define MUX_CAPACITY 24\n#define VERIFY_FRAMES 120\n\nvoid example_install_irq(void);\nvoid example_init_pair_binding(void);\n\nWEB64_ACTOR_POOL(pool, ACTOR_COUNT);\nWEB64_ACTOR_ANIMATION_STORAGE(animation, ACTOR_COUNT);\nWEB64_ACTOR_VISIBLE_STORAGE(visible, ACTOR_COUNT);\nWEB64_ACTOR_PAIR_STORAGE(pairing, ACTOR_COUNT, 64);\nWEB64_ACTOR_SPRITE_SET_STORAGE(sprites, ACTOR_COUNT);\nWEB64_ACTOR_COMMAND_STORAGE(commands, ACTOR_COUNT);\nWEB64_SPRITE_MUX_STORAGE(mux, MUX_CAPACITY);\n\nWeb64ActorBatchView view;\nWeb64ActorViewport viewport;\nWeb64ActorBatchStatus actor_status;\nWeb64SpriteRenderer hud_renderer;\nWeb64AnimationStep animation_steps[4];\nWeb64AnimationSequence arena_sequence;\nWeb64AnimationBank arena_animation_bank;\nWeb64SpriteOverlayBinding pair_binding;\n\nvolatile uint8_t frame_tick;\nvolatile uint8_t irq_count;\nvolatile uint8_t irq_entry_line;\nvolatile uint8_t irq_exit_line;\nuint8_t observed_tick;\nuint8_t wave_phase;\nuint8_t i;\nuint8_t frame_counter;\nuint8_t verification_complete;\nuint8_t verification_stable_drop;\nuint8_t verification_motion_changes;\nuint8_t verification_pair_frames;\nuint8_t verification_independent_frames;\nuint8_t expected_accepted_entries;\nuint8_t expected_dropped_entries;\nuint8_t expected_accepted_layers;\nuint8_t expected_dropped_layers;\nuint16_t previous_actor_x;\n\n/* Unsigned, 24-centered, 32-sample sine wave. */\nuint8_t sprite_wave[32] = {\n    24, 29, 33, 37, 41, 44, 46, 47,\n    48, 47, 46, 44, 41, 37, 33, 29,\n    24, 19, 15, 11, 7, 4, 2, 1,\n    0, 1, 2, 4, 7, 11, 15, 19\n};\n\nuint8_t home_x[32] = {\n    42, 50, 132, 212, 32, 112, 212, 52,\n    132, 222, 32, 112, 202, 52, 142, 232,\n    32, 112, 202, 72, 192, 24, 52, 80,\n    108, 136, 164, 192, 220, 248, 276, 304\n};\n\nuint8_t actor_y[32] = {\n    20, 20, 20, 20, 55, 55, 55, 84,\n    84, 84, 113, 113, 113, 142, 142, 142,\n    171, 171, 171, 200, 200, 250, 250, 250,\n    250, 250, 250, 250, 250, 250, 250, 250\n};\n\nvoid example_make_sprite_data(void) {\n    uint8_t frame;\n    uint8_t byte;\n    uint16_t offset;\n    volatile uint8_t *base_data;\n    volatile uint8_t *overlay_data;\n    base_data = (uint8_t *)0x3000;\n    overlay_data = (uint8_t *)0x3100;\n    for (frame = 0; frame < 4; frame++) {\n        offset = ((uint16_t)frame) << 6;\n        for (byte = 0; byte < 63; byte++) {\n            base_data[offset + byte] = ((byte + frame) & 1) ? 0x55 : 0x14;\n            overlay_data[offset + byte] = ((byte + frame) & 3) ? 0x42 : 0x7e;\n        }\n        base_data[offset + 63] = 0;\n        overlay_data[offset + 63] = 0;\n    }\n}\n\nvoid example_init_animation(void) {\n    animation_steps[0].frame = 0;\n    animation_steps[0].overlay_frame = 3;\n    animation_steps[0].duration = 2;\n    animation_steps[0].event = 1;\n    animation_steps[1].frame = 1;\n    animation_steps[1].overlay_frame = 1;\n    animation_steps[1].duration = 2;\n    animation_steps[1].event = 0;\n    animation_steps[2].frame = 2;\n    animation_steps[2].overlay_frame = 0;\n    animation_steps[2].duration = 2;\n    animation_steps[2].event = 2;\n    animation_steps[3].frame = 3;\n    animation_steps[3].overlay_frame = 2;\n    animation_steps[3].duration = 2;\n    animation_steps[3].event = 0;\n    arena_sequence.steps = WEB64_ADDRESS(animation_steps);\n    arena_sequence.count = 4;\n    arena_sequence.flags = WEB64_ANIMATION_LOOP;\n    arena_animation_bank.sequences = WEB64_ADDRESS(&arena_sequence);\n    arena_animation_bank.count = 1;\n    animation.bank = animation_bank;\n    animation.sequence = animation_sequence;\n    animation.queued = animation_queued;\n    animation.step = animation_step;\n    animation.ticks = animation_ticks;\n    animation.frame = animation_frame;\n    animation.overlay_frame = animation_overlay_frame;\n    animation.events = animation_events;\n    animation.status = animation_status;\n    animation.direction = animation_direction;\n    for (i = 0; i < ACTOR_COUNT; i++) {\n        animation_bank[i] = WEB64_ADDRESS(&arena_animation_bank);\n        animation_queued[i] = 0xff;\n        animation_direction[i] = 1;\n        animation_ticks[i] = 1;\n        animation_overlay_frame[i] = 3;\n    }\n}\n\nvoid example_init_buffers(void) {\n    pool_active_count = ACTOR_COUNT;\n    for (i = 0; i < ACTOR_COUNT; i++) {\n        pool_active_ids[i] = i;\n        pool_active[i] = 1;\n        pool_x[i] = WEB64_POS_FROM_PX(home_x[i]);\n        pool_y[i] = WEB64_POS_FROM_PX(actor_y[i]);\n        pool_vx[i] = 0;\n        pool_vy[i] = 0;\n        pool_width[i] = 20;\n        pool_height[i] = 20;\n        pool_category[i] = 1;\n        pool_mask[i] = 1;\n        pairing_sorted_ids[i] = i;\n    }\n    view.active_ids = pool_active_ids;\n    view.active = pool_active;\n    view.active_count = &pool_active_count;\n    view.capacity = ACTOR_COUNT;\n    view.x = pool_x;\n    view.y = pool_y;\n    view.vx = pool_vx;\n    view.vy = pool_vy;\n    view.width = pool_width;\n    view.height = pool_height;\n    view.category = pool_category;\n    view.mask = pool_mask;\n    viewport.world_x = 0;\n    viewport.world_y = 0;\n    viewport.vic_origin_x = 24;\n    viewport.vic_origin_y = 30;\n    viewport.width = 320;\n    viewport.height = 230;\n    visible.entries = visible_entries;\n    visible.capacity = ACTOR_COUNT;\n    pairing_workspace.sorted_ids = pairing_sorted_ids;\n    pairing_workspace.count = ACTOR_COUNT;\n    pairing_workspace.capacity = ACTOR_COUNT;\n    pairing_workspace.initialized = 1;\n    pairing_pairs.pairs = pairing_pair_entries;\n    pairing_pairs.capacity = 64;\n    sprites.kind = sprites_kind;\n    sprites.asset = sprites_asset;\n    sprites.base_pointer = sprites_base_pointer;\n    sprites.overlay_pointer = sprites_overlay_pointer;\n    sprites.frame_count = sprites_frame_count;\n    sprites.base_color = sprites_base_color;\n    sprites.overlay_color = sprites_overlay_color;\n    sprites.multicolor_1 = sprites_multicolor_1;\n    sprites.multicolor_2 = sprites_multicolor_2;\n    sprites.flags = sprites_flags;\n    sprites.priority = sprites_priority;\n    sprites.base_frame = animation_frame;\n    sprites.overlay_frame = animation_overlay_frame;\n    sprites.capacity = ACTOR_COUNT;\n    commands.commands = commands_commands;\n    commands.capacity = ACTOR_COUNT;\n    for (i = 0; i < 4; i++) {\n        web64_actor_sprite_bind_asset_pair(\n            &sprites, i, &pair_binding, WEB64_SPRITE_VISIBLE, 255 - i\n        );\n    }\n    for (i = 4; i < ACTOR_COUNT; i++) {\n        web64_actor_sprite_bind_raw(\n            &sprites, i, BASE_POINTER, 4, 5,\n            WEB64_SPRITE_VISIBLE | WEB64_SPRITE_MULTICOLOR, 255 - i\n        );\n        sprites_multicolor_1[i] = 6;\n        sprites_multicolor_2[i] = 14;\n    }\n}\n\nuint8_t example_build_frame(void) {\n    int16_t target_x;\n    if (web64_sprite_mux_begin_frame(&mux) != WEB64_SPRITE_MUX_OK) return 0;\n    wave_phase = (wave_phase + 1) & 31;\n    for (i = 0; i < ACTOR_COUNT; i++) {\n        target_x = home_x[i] + sprite_wave[(wave_phase + i) & 31] - 24;\n        pool_vx[i] = WEB64_POS_FROM_PX(target_x) - pool_x[i];\n    }\n    web64_actor_batch_integrate_xy_fast(&view, &actor_status);\n    web64_actor_batch_animation_tick_fast(&view, &animation, &actor_status);\n    web64_actor_batch_cull_fast(&view, &viewport, &visible, &actor_status);\n    web64_actor_batch_pairs_x_fast(\n        &view, &pairing_workspace, &pairing_pairs, &actor_status\n    );\n    web64_actor_batch_build_commands_fast(\n        &view, &visible, &sprites, &commands, &actor_status\n    );\n    web64_actor_commands_submit_mux_fast(&mux, &commands, &actor_status);\n    web64_sprite_mux_commit(&mux);\n    if (pool_x[0] != previous_actor_x) verification_motion_changes++;\n    previous_actor_x = pool_x[0];\n    if (pairing_pairs.count) verification_pair_frames++;\n    if (animation_frame[0] != animation_overlay_frame[0]) {\n        verification_independent_frames++;\n    }\n    if (!frame_counter) {\n        expected_accepted_entries = mux.status.accepted_entries;\n        expected_dropped_entries = mux.status.dropped_entries;\n        expected_accepted_layers = mux.status.accepted_layers;\n        expected_dropped_layers = mux.status.dropped_layers;\n        verification_stable_drop = 1;\n    } else if (\n        expected_accepted_entries != mux.status.accepted_entries ||\n        expected_dropped_entries != mux.status.dropped_entries ||\n        expected_accepted_layers != mux.status.accepted_layers ||\n        expected_dropped_layers != mux.status.dropped_layers\n    ) {\n        verification_stable_drop = 0;\n    }\n    frame_counter++;\n    return 1;\n}\n\nvoid main(void) {\n    uint8_t service_count;\n    example_make_sprite_data();\n    example_init_pair_binding();\n    example_init_buffers();\n    /* Binding initializes command frames; animation state takes final ownership. */\n    example_init_animation();\n    web64_sprite_renderer_init(&hud_renderer, POINTER_TABLE);\n    *((uint8_t *)0xd025) = 6;\n    *((uint8_t *)0xd026) = 14;\n    web64_sprite_render_asset_pair(\n        &hud_renderer, &pair_binding, 1, 0, 24, 24,\n        0, 3, WEB64_SPRITE_VISIBLE\n    );\n    web64_sprite_mux_init(\n        &mux, mux_buffer_a, mux_buffer_b, MUX_CAPACITY,\n        POINTER_TABLE, MUX_OWNED_SLOTS, 6, 14, WEB64_SPRITE_MUX_VIDEO_PAL\n    );\n    web64_sprite_mux_irq_service_fast();\n    web64_sprite_mux_activate(&mux);\n    previous_actor_x = pool_x[0];\n    example_build_frame();\n#ifdef WEB64_EXAMPLE_VERIFY\n    while (frame_counter < VERIFY_FRAMES) {\n        for (service_count = 0; service_count < 16; service_count++) {\n            web64_sprite_mux_irq_service();\n        }\n        example_build_frame();\n    }\n    verification_complete = 1;\n    if (!verification_stable_drop) verification_complete = 0;\n    if (verification_motion_changes <= 100) verification_complete = 0;\n    if (verification_pair_frames != VERIFY_FRAMES) verification_complete = 0;\n    if (verification_independent_frames != VERIFY_FRAMES) verification_complete = 0;\n    if (visible.count != VISIBLE_ACTORS) verification_complete = 0;\n    if (!expected_dropped_entries) verification_complete = 0;\n    if (expected_dropped_layers < 2) verification_complete = 0;\n    return;\n#else\n    example_install_irq();\n    observed_tick = frame_tick;\n    while (1) {\n        while (observed_tick == frame_tick) { }\n        observed_tick = frame_tick;\n        example_build_frame();\n    }\n#endif\n}\n",
+    "selectedEntryLabel": "auto"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c90",
+    "abi": "web64-stack-v1",
+    "entry": "main.c",
+    "entrySymbol": "",
+    "predefinedDefines": {},
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native",
+    "startup": {
+      "processorPort": null,
+      "disableInterrupts": false
+    },
+    "stack": {
+      "size": 512,
+      "address": null
+    },
+    "zeroPage": {
+      "reserved": []
+    },
+    "ir": {
+      "schemaVersion": 1,
+      "enabled": false,
+      "verifyLegacyEquivalence": true,
+      "emitSnapshots": false
+    },
+    "optimize": {
+      "schemaVersion": 2,
+      "mode": "size",
+      "enabled": true,
+      "passGates": {
+        "generatorPeephole": true,
+        "registerTemporaryStack": true,
+        "constantStrengthReduction": true,
+        "fixedPointSpecialization": true,
+        "booleanBranch": true,
+        "controlFlowLoop": true,
+        "cc65Peephole": true,
+        "zeroPagePromotion": true,
+        "deadCode": true,
+        "conditionalInlining": true,
+        "hardwareAware": false,
+        "runtimeData": true
+      },
+      "frameCriticalFunctions": [],
+      "zeroPageReserved": [],
+      "budgets": {
+        "maxBuildByteGrowth": 0,
+        "maxFunctionByteGrowth": 0,
+        "maxWorstCaseCycles": null
+      },
+      "diagnostics": {
+        "trace": "summary",
+        "missedOptimizationRemarks": false
+      }
+    }
+  },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "compatibilityDefaults": [],
+    "targets": [
+      {
+        "id": "main",
+        "label": "Web64 v2 Actor Batch Arena",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c",
+          "irq-wrapper.asm"
+        ],
+        "entrySymbol": "",
+        "origin": "$6000",
+        "outputName": "actor-batch-arena.prg",
+        "artifactContribution": "",
+        "defines": {},
+        "compatibilityModules": [],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
+        "c": {
+          "enabled": true
+        },
+        "cartridge": {},
+        "test": {}
+      }
+    ]
+  },
+  "emulator": {
+    "emulatorScale": "1",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": true,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": false,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "settings": {
+    "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "1",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": true,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": false,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": true,
+      "dialect": "web64-c90",
+      "abi": "web64-stack-v1",
+      "entry": "main.c",
+      "entrySymbol": "",
+      "predefinedDefines": {},
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "none",
+      "stdin": "none",
+      "runtimeProfile": "tiny",
+      "compilerBackend": "web64-native",
+      "startup": {
+        "processorPort": null,
+        "disableInterrupts": false
+      },
+      "stack": {
+        "size": 512,
+        "address": null
+      },
+      "zeroPage": {
+        "reserved": []
+      },
+      "ir": {
+        "schemaVersion": 1,
+        "enabled": false,
+        "verifyLegacyEquivalence": true,
+        "emitSnapshots": false
+      }
+    }
+  },
+  "workspace": {
+    "selectedFile": null,
+    "editor": null,
+    "emulatorCollapsed": false
+  },
+  "media": {
+    "version": 2,
+    "files": [],
+    "disks": [],
+    "diskSets": []
+  },
+  "files": [
+    {
+      "path": "main.c",
+      "name": "main.c",
+      "kind": "source",
+      "source": "#include <stdint.h>\n#include <web64/actor-batch.h>\n\n#define ACTOR_COUNT 32\n#define VISIBLE_ACTORS 21\n#define POINTER_TABLE 0x07f8\n#define BASE_POINTER 0xc0\n#define OVERLAY_POINTER 0xc4\n#define MUX_OWNED_SLOTS 0xfc\n#define MUX_CAPACITY 24\n#define VERIFY_FRAMES 120\n\nvoid example_install_irq(void);\nvoid example_init_pair_binding(void);\n\nWEB64_ACTOR_POOL(pool, ACTOR_COUNT);\nWEB64_ACTOR_ANIMATION_STORAGE(animation, ACTOR_COUNT);\nWEB64_ACTOR_VISIBLE_STORAGE(visible, ACTOR_COUNT);\nWEB64_ACTOR_PAIR_STORAGE(pairing, ACTOR_COUNT, 64);\nWEB64_ACTOR_SPRITE_SET_STORAGE(sprites, ACTOR_COUNT);\nWEB64_ACTOR_COMMAND_STORAGE(commands, ACTOR_COUNT);\nWEB64_SPRITE_MUX_STORAGE(mux, MUX_CAPACITY);\n\nWeb64ActorBatchView view;\nWeb64ActorViewport viewport;\nWeb64ActorBatchStatus actor_status;\nWeb64SpriteRenderer hud_renderer;\nWeb64AnimationStep animation_steps[4];\nWeb64AnimationSequence arena_sequence;\nWeb64AnimationBank arena_animation_bank;\nWeb64SpriteOverlayBinding pair_binding;\n\nvolatile uint8_t frame_tick;\nvolatile uint8_t irq_count;\nvolatile uint8_t irq_entry_line;\nvolatile uint8_t irq_exit_line;\nuint8_t observed_tick;\nuint8_t wave_phase;\nuint8_t i;\nuint8_t frame_counter;\nuint8_t verification_complete;\nuint8_t verification_stable_drop;\nuint8_t verification_motion_changes;\nuint8_t verification_pair_frames;\nuint8_t verification_independent_frames;\nuint8_t expected_accepted_entries;\nuint8_t expected_dropped_entries;\nuint8_t expected_accepted_layers;\nuint8_t expected_dropped_layers;\nuint16_t previous_actor_x;\n\n/* Unsigned, 24-centered, 32-sample sine wave. */\nuint8_t sprite_wave[32] = {\n    24, 29, 33, 37, 41, 44, 46, 47,\n    48, 47, 46, 44, 41, 37, 33, 29,\n    24, 19, 15, 11, 7, 4, 2, 1,\n    0, 1, 2, 4, 7, 11, 15, 19\n};\n\nuint8_t home_x[32] = {\n    42, 50, 132, 212, 32, 112, 212, 52,\n    132, 222, 32, 112, 202, 52, 142, 232,\n    32, 112, 202, 72, 192, 24, 52, 80,\n    108, 136, 164, 192, 220, 248, 276, 304\n};\n\nuint8_t actor_y[32] = {\n    20, 20, 20, 20, 55, 55, 55, 84,\n    84, 84, 113, 113, 113, 142, 142, 142,\n    171, 171, 171, 200, 200, 250, 250, 250,\n    250, 250, 250, 250, 250, 250, 250, 250\n};\n\nvoid example_make_sprite_data(void) {\n    uint8_t frame;\n    uint8_t byte;\n    uint16_t offset;\n    volatile uint8_t *base_data;\n    volatile uint8_t *overlay_data;\n    base_data = (uint8_t *)0x3000;\n    overlay_data = (uint8_t *)0x3100;\n    for (frame = 0; frame < 4; frame++) {\n        offset = ((uint16_t)frame) << 6;\n        for (byte = 0; byte < 63; byte++) {\n            base_data[offset + byte] = ((byte + frame) & 1) ? 0x55 : 0x14;\n            overlay_data[offset + byte] = ((byte + frame) & 3) ? 0x42 : 0x7e;\n        }\n        base_data[offset + 63] = 0;\n        overlay_data[offset + 63] = 0;\n    }\n}\n\nvoid example_init_animation(void) {\n    animation_steps[0].frame = 0;\n    animation_steps[0].overlay_frame = 3;\n    animation_steps[0].duration = 2;\n    animation_steps[0].event = 1;\n    animation_steps[1].frame = 1;\n    animation_steps[1].overlay_frame = 1;\n    animation_steps[1].duration = 2;\n    animation_steps[1].event = 0;\n    animation_steps[2].frame = 2;\n    animation_steps[2].overlay_frame = 0;\n    animation_steps[2].duration = 2;\n    animation_steps[2].event = 2;\n    animation_steps[3].frame = 3;\n    animation_steps[3].overlay_frame = 2;\n    animation_steps[3].duration = 2;\n    animation_steps[3].event = 0;\n    arena_sequence.steps = WEB64_ADDRESS(animation_steps);\n    arena_sequence.count = 4;\n    arena_sequence.flags = WEB64_ANIMATION_LOOP;\n    arena_animation_bank.sequences = WEB64_ADDRESS(&arena_sequence);\n    arena_animation_bank.count = 1;\n    animation.bank = animation_bank;\n    animation.sequence = animation_sequence;\n    animation.queued = animation_queued;\n    animation.step = animation_step;\n    animation.ticks = animation_ticks;\n    animation.frame = animation_frame;\n    animation.overlay_frame = animation_overlay_frame;\n    animation.events = animation_events;\n    animation.status = animation_status;\n    animation.direction = animation_direction;\n    for (i = 0; i < ACTOR_COUNT; i++) {\n        animation_bank[i] = WEB64_ADDRESS(&arena_animation_bank);\n        animation_queued[i] = 0xff;\n        animation_direction[i] = 1;\n        animation_ticks[i] = 1;\n        animation_overlay_frame[i] = 3;\n    }\n}\n\nvoid example_init_buffers(void) {\n    pool_active_count = ACTOR_COUNT;\n    for (i = 0; i < ACTOR_COUNT; i++) {\n        pool_active_ids[i] = i;\n        pool_active[i] = 1;\n        pool_x[i] = WEB64_POS_FROM_PX(home_x[i]);\n        pool_y[i] = WEB64_POS_FROM_PX(actor_y[i]);\n        pool_vx[i] = 0;\n        pool_vy[i] = 0;\n        pool_width[i] = 20;\n        pool_height[i] = 20;\n        pool_category[i] = 1;\n        pool_mask[i] = 1;\n        pairing_sorted_ids[i] = i;\n    }\n    view.active_ids = pool_active_ids;\n    view.active = pool_active;\n    view.active_count = &pool_active_count;\n    view.capacity = ACTOR_COUNT;\n    view.x = pool_x;\n    view.y = pool_y;\n    view.vx = pool_vx;\n    view.vy = pool_vy;\n    view.width = pool_width;\n    view.height = pool_height;\n    view.category = pool_category;\n    view.mask = pool_mask;\n    viewport.world_x = 0;\n    viewport.world_y = 0;\n    viewport.vic_origin_x = 24;\n    viewport.vic_origin_y = 30;\n    viewport.width = 320;\n    viewport.height = 230;\n    visible.entries = visible_entries;\n    visible.capacity = ACTOR_COUNT;\n    pairing_workspace.sorted_ids = pairing_sorted_ids;\n    pairing_workspace.count = ACTOR_COUNT;\n    pairing_workspace.capacity = ACTOR_COUNT;\n    pairing_workspace.initialized = 1;\n    pairing_pairs.pairs = pairing_pair_entries;\n    pairing_pairs.capacity = 64;\n    sprites.kind = sprites_kind;\n    sprites.asset = sprites_asset;\n    sprites.base_pointer = sprites_base_pointer;\n    sprites.overlay_pointer = sprites_overlay_pointer;\n    sprites.frame_count = sprites_frame_count;\n    sprites.base_color = sprites_base_color;\n    sprites.overlay_color = sprites_overlay_color;\n    sprites.multicolor_1 = sprites_multicolor_1;\n    sprites.multicolor_2 = sprites_multicolor_2;\n    sprites.flags = sprites_flags;\n    sprites.priority = sprites_priority;\n    sprites.base_frame = animation_frame;\n    sprites.overlay_frame = animation_overlay_frame;\n    sprites.capacity = ACTOR_COUNT;\n    commands.commands = commands_commands;\n    commands.capacity = ACTOR_COUNT;\n    for (i = 0; i < 4; i++) {\n        web64_actor_sprite_bind_asset_pair(\n            &sprites, i, &pair_binding, WEB64_SPRITE_VISIBLE, 255 - i\n        );\n    }\n    for (i = 4; i < ACTOR_COUNT; i++) {\n        web64_actor_sprite_bind_raw(\n            &sprites, i, BASE_POINTER, 4, 5,\n            WEB64_SPRITE_VISIBLE | WEB64_SPRITE_MULTICOLOR, 255 - i\n        );\n        sprites_multicolor_1[i] = 6;\n        sprites_multicolor_2[i] = 14;\n    }\n}\n\nuint8_t example_build_frame(void) {\n    int16_t target_x;\n    if (web64_sprite_mux_begin_frame(&mux) != WEB64_SPRITE_MUX_OK) return 0;\n    wave_phase = (wave_phase + 1) & 31;\n    for (i = 0; i < ACTOR_COUNT; i++) {\n        target_x = home_x[i] + sprite_wave[(wave_phase + i) & 31] - 24;\n        pool_vx[i] = WEB64_POS_FROM_PX(target_x) - pool_x[i];\n    }\n    web64_actor_batch_integrate_xy_fast(&view, &actor_status);\n    web64_actor_batch_animation_tick_fast(&view, &animation, &actor_status);\n    web64_actor_batch_cull_fast(&view, &viewport, &visible, &actor_status);\n    web64_actor_batch_pairs_x_fast(\n        &view, &pairing_workspace, &pairing_pairs, &actor_status\n    );\n    web64_actor_batch_build_commands_fast(\n        &view, &visible, &sprites, &commands, &actor_status\n    );\n    web64_actor_commands_submit_mux_fast(&mux, &commands, &actor_status);\n    web64_sprite_mux_commit(&mux);\n    if (pool_x[0] != previous_actor_x) verification_motion_changes++;\n    previous_actor_x = pool_x[0];\n    if (pairing_pairs.count) verification_pair_frames++;\n    if (animation_frame[0] != animation_overlay_frame[0]) {\n        verification_independent_frames++;\n    }\n    if (!frame_counter) {\n        expected_accepted_entries = mux.status.accepted_entries;\n        expected_dropped_entries = mux.status.dropped_entries;\n        expected_accepted_layers = mux.status.accepted_layers;\n        expected_dropped_layers = mux.status.dropped_layers;\n        verification_stable_drop = 1;\n    } else if (\n        expected_accepted_entries != mux.status.accepted_entries ||\n        expected_dropped_entries != mux.status.dropped_entries ||\n        expected_accepted_layers != mux.status.accepted_layers ||\n        expected_dropped_layers != mux.status.dropped_layers\n    ) {\n        verification_stable_drop = 0;\n    }\n    frame_counter++;\n    return 1;\n}\n\nvoid main(void) {\n    uint8_t service_count;\n    example_make_sprite_data();\n    example_init_pair_binding();\n    example_init_buffers();\n    /* Binding initializes command frames; animation state takes final ownership. */\n    example_init_animation();\n    web64_sprite_renderer_init(&hud_renderer, POINTER_TABLE);\n    *((uint8_t *)0xd025) = 6;\n    *((uint8_t *)0xd026) = 14;\n    web64_sprite_render_asset_pair(\n        &hud_renderer, &pair_binding, 1, 0, 24, 24,\n        0, 3, WEB64_SPRITE_VISIBLE\n    );\n    web64_sprite_mux_init(\n        &mux, mux_buffer_a, mux_buffer_b, MUX_CAPACITY,\n        POINTER_TABLE, MUX_OWNED_SLOTS, 6, 14, WEB64_SPRITE_MUX_VIDEO_PAL\n    );\n    web64_sprite_mux_irq_service_fast();\n    web64_sprite_mux_activate(&mux);\n    previous_actor_x = pool_x[0];\n    example_build_frame();\n#ifdef WEB64_EXAMPLE_VERIFY\n    while (frame_counter < VERIFY_FRAMES) {\n        for (service_count = 0; service_count < 16; service_count++) {\n            web64_sprite_mux_irq_service();\n        }\n        example_build_frame();\n    }\n    verification_complete = 1;\n    if (!verification_stable_drop) verification_complete = 0;\n    if (verification_motion_changes <= 100) verification_complete = 0;\n    if (verification_pair_frames != VERIFY_FRAMES) verification_complete = 0;\n    if (verification_independent_frames != VERIFY_FRAMES) verification_complete = 0;\n    if (visible.count != VISIBLE_ACTORS) verification_complete = 0;\n    if (!expected_dropped_entries) verification_complete = 0;\n    if (expected_dropped_layers < 2) verification_complete = 0;\n    return;\n#else\n    example_install_irq();\n    observed_tick = frame_tick;\n    while (1) {\n        while (observed_tick == frame_tick) { }\n        observed_tick = frame_tick;\n        example_build_frame();\n    }\n#endif\n}\n"
+    },
+    {
+      "path": "irq-wrapper.asm",
+      "name": "irq-wrapper.asm",
+      "kind": "source",
+      "source": "; Open native descriptors: C, KickAssembler, or any other routine may inspect\n; or replace these while sprite payload placement remains application-owned.\n_base_asset:\n    .word $3000\n    .word $0100\n    .word 4\n    .byte 64, 63, 24, 21, 2, 5, 6, 14, 0\n_overlay_asset:\n    .word $3100\n    .word $0100\n    .word 4\n    .byte 64, 63, 24, 21, 1, 1, 6, 14, 0\n_pair_asset:\n    .word _base_asset\n    .word _overlay_asset\n    .word 4\n    .byte 5, 1, 6, 14, 0\n\n_example_init_pair_binding:\n    lda #<_pair_asset\n    sta _pair_binding\n    lda #>_pair_asset\n    sta _pair_binding+1\n    lda #$c0\n    sta _pair_binding+2\n    lda #$c4\n    sta _pair_binding+3\n    rts\n\n; Application-owned IRQ wrapper. The mux never installs, acknowledges, or\n; terminates an interrupt for the application.\n\n_example_install_irq:\n    sei\n    lda $0314\n    sta example_irq_chain+1\n    lda $0315\n    sta example_irq_chain+2\n    lda #<example_irq\n    sta $0314\n    lda #>example_irq\n    sta $0315\n    lda $d01a\n    ora #1\n    sta $d01a\n    cli\n    rts\n\nexample_irq:\n    ; The KERNAL dispatcher has already saved A/X/Y before entering $0314.\n    lda $d019\n    and #1\n    beq example_irq_chain\n    lda #1\n    sta $d019\n    inc _irq_count\n    lda $d012\n    sta _irq_entry_line\n    lda __web64_mux_irq_frame_boundary\n    beq example_irq_service\n    inc _frame_tick\nexample_irq_service:\n    jsr _web64_sprite_mux_irq_service_fast\n    lda $d012\n    sta _irq_exit_line\n    jmp $ea81\nexample_irq_chain:\n    jmp $ffff\n"
+    },
+    {
+      "path": "README.md",
+      "name": "README.md",
+      "kind": "source",
+      "source": "# Actor Batch Arena\n\nAn unreleased Web64 v2 Game Runtime example built around the open actor-batch pipeline.\n\nThe project keeps 32 actors in caller-owned SoA storage and exposes every intermediate stage to C and assembly. Twenty-one actors enter the viewport, four use native two-layer overlay commands, and the PAL mux owns only VIC slots 2–7 while a direct HUD pair remains fixed in slots 0–1. A 32-sample sine table drives horizontal targets; the batch motion kernel integrates the resulting Q12.4 velocities. Base and overlay frame indices advance independently.\n\nEach application-owned frame performs motion, animation tick, culling, coherent X-sweep pair generation, command building, mux submission, and commit explicitly. Four pairs deliberately share one vertical band, creating repeatable priority pressure against six owned slots. Pairs are submitted as one logical command and can never separate. The IRQ wrapper acknowledges the VIC source, advances the game tick only at the mux frame boundary, calls the fast service inside the KERNAL register envelope, and owns chaining/RTI.\n\n`WEB64_EXAMPLE_VERIFY` runs 120 synthetic PAL frames and publishes `verification_complete`, `frame_counter`, `verification_pair_frames`, `verification_independent_frames`, `verification_motion_changes`, and `verification_stable_drop` for automated inspection. Normal builds install the application IRQ and run continuously.\n\nThis is a standalone `web64-examples` project, not an IDE template and not a v2 release by itself.\n"
+    }
+  ]
+}

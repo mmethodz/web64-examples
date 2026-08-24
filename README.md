@@ -14,6 +14,10 @@ Open a .web64proj in the Web64 IDE to inspect, build, and run it.
 
 - `WORLD_RUNTIME_EXAMPLES.md` links the native `.w64*` World-module examples: static map, horizontal/vertical/bidirectional scrollers, a Q12.4 subpixel Motion scroller, multicolor scroller, platformer, and World + Motion + Sprites actor/camera composition. World belongs to Web64 Game Runtime alongside Motion, Collision, Animation, Sprites, and Actors, while retaining independent runtime closure. These projects include their editable assets and generated build artifacts, copy charset/sprite data into VIC-visible memory at startup, and are joystick-driven on port 2.
 
+## Web64 v2 workstream examples
+
+- `actor-batch-arena/actor-batch-arena.web64proj` is the standalone open actor-batch demonstration: 32 caller-owned SoA actors, 21 visible actors, sine-driven Q12.4 movement, independent base/overlay animation, public culling and actor-pair buffers, descriptor-backed atomic sprite pairs, repeated six-slot PAL mux reuse, two reserved direct HUD slots, and a deterministic priority drop. Its application-owned IRQ wrapper documents the acknowledgement and chaining boundary; `WEB64_EXAMPLE_VERIFY` exercises 120 frames without hiding any phase buffer or asset placement.
+
 ## Web64 C v1 Coverage
 
 - `c-compiler-conformance` prints PASS/FAIL for parser-backed arithmetic, shifts, bitwise operators, casts, nested calls, `_fastcall` runtime calls, and `printf` argument materialization.
