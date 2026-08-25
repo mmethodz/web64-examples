@@ -2,7 +2,7 @@
   {
     "target": "visual-title",
     "fileName": "visual-title-runtime.bmp",
-    "cycles": 532511,
+    "cycles": 531673,
     "trackColors": [
       1,
       2,
@@ -14,7 +14,7 @@
   {
     "target": "visual-selection",
     "fileName": "visual-selection-runtime.bmp",
-    "cycles": 574431,
+    "cycles": 573405,
     "trackColors": [
       1,
       2,
@@ -26,7 +26,7 @@
   {
     "target": "visual-results",
     "fileName": "visual-results-runtime.bmp",
-    "cycles": 533079,
+    "cycles": 532504,
     "trackColors": [
       1,
       2,
@@ -38,7 +38,7 @@
   {
     "target": "visual-track-1",
     "fileName": "visual-track-1-runtime.bmp",
-    "cycles": 377607,
+    "cycles": 376633,
     "trackColors": [
       10,
       11,
@@ -50,7 +50,7 @@
   {
     "target": "visual-track-2",
     "fileName": "visual-track-2-runtime.bmp",
-    "cycles": 377221,
+    "cycles": 376126,
     "trackColors": [
       8,
       9,
@@ -62,7 +62,7 @@
   {
     "target": "visual-track-3",
     "fileName": "visual-track-3-runtime.bmp",
-    "cycles": 379504,
+    "cycles": 378521,
     "trackColors": [
       8,
       9,
