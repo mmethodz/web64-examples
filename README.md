@@ -17,6 +17,7 @@ Open a .web64proj in the Web64 IDE to inspect, build, and run it.
 ## Web64 v2 workstream examples
 
 - `actor-batch-arena/actor-batch-arena.web64proj` is the standalone open actor-batch demonstration: 32 caller-owned SoA actors, 21 visible actors, sine-driven Q12.4 movement, independent base/overlay animation, public culling and actor-pair buffers, descriptor-backed atomic sprite pairs, repeated six-slot PAL mux reuse, two reserved direct HUD slots, and a deterministic priority drop. Its application-owned IRQ wrapper documents the acknowledgement and chaining boundary; `WEB64_EXAMPLE_VERIFY` exercises 120 frames without hiding any phase buffer or asset placement.
+- `trajectory-patterns/trajectory-patterns.web64proj` demonstrates eight independent trajectory states sharing one immutable compact waypoint pattern. It covers all four X/Y mirroring combinations, looping, ping-pong, phase staggering, exact prime-duration interpolation, direct C-owned VIC-II rendering, and native assembly inspection through `web64/trajectory.inc` while linking only the trajectory runtime module.
 
 ## Web64 C v1 Coverage
 
