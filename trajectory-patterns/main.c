@@ -23,6 +23,7 @@ Web64TrajectoryState state7;
 Web64SpriteRenderer sprite_renderer;
 uint8_t frame_counter;
 uint8_t verification_complete;
+uint16_t verification_frames;
 uint8_t i;
 
 void make_sprite(void) {
@@ -40,26 +41,26 @@ void make_sprite(void) {
 
 void make_pattern(void) {
     shared_segments[0].delta_x = 48;  shared_segments[0].delta_y = 0;   shared_segments[0].duration = 32;
-    shared_segments[1].delta_x = 16;  shared_segments[1].delta_y = 24;  shared_segments[1].duration = 17;
-    shared_segments[2].delta_x = -16; shared_segments[2].delta_y = 24;  shared_segments[2].duration = 23;
+    shared_segments[1].delta_x = 16;  shared_segments[1].delta_y = 16;  shared_segments[1].duration = 17;
+    shared_segments[2].delta_x = -16; shared_segments[2].delta_y = 16;  shared_segments[2].duration = 23;
     shared_segments[3].delta_x = -48; shared_segments[3].delta_y = 0;   shared_segments[3].duration = 32;
-    shared_segments[4].delta_x = -16; shared_segments[4].delta_y = -24; shared_segments[4].duration = 17;
-    shared_segments[5].delta_x = 16;  shared_segments[5].delta_y = -24; shared_segments[5].duration = 23;
-    shared_segments[6].delta_x = 0;   shared_segments[6].delta_y = 8;   shared_segments[6].duration = 31;
-    shared_segments[7].delta_x = 0;   shared_segments[7].delta_y = -8;  shared_segments[7].duration = 29;
+    shared_segments[4].delta_x = -16; shared_segments[4].delta_y = -16; shared_segments[4].duration = 17;
+    shared_segments[5].delta_x = 16;  shared_segments[5].delta_y = -16; shared_segments[5].duration = 23;
+    shared_segments[6].delta_x = 0;   shared_segments[6].delta_y = 6;   shared_segments[6].duration = 31;
+    shared_segments[7].delta_x = 0;   shared_segments[7].delta_y = -6;  shared_segments[7].duration = 29;
     shared_pattern.segments = shared_segments;
     shared_pattern.count = SEGMENT_COUNT;
 }
 
 void make_states(void) {
-    web64_trajectory_init(&state0, &shared_pattern, 58 << WEB64_SUBPIXEL_BITS, 62 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP);
-    web64_trajectory_init(&state1, &shared_pattern, 106 << WEB64_SUBPIXEL_BITS, 62 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_NEGATE_X);
-    web64_trajectory_init(&state2, &shared_pattern, 154 << WEB64_SUBPIXEL_BITS, 62 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_NEGATE_Y);
-    web64_trajectory_init(&state3, &shared_pattern, 202 << WEB64_SUBPIXEL_BITS, 62 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_NEGATE_X | WEB64_TRAJECTORY_NEGATE_Y);
-    web64_trajectory_init(&state4, &shared_pattern, 58 << WEB64_SUBPIXEL_BITS, 152 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_PING_PONG);
-    web64_trajectory_init(&state5, &shared_pattern, 106 << WEB64_SUBPIXEL_BITS, 152 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_PING_PONG | WEB64_TRAJECTORY_NEGATE_X);
-    web64_trajectory_init(&state6, &shared_pattern, 154 << WEB64_SUBPIXEL_BITS, 152 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_PING_PONG | WEB64_TRAJECTORY_NEGATE_Y);
-    web64_trajectory_init(&state7, &shared_pattern, 202 << WEB64_SUBPIXEL_BITS, 152 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_PING_PONG | WEB64_TRAJECTORY_NEGATE_X | WEB64_TRAJECTORY_NEGATE_Y);
+    web64_trajectory_init(&state0, &shared_pattern, 58 << WEB64_SUBPIXEL_BITS, 84 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP);
+    web64_trajectory_init(&state1, &shared_pattern, 106 << WEB64_SUBPIXEL_BITS, 84 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_NEGATE_X);
+    web64_trajectory_init(&state2, &shared_pattern, 154 << WEB64_SUBPIXEL_BITS, 84 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_NEGATE_Y);
+    web64_trajectory_init(&state3, &shared_pattern, 202 << WEB64_SUBPIXEL_BITS, 84 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_NEGATE_X | WEB64_TRAJECTORY_NEGATE_Y);
+    web64_trajectory_init(&state4, &shared_pattern, 58 << WEB64_SUBPIXEL_BITS, 152 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_PING_PONG);
+    web64_trajectory_init(&state5, &shared_pattern, 106 << WEB64_SUBPIXEL_BITS, 152 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_PING_PONG | WEB64_TRAJECTORY_NEGATE_X);
+    web64_trajectory_init(&state6, &shared_pattern, 154 << WEB64_SUBPIXEL_BITS, 152 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_PING_PONG | WEB64_TRAJECTORY_NEGATE_Y);
+    web64_trajectory_init(&state7, &shared_pattern, 202 << WEB64_SUBPIXEL_BITS, 152 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_PING_PONG | WEB64_TRAJECTORY_NEGATE_X | WEB64_TRAJECTORY_NEGATE_Y);
     for (frame_counter = 0; frame_counter < 5; frame_counter++) web64_trajectory_step_fast(&state1);
     for (frame_counter = 0; frame_counter < 10; frame_counter++) web64_trajectory_step_fast(&state2);
     for (frame_counter = 0; frame_counter < 15; frame_counter++) web64_trajectory_step_fast(&state3);
@@ -72,6 +73,8 @@ void make_states(void) {
 void render_state(Web64TrajectoryState *state, uint8_t slot, uint8_t color) {
     uint16_t x;
     x = state->x >> WEB64_SUBPIXEL_BITS;
+    color = color & 15;
+    if (color == 0) color = 1;
     web64_sprite_render(&sprite_renderer, slot, x, state->y >> WEB64_SUBPIXEL_BITS, SPRITE_POINTER, color, WEB64_SPRITE_VISIBLE);
 }
 
@@ -105,6 +108,7 @@ void main(void) {
     *((uint8_t *)0xd020) = 0;
     *((uint8_t *)0xd021) = 0;
     frame_counter = 0;
+    verification_frames = 0;
     while (1) {
         wait_frame();
         web64_trajectory_step_fast(&state0);
@@ -118,7 +122,8 @@ void main(void) {
         render_states();
         frame_counter++;
 #ifdef WEB64_EXAMPLE_VERIFY
-        if (frame_counter == 120) {
+        verification_frames++;
+        if (verification_frames == 600) {
             verification_complete = 1;
             return;
         }
