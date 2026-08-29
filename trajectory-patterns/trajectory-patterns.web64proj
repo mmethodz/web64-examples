@@ -1,11 +1,11 @@
 {
   "kind": "web64.ide.project",
   "version": 4,
-  "savedAt": "2026-08-27T19:48:41.602Z",
+  "savedAt": "2026-08-27T19:53:47.726Z",
   "main": {
     "fileName": "main.c",
     "origin": "$4000",
-    "source": "#include <stdint.h>\n#include <web64/trajectory.h>\n#include <web64/sprite-runtime.h>\n\n#define TRAJECTORY_COUNT 8\n#define SEGMENT_COUNT 8\n#define POINTER_TABLE 0x07f8\n#define SPRITE_DATA 0x3000\n#define SPRITE_POINTER 0xc0\n\nuint8_t example_color_from_state(void);\n\nWeb64TrajectorySegment shared_segments[SEGMENT_COUNT];\nWeb64TrajectoryPattern shared_pattern;\nWeb64TrajectoryState state0;\nWeb64TrajectoryState state1;\nWeb64TrajectoryState state2;\nWeb64TrajectoryState state3;\nWeb64TrajectoryState state4;\nWeb64TrajectoryState state5;\nWeb64TrajectoryState state6;\nWeb64TrajectoryState state7;\nWeb64SpriteRenderer sprite_renderer;\nuint8_t frame_counter;\nuint8_t verification_complete;\nuint16_t verification_frames;\nuint8_t i;\n\nvoid make_sprite(void) {\n    uint8_t row;\n    uint8_t *data;\n    data = (uint8_t *)SPRITE_DATA;\n    for (row = 0; row < 63; row++) data[row] = 0;\n    for (row = 3; row < 18; row++) {\n        data[row * 3] = 0x18;\n        data[row * 3 + 1] = 0x7e;\n        data[row * 3 + 2] = 0x18;\n    }\n    data[63] = 0;\n}\n\nvoid make_pattern(void) {\n    shared_segments[0].delta_x = 48;  shared_segments[0].delta_y = 0;   shared_segments[0].duration = 32;\n    shared_segments[1].delta_x = 16;  shared_segments[1].delta_y = 16;  shared_segments[1].duration = 17;\n    shared_segments[2].delta_x = -16; shared_segments[2].delta_y = 16;  shared_segments[2].duration = 23;\n    shared_segments[3].delta_x = -48; shared_segments[3].delta_y = 0;   shared_segments[3].duration = 32;\n    shared_segments[4].delta_x = -16; shared_segments[4].delta_y = -16; shared_segments[4].duration = 17;\n    shared_segments[5].delta_x = 16;  shared_segments[5].delta_y = -16; shared_segments[5].duration = 23;\n    shared_segments[6].delta_x = 0;   shared_segments[6].delta_y = 6;   shared_segments[6].duration = 31;\n    shared_segments[7].delta_x = 0;   shared_segments[7].delta_y = -6;  shared_segments[7].duration = 29;\n    shared_pattern.segments = shared_segments;\n    shared_pattern.count = SEGMENT_COUNT;\n}\n\nvoid make_states(void) {\n    web64_trajectory_init(&state0, &shared_pattern, 58 << WEB64_SUBPIXEL_BITS, 84 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP);\n    web64_trajectory_init(&state1, &shared_pattern, 106 << WEB64_SUBPIXEL_BITS, 84 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_NEGATE_X);\n    web64_trajectory_init(&state2, &shared_pattern, 154 << WEB64_SUBPIXEL_BITS, 84 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_NEGATE_Y);\n    web64_trajectory_init(&state3, &shared_pattern, 202 << WEB64_SUBPIXEL_BITS, 84 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_NEGATE_X | WEB64_TRAJECTORY_NEGATE_Y);\n    web64_trajectory_init(&state4, &shared_pattern, 58 << WEB64_SUBPIXEL_BITS, 152 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_PING_PONG);\n    web64_trajectory_init(&state5, &shared_pattern, 106 << WEB64_SUBPIXEL_BITS, 152 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_PING_PONG | WEB64_TRAJECTORY_NEGATE_X);\n    web64_trajectory_init(&state6, &shared_pattern, 154 << WEB64_SUBPIXEL_BITS, 152 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_PING_PONG | WEB64_TRAJECTORY_NEGATE_Y);\n    web64_trajectory_init(&state7, &shared_pattern, 202 << WEB64_SUBPIXEL_BITS, 152 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_PING_PONG | WEB64_TRAJECTORY_NEGATE_X | WEB64_TRAJECTORY_NEGATE_Y);\n    for (frame_counter = 0; frame_counter < 5; frame_counter++) web64_trajectory_step_fast(&state1);\n    for (frame_counter = 0; frame_counter < 10; frame_counter++) web64_trajectory_step_fast(&state2);\n    for (frame_counter = 0; frame_counter < 15; frame_counter++) web64_trajectory_step_fast(&state3);\n    for (frame_counter = 0; frame_counter < 20; frame_counter++) web64_trajectory_step_fast(&state4);\n    for (frame_counter = 0; frame_counter < 25; frame_counter++) web64_trajectory_step_fast(&state5);\n    for (frame_counter = 0; frame_counter < 30; frame_counter++) web64_trajectory_step_fast(&state6);\n    for (frame_counter = 0; frame_counter < 35; frame_counter++) web64_trajectory_step_fast(&state7);\n}\n\nvoid render_state(Web64TrajectoryState *state, uint8_t slot, uint8_t color) {\n    uint16_t x;\n    x = state->x >> WEB64_SUBPIXEL_BITS;\n    color = color & 15;\n    if (color == 0) color = 1;\n    web64_sprite_render(&sprite_renderer, slot, x, state->y >> WEB64_SUBPIXEL_BITS, SPRITE_POINTER, color, WEB64_SPRITE_VISIBLE);\n}\n\nvoid render_states(void) {\n    uint8_t base_color;\n    base_color = example_color_from_state();\n    render_state(&state0, 0, base_color);\n    render_state(&state1, 1, base_color + 1);\n    render_state(&state2, 2, base_color + 2);\n    render_state(&state3, 3, base_color + 3);\n    render_state(&state4, 4, base_color + 4);\n    render_state(&state5, 5, base_color + 5);\n    render_state(&state6, 6, base_color + 6);\n    render_state(&state7, 7, base_color + 7);\n}\n\nvoid wait_frame(void) {\n#ifdef WEB64_EXAMPLE_VERIFY\n    return;\n#else\n    while (*((uint8_t *)0xd012) != 250) { }\n    while (*((uint8_t *)0xd012) == 250) { }\n#endif\n}\n\nvoid main(void) {\n    make_sprite();\n    make_pattern();\n    make_states();\n    web64_sprite_renderer_init(&sprite_renderer, POINTER_TABLE);\n    *((uint8_t *)0xd020) = 0;\n    *((uint8_t *)0xd021) = 0;\n    frame_counter = 0;\n    verification_frames = 0;\n    while (1) {\n        wait_frame();\n        web64_trajectory_step_fast(&state0);\n        web64_trajectory_step_fast(&state1);\n        web64_trajectory_step_fast(&state2);\n        web64_trajectory_step_fast(&state3);\n        web64_trajectory_step_fast(&state4);\n        web64_trajectory_step_fast(&state5);\n        web64_trajectory_step_fast(&state6);\n        web64_trajectory_step_fast(&state7);\n        render_states();\n        frame_counter++;\n#ifdef WEB64_EXAMPLE_VERIFY\n        verification_frames++;\n        if (verification_frames == 600) {\n            verification_complete = 1;\n            return;\n        }\n#endif\n    }\n}\n",
+    "source": "#include <stdint.h>\n#include <web64/trajectory.h>\n#include <web64/sprite-runtime.h>\n#include <web64.h>\n\n#define TRAJECTORY_COUNT 8\n#define SEGMENT_COUNT 8\n#define POINTER_TABLE 0x07f8\n#define SPRITE_DATA 0x3000\n#define SPRITE_POINTER 0xc0\n\nuint8_t example_color_from_state(void);\n\nWeb64TrajectorySegment shared_segments[SEGMENT_COUNT];\nWeb64TrajectoryPattern shared_pattern;\nWeb64TrajectoryState state0;\nWeb64TrajectoryState state1;\nWeb64TrajectoryState state2;\nWeb64TrajectoryState state3;\nWeb64TrajectoryState state4;\nWeb64TrajectoryState state5;\nWeb64TrajectoryState state6;\nWeb64TrajectoryState state7;\nWeb64SpriteRenderer sprite_renderer;\nuint8_t frame_counter;\nuint8_t verification_complete;\nuint16_t verification_frames;\nuint8_t i;\n\nvoid make_sprite(void) {\n    uint8_t row;\n    uint8_t *data;\n    data = (uint8_t *)SPRITE_DATA;\n    for (row = 0; row < 63; row++) data[row] = 0;\n    for (row = 3; row < 18; row++) {\n        data[row * 3] = 0x18;\n        data[row * 3 + 1] = 0x7e;\n        data[row * 3 + 2] = 0x18;\n    }\n    data[63] = 0;\n}\n\nvoid make_pattern(void) {\n    shared_segments[0].delta_x = 48;  shared_segments[0].delta_y = 0;   shared_segments[0].duration = 32;\n    shared_segments[1].delta_x = 16;  shared_segments[1].delta_y = 16;  shared_segments[1].duration = 17;\n    shared_segments[2].delta_x = -16; shared_segments[2].delta_y = 16;  shared_segments[2].duration = 23;\n    shared_segments[3].delta_x = -48; shared_segments[3].delta_y = 0;   shared_segments[3].duration = 32;\n    shared_segments[4].delta_x = -16; shared_segments[4].delta_y = -16; shared_segments[4].duration = 17;\n    shared_segments[5].delta_x = 16;  shared_segments[5].delta_y = -16; shared_segments[5].duration = 23;\n    shared_segments[6].delta_x = 0;   shared_segments[6].delta_y = 6;   shared_segments[6].duration = 31;\n    shared_segments[7].delta_x = 0;   shared_segments[7].delta_y = -6;  shared_segments[7].duration = 29;\n    shared_pattern.segments = shared_segments;\n    shared_pattern.count = SEGMENT_COUNT;\n}\n\nvoid make_states(void) {\n    web64_trajectory_init(&state0, &shared_pattern, 58 << WEB64_SUBPIXEL_BITS, 84 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP);\n    web64_trajectory_init(&state1, &shared_pattern, 106 << WEB64_SUBPIXEL_BITS, 84 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_NEGATE_X);\n    web64_trajectory_init(&state2, &shared_pattern, 154 << WEB64_SUBPIXEL_BITS, 84 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_NEGATE_Y);\n    web64_trajectory_init(&state3, &shared_pattern, 202 << WEB64_SUBPIXEL_BITS, 84 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_NEGATE_X | WEB64_TRAJECTORY_NEGATE_Y);\n    web64_trajectory_init(&state4, &shared_pattern, 58 << WEB64_SUBPIXEL_BITS, 152 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_PING_PONG);\n    web64_trajectory_init(&state5, &shared_pattern, 106 << WEB64_SUBPIXEL_BITS, 152 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_PING_PONG | WEB64_TRAJECTORY_NEGATE_X);\n    web64_trajectory_init(&state6, &shared_pattern, 154 << WEB64_SUBPIXEL_BITS, 152 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_PING_PONG | WEB64_TRAJECTORY_NEGATE_Y);\n    web64_trajectory_init(&state7, &shared_pattern, 202 << WEB64_SUBPIXEL_BITS, 152 << WEB64_SUBPIXEL_BITS, WEB64_TRAJECTORY_LOOP | WEB64_TRAJECTORY_PING_PONG | WEB64_TRAJECTORY_NEGATE_X | WEB64_TRAJECTORY_NEGATE_Y);\n    for (frame_counter = 0; frame_counter < 5; frame_counter++) web64_trajectory_step_fast(&state1);\n    for (frame_counter = 0; frame_counter < 10; frame_counter++) web64_trajectory_step_fast(&state2);\n    for (frame_counter = 0; frame_counter < 15; frame_counter++) web64_trajectory_step_fast(&state3);\n    for (frame_counter = 0; frame_counter < 20; frame_counter++) web64_trajectory_step_fast(&state4);\n    for (frame_counter = 0; frame_counter < 25; frame_counter++) web64_trajectory_step_fast(&state5);\n    for (frame_counter = 0; frame_counter < 30; frame_counter++) web64_trajectory_step_fast(&state6);\n    for (frame_counter = 0; frame_counter < 35; frame_counter++) web64_trajectory_step_fast(&state7);\n}\n\nvoid render_state(Web64TrajectoryState *state, uint8_t slot, uint8_t color) {\n    uint16_t x;\n    x = state->x >> WEB64_SUBPIXEL_BITS;\n    color = color & 15;\n    if (color == 0) color = 1;\n    web64_sprite_render(&sprite_renderer, slot, x, state->y >> WEB64_SUBPIXEL_BITS, SPRITE_POINTER, color, WEB64_SPRITE_VISIBLE);\n}\n\nvoid render_states(void) {\n    uint8_t base_color;\n    base_color = example_color_from_state();\n    render_state(&state0, 0, base_color);\n    render_state(&state1, 1, base_color + 1);\n    render_state(&state2, 2, base_color + 2);\n    render_state(&state3, 3, base_color + 3);\n    render_state(&state4, 4, base_color + 4);\n    render_state(&state5, 5, base_color + 5);\n    render_state(&state6, 6, base_color + 6);\n    render_state(&state7, 7, base_color + 7);\n}\n\nvoid wait_frame(void) {\n#ifdef WEB64_EXAMPLE_VERIFY\n    return;\n#else\n    while (*((uint8_t *)0xd012) != 250) { }\n    while (*((uint8_t *)0xd012) == 250) { }\n#endif\n}\n\nvoid main(void) {\n    make_sprite();\n    make_pattern();\n    make_states();\n    web64_sprite_renderer_init(&sprite_renderer, POINTER_TABLE);\n    *((uint8_t *)0xd020) = 0;\n    *((uint8_t *)0xd021) = 0;\n  \tclrscr();\n    frame_counter = 0;\n    verification_frames = 0;\n    while (1) {\n        wait_frame();\n        web64_trajectory_step_fast(&state0);\n        web64_trajectory_step_fast(&state1);\n        web64_trajectory_step_fast(&state2);\n        web64_trajectory_step_fast(&state3);\n        web64_trajectory_step_fast(&state4);\n        web64_trajectory_step_fast(&state5);\n        web64_trajectory_step_fast(&state6);\n        web64_trajectory_step_fast(&state7);\n        render_states();\n        frame_counter++;\n#ifdef WEB64_EXAMPLE_VERIFY\n        verification_frames++;\n        if (verification_frames == 600) {\n            verification_complete = 1;\n            return;\n        }\n#endif\n    }\n}\n",
     "selectedEntryLabel": "auto"
   },
   "c": {
@@ -23,6 +23,10 @@
     "stdin": "none",
     "runtimeProfile": "tiny",
     "compilerBackend": "web64-native",
+    "startup": {
+      "processorPort": null,
+      "disableInterrupts": false
+    },
     "stack": {
       "size": 512,
       "address": null
@@ -30,8 +34,41 @@
     "zeroPage": {
       "reserved": []
     },
+    "ir": {
+      "schemaVersion": 1,
+      "enabled": false,
+      "verifyLegacyEquivalence": true,
+      "emitSnapshots": false
+    },
     "optimize": {
-      "mode": "speed"
+      "schemaVersion": 2,
+      "mode": "speed",
+      "enabled": true,
+      "passGates": {
+        "generatorPeephole": true,
+        "registerTemporaryStack": true,
+        "constantStrengthReduction": true,
+        "fixedPointSpecialization": true,
+        "booleanBranch": true,
+        "controlFlowLoop": true,
+        "cc65Peephole": true,
+        "zeroPagePromotion": true,
+        "deadCode": true,
+        "conditionalInlining": true,
+        "hardwareAware": true,
+        "runtimeData": true
+      },
+      "frameCriticalFunctions": [],
+      "zeroPageReserved": [],
+      "budgets": {
+        "maxBuildByteGrowth": 0,
+        "maxFunctionByteGrowth": 0,
+        "maxWorstCaseCycles": null
+      },
+      "diagnostics": {
+        "trace": "summary",
+        "missedOptimizationRemarks": false
+      }
     }
   },
   "build": {
@@ -51,8 +88,12 @@
         "entrySymbol": "",
         "origin": "$4000",
         "outputName": "trajectory-patterns.prg",
+        "artifactContribution": "",
         "defines": {},
         "compatibilityModules": [],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
         "c": {
           "enabled": true
         },
@@ -76,6 +117,33 @@
   },
   "settings": {
     "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "fit",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": true,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": false,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
     "compiler": {
       "enabled": true,
       "dialect": "web64-c-v0.1",
@@ -91,6 +159,10 @@
       "stdin": "none",
       "runtimeProfile": "tiny",
       "compilerBackend": "web64-native",
+      "startup": {
+        "processorPort": null,
+        "disableInterrupts": false
+      },
       "stack": {
         "size": 512,
         "address": null
@@ -98,16 +170,12 @@
       "zeroPage": {
         "reserved": []
       },
-      "optimize": {
-        "mode": "speed"
+      "ir": {
+        "schemaVersion": 1,
+        "enabled": false,
+        "verifyLegacyEquivalence": true,
+        "emitSnapshots": false
       }
-    },
-    "optimizer": {
-      "profile": "default",
-      "peephole": true,
-      "simplification": true,
-      "runtimeDependencySelection": true,
-      "unsupportedNativeFlags": "diagnostic"
     }
   },
   "workspace": {
@@ -115,7 +183,16 @@
       "scope": "root",
       "path": "main.c"
     },
-    "editor": null,
+    "editor": {
+      "file": {
+        "scope": "root",
+        "path": "main.c"
+      },
+      "selectionStart": 5349,
+      "selectionEnd": 5349,
+      "scrollTop": 2147,
+      "scrollLeft": 0
+    },
     "emulatorCollapsed": false
   },
   "media": {

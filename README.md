@@ -14,10 +14,16 @@ Open a .web64proj in the Web64 IDE to inspect, build, and run it.
 
 - `WORLD_RUNTIME_EXAMPLES.md` links the native `.w64*` World-module examples: static map, horizontal/vertical/bidirectional scrollers, a Q12.4 subpixel Motion scroller, multicolor scroller, platformer, and World + Motion + Sprites actor/camera composition. World belongs to Web64 Game Runtime alongside Motion, Collision, Animation, Sprites, and Actors, while retaining independent runtime closure. These projects include their editable assets and generated build artifacts, copy charset/sprite data into VIC-visible memory at startup, and are joystick-driven on port 2.
 
+## Bitmap drawing examples
+
+- `bitmap-drawing/bitmap-drawing.web64proj` demonstrates bitmap setup, logical-index lines and shapes, explicit palette ownership, and bounded replace-only flood fill.
+- `bitmap-wireframe-3d/bitmap-wireframe-3d.web64proj` renders a perspective wireframe cube with twelve optimized bitmap lines. Web64's Matrix generator supplies cyclic Q8.8 X/Y rotation matrices, WASD controls pitch and yaw, and XOR redraw removes the previous orientation without clearing the full bitmap.
+
 ## Web64 v2 workstream examples
 
 - `actor-batch-arena/actor-batch-arena.web64proj` is the standalone open actor-batch demonstration: 32 caller-owned SoA actors, 21 visible actors, sine-driven Q12.4 movement, independent base/overlay animation, public culling and actor-pair buffers, descriptor-backed atomic sprite pairs, repeated six-slot PAL mux reuse, two reserved direct HUD slots, and a deterministic priority drop. Its application-owned IRQ wrapper documents the acknowledgement and chaining boundary; `WEB64_EXAMPLE_VERIFY` exercises 120 frames without hiding any phase buffer or asset placement.
 - `trajectory-patterns/trajectory-patterns.web64proj` demonstrates eight independent trajectory states sharing one immutable compact waypoint pattern. It covers all four X/Y mirroring combinations, looping, ping-pong, phase staggering, exact prime-duration interpolation, direct C-owned VIC-II rendering, and native assembly inspection through `web64/trajectory.inc` while linking only the trajectory runtime module.
+- `trajectory-patterns-asm/trajectory-patterns-asm.web64proj` is the cycle-critical native companion. C enters assembly once; one `_web64_trajectory_step_batch_fast` call advances eight caller-owned lockstep states, and open assembly projects the changed Q12.4 axis directly into all eight VIC-II sprites. The complete measured hot interval stays at or below 3,783 cycles / 19.246% PAL under both C ABIs, including event writes and VIC projection, while exact-linking only the scalar and batch trajectory modules.
 
 ## Web64 C v1 Coverage
 
