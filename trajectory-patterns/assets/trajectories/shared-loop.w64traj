@@ -1,0 +1,88 @@
+{
+  "schema": "web64.ide.trajectoryAsset",
+  "version": 1,
+  "id": "trajectory-patterns-shared-loop",
+  "name": "Shared Loop",
+  "points": [
+    {
+      "id": "shared-loop-point-1",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "shared-loop-point-2",
+      "x": 48,
+      "y": 0,
+      "duration": 32
+    },
+    {
+      "id": "shared-loop-point-3",
+      "x": 64,
+      "y": 16,
+      "duration": 17
+    },
+    {
+      "id": "shared-loop-point-4",
+      "x": 48,
+      "y": 32,
+      "duration": 23
+    },
+    {
+      "id": "shared-loop-point-5",
+      "x": 0,
+      "y": 32,
+      "duration": 32
+    },
+    {
+      "id": "shared-loop-point-6",
+      "x": -16,
+      "y": 16,
+      "duration": 17
+    },
+    {
+      "id": "shared-loop-point-7",
+      "x": 0,
+      "y": 0,
+      "duration": 23
+    },
+    {
+      "id": "shared-loop-point-8",
+      "x": 0,
+      "y": 6,
+      "duration": 31
+    },
+    {
+      "id": "shared-loop-point-9",
+      "x": 0,
+      "y": 0,
+      "duration": 29
+    }
+  ],
+  "runtimeDefaults": {
+    "loop": true,
+    "pingPong": false,
+    "reverse": false,
+    "negateX": false,
+    "negateY": false
+  },
+  "authoring": {
+    "anchor": {
+      "x": 58,
+      "y": 84
+    },
+    "mapBackdrop": null,
+    "appearancePreview": null,
+    "grid": {
+      "visible": true,
+      "snap": true,
+      "spacingX": 8,
+      "spacingY": 8,
+      "preset": "character"
+    },
+    "storedView": {
+      "centerX": 0,
+      "centerY": 0,
+      "zoom": 1
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "schema": "web64.ide.trajectoryAsset",
+  "version": 1,
+  "id": "trajectory-actors-actor-5-kite-loop",
+  "name": "Actor 5 Kite Loop",
+  "points": [
+    {
+      "id": "actor-5-kite-loop-point-1",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "actor-5-kite-loop-point-2",
+      "x": 16,
+      "y": -9,
+      "duration": 14
+    },
+    {
+      "id": "actor-5-kite-loop-point-3",
+      "x": 34,
+      "y": 0,
+      "duration": 18
+    },
+    {
+      "id": "actor-5-kite-loop-point-4",
+      "x": 16,
+      "y": 11,
+      "duration": 22
+    },
+    {
+      "id": "actor-5-kite-loop-point-5",
+      "x": 0,
+      "y": 0,
+      "duration": 16
+    }
+  ],
+  "runtimeDefaults": {
+    "loop": true,
+    "pingPong": true,
+    "reverse": false,
+    "negateX": false,
+    "negateY": false
+  },
+  "authoring": {
+    "anchor": {
+      "x": 48,
+      "y": 156
+    },
+    "mapBackdrop": null,
+    "appearancePreview": {
+      "assetId": "w64-9b448be4",
+      "path": "assets/sprites/trajectory-actors.w64spr",
+      "selection": {
+        "kind": "animation",
+        "id": "orbit-pulse"
+      }
+    },
+    "grid": {
+      "visible": true,
+      "snap": true,
+      "spacingX": 4,
+      "spacingY": 4,
+      "preset": "fine"
+    },
+    "storedView": {
+      "centerX": 8,
+      "centerY": 4,
+      "zoom": 2
+    }
+  }
+}

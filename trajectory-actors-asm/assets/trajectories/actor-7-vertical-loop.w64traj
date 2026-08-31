@@ -1,0 +1,71 @@
+{
+  "schema": "web64.ide.trajectoryAsset",
+  "version": 1,
+  "id": "trajectory-actors-actor-7-vertical-loop",
+  "name": "Actor 7 Vertical Loop",
+  "points": [
+    {
+      "id": "actor-7-vertical-loop-point-1",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "actor-7-vertical-loop-point-2",
+      "x": 8,
+      "y": -20,
+      "duration": 29
+    },
+    {
+      "id": "actor-7-vertical-loop-point-3",
+      "x": 17,
+      "y": 0,
+      "duration": 13
+    },
+    {
+      "id": "actor-7-vertical-loop-point-4",
+      "x": 8,
+      "y": 22,
+      "duration": 29
+    },
+    {
+      "id": "actor-7-vertical-loop-point-5",
+      "x": 0,
+      "y": 0,
+      "duration": 13
+    }
+  ],
+  "runtimeDefaults": {
+    "loop": true,
+    "pingPong": false,
+    "reverse": false,
+    "negateX": true,
+    "negateY": true
+  },
+  "authoring": {
+    "anchor": {
+      "x": 168,
+      "y": 156
+    },
+    "mapBackdrop": null,
+    "appearancePreview": {
+      "assetId": "w64-9b448be4",
+      "path": "assets/sprites/trajectory-actors.w64spr",
+      "selection": {
+        "kind": "animation",
+        "id": "orbit-pulse"
+      }
+    },
+    "grid": {
+      "visible": true,
+      "snap": true,
+      "spacingX": 4,
+      "spacingY": 4,
+      "preset": "fine"
+    },
+    "storedView": {
+      "centerX": 8,
+      "centerY": 4,
+      "zoom": 2
+    }
+  }
+}

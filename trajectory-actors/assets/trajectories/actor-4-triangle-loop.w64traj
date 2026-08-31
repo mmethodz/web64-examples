@@ -1,0 +1,65 @@
+{
+  "schema": "web64.ide.trajectoryAsset",
+  "version": 1,
+  "id": "trajectory-actors-actor-4-triangle-loop",
+  "name": "Actor 4 Triangle Loop",
+  "points": [
+    {
+      "id": "actor-4-triangle-loop-point-1",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "actor-4-triangle-loop-point-2",
+      "x": 14,
+      "y": -16,
+      "duration": 21
+    },
+    {
+      "id": "actor-4-triangle-loop-point-3",
+      "x": 30,
+      "y": 0,
+      "duration": 27
+    },
+    {
+      "id": "actor-4-triangle-loop-point-4",
+      "x": 0,
+      "y": 0,
+      "duration": 31
+    }
+  ],
+  "runtimeDefaults": {
+    "loop": true,
+    "pingPong": false,
+    "reverse": true,
+    "negateX": false,
+    "negateY": false
+  },
+  "authoring": {
+    "anchor": {
+      "x": 232,
+      "y": 78
+    },
+    "mapBackdrop": null,
+    "appearancePreview": {
+      "assetId": "w64-9b448be4",
+      "path": "assets/sprites/trajectory-actors.w64spr",
+      "selection": {
+        "kind": "animation",
+        "id": "orbit-pulse"
+      }
+    },
+    "grid": {
+      "visible": true,
+      "snap": true,
+      "spacingX": 4,
+      "spacingY": 4,
+      "preset": "fine"
+    },
+    "storedView": {
+      "centerX": 8,
+      "centerY": 4,
+      "zoom": 2
+    }
+  }
+}

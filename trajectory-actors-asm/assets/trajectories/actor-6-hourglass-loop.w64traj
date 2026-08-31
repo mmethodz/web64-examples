@@ -1,0 +1,71 @@
+{
+  "schema": "web64.ide.trajectoryAsset",
+  "version": 1,
+  "id": "trajectory-actors-actor-6-hourglass-loop",
+  "name": "Actor 6 Hourglass Loop",
+  "points": [
+    {
+      "id": "actor-6-hourglass-loop-point-1",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "actor-6-hourglass-loop-point-2",
+      "x": 26,
+      "y": 18,
+      "duration": 25
+    },
+    {
+      "id": "actor-6-hourglass-loop-point-3",
+      "x": 0,
+      "y": 18,
+      "duration": 15
+    },
+    {
+      "id": "actor-6-hourglass-loop-point-4",
+      "x": 26,
+      "y": 0,
+      "duration": 25
+    },
+    {
+      "id": "actor-6-hourglass-loop-point-5",
+      "x": 0,
+      "y": 0,
+      "duration": 15
+    }
+  ],
+  "runtimeDefaults": {
+    "loop": true,
+    "pingPong": true,
+    "reverse": true,
+    "negateX": false,
+    "negateY": false
+  },
+  "authoring": {
+    "anchor": {
+      "x": 104,
+      "y": 148
+    },
+    "mapBackdrop": null,
+    "appearancePreview": {
+      "assetId": "w64-9b448be4",
+      "path": "assets/sprites/trajectory-actors.w64spr",
+      "selection": {
+        "kind": "animation",
+        "id": "orbit-pulse"
+      }
+    },
+    "grid": {
+      "visible": true,
+      "snap": true,
+      "spacingX": 4,
+      "spacingY": 4,
+      "preset": "fine"
+    },
+    "storedView": {
+      "centerX": 8,
+      "centerY": 4,
+      "zoom": 2
+    }
+  }
+}

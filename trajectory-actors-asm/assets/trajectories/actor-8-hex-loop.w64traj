@@ -1,0 +1,83 @@
+{
+  "schema": "web64.ide.trajectoryAsset",
+  "version": 1,
+  "id": "trajectory-actors-actor-8-hex-loop",
+  "name": "Actor 8 Hex Loop",
+  "points": [
+    {
+      "id": "actor-8-hex-loop-point-1",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "actor-8-hex-loop-point-2",
+      "x": 12,
+      "y": -9,
+      "duration": 11
+    },
+    {
+      "id": "actor-8-hex-loop-point-3",
+      "x": 28,
+      "y": -5,
+      "duration": 13
+    },
+    {
+      "id": "actor-8-hex-loop-point-4",
+      "x": 34,
+      "y": 10,
+      "duration": 17
+    },
+    {
+      "id": "actor-8-hex-loop-point-5",
+      "x": 19,
+      "y": 22,
+      "duration": 19
+    },
+    {
+      "id": "actor-8-hex-loop-point-6",
+      "x": 3,
+      "y": 15,
+      "duration": 13
+    },
+    {
+      "id": "actor-8-hex-loop-point-7",
+      "x": 0,
+      "y": 0,
+      "duration": 11
+    }
+  ],
+  "runtimeDefaults": {
+    "loop": true,
+    "pingPong": true,
+    "reverse": false,
+    "negateX": true,
+    "negateY": false
+  },
+  "authoring": {
+    "anchor": {
+      "x": 224,
+      "y": 148
+    },
+    "mapBackdrop": null,
+    "appearancePreview": {
+      "assetId": "w64-9b448be4",
+      "path": "assets/sprites/trajectory-actors.w64spr",
+      "selection": {
+        "kind": "animation",
+        "id": "orbit-pulse"
+      }
+    },
+    "grid": {
+      "visible": true,
+      "snap": true,
+      "spacingX": 4,
+      "spacingY": 4,
+      "preset": "fine"
+    },
+    "storedView": {
+      "centerX": 8,
+      "centerY": 4,
+      "zoom": 2
+    }
+  }
+}

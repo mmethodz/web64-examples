@@ -1,0 +1,690 @@
+{
+  "kind": "web64.ide.project",
+  "version": 4,
+  "savedAt": "2026-08-31T10:42:42.783Z",
+  "main": {
+    "fileName": "main.c",
+    "origin": "$4000",
+    "source": "#include <stdint.h>\n#include <assets/generated.h>\n#include <web64/assets.h>\n#include <web64/animation.h>\n#include <web64/trajectory.h>\n#include <web64/sprite-runtime.h>\n\n#define ACTOR_COUNT 8\n#define SPRITE_RAM ((uint8_t *)0x3000)\n#define SPRITE_POINTER 0xc0\n#define POINTER_TABLE 0x07f8\n#define VERIFY_FRAMES 600\n\nWeb64TrajectoryState trajectory_state_0;\nWeb64TrajectoryState trajectory_state_1;\nWeb64TrajectoryState trajectory_state_2;\nWeb64TrajectoryState trajectory_state_3;\nWeb64TrajectoryState trajectory_state_4;\nWeb64TrajectoryState trajectory_state_5;\nWeb64TrajectoryState trajectory_state_6;\nWeb64TrajectoryState trajectory_state_7;\nWeb64AnimationPlayer animation_player;\nWeb64AnimationStep animation_steps[4] = {{0,4,0,255},{1,4,0,255},{2,4,0,255},{3,4,0,255}};\nWeb64AnimationSequence animation_sequence;\nWeb64AnimationBank animation_bank;\nWeb64SpriteRenderer sprite_renderer;\nuint16_t previous_x[ACTOR_COUNT];\nuint16_t previous_y[ACTOR_COUNT];\nuint8_t animation_frame_masks[ACTOR_COUNT];\nuint8_t movement_mask;\nuint16_t frame_counter;\nuint16_t verification_frames;\nuint8_t verification_complete;\nuint8_t initialization_failed;\n\nvoid initialize_trajectories(void) {\n    if (web64_trajectory_init(&trajectory_state_0, &actor_1_box_loop_asset, 48 << WEB64_SUBPIXEL_BITS, 72 << WEB64_SUBPIXEL_BITS, actor_1_box_loop_default_options) != WEB64_TRAJECTORY_OK) initialization_failed = 1;\n    if (web64_trajectory_init(&trajectory_state_1, &actor_2_diamond_loop_asset, 112 << WEB64_SUBPIXEL_BITS, 76 << WEB64_SUBPIXEL_BITS, actor_2_diamond_loop_default_options) != WEB64_TRAJECTORY_OK) initialization_failed = 1;\n    if (web64_trajectory_init(&trajectory_state_2, &actor_3_wide_loop_asset, 160 << WEB64_SUBPIXEL_BITS, 68 << WEB64_SUBPIXEL_BITS, actor_3_wide_loop_default_options) != WEB64_TRAJECTORY_OK) initialization_failed = 1;\n    if (web64_trajectory_init(&trajectory_state_3, &actor_4_triangle_loop_asset, 232 << WEB64_SUBPIXEL_BITS, 78 << WEB64_SUBPIXEL_BITS, actor_4_triangle_loop_default_options) != WEB64_TRAJECTORY_OK) initialization_failed = 1;\n    if (web64_trajectory_init(&trajectory_state_4, &actor_5_kite_loop_asset, 48 << WEB64_SUBPIXEL_BITS, 156 << WEB64_SUBPIXEL_BITS, actor_5_kite_loop_default_options) != WEB64_TRAJECTORY_OK) initialization_failed = 1;\n    if (web64_trajectory_init(&trajectory_state_5, &actor_6_hourglass_loop_asset, 104 << WEB64_SUBPIXEL_BITS, 148 << WEB64_SUBPIXEL_BITS, actor_6_hourglass_loop_default_options) != WEB64_TRAJECTORY_OK) initialization_failed = 1;\n    if (web64_trajectory_init(&trajectory_state_6, &actor_7_vertical_loop_asset, 168 << WEB64_SUBPIXEL_BITS, 156 << WEB64_SUBPIXEL_BITS, actor_7_vertical_loop_default_options) != WEB64_TRAJECTORY_OK) initialization_failed = 1;\n    if (web64_trajectory_init(&trajectory_state_7, &actor_8_hex_loop_asset, 224 << WEB64_SUBPIXEL_BITS, 148 << WEB64_SUBPIXEL_BITS, actor_8_hex_loop_default_options) != WEB64_TRAJECTORY_OK) initialization_failed = 1;\n    previous_x[0] = trajectory_state_0.x;\n    previous_y[0] = trajectory_state_0.y;\n    previous_x[1] = trajectory_state_1.x;\n    previous_y[1] = trajectory_state_1.y;\n    previous_x[2] = trajectory_state_2.x;\n    previous_y[2] = trajectory_state_2.y;\n    previous_x[3] = trajectory_state_3.x;\n    previous_y[3] = trajectory_state_3.y;\n    previous_x[4] = trajectory_state_4.x;\n    previous_y[4] = trajectory_state_4.y;\n    previous_x[5] = trajectory_state_5.x;\n    previous_y[5] = trajectory_state_5.y;\n    previous_x[6] = trajectory_state_6.x;\n    previous_y[6] = trajectory_state_6.y;\n    previous_x[7] = trajectory_state_7.x;\n    previous_y[7] = trajectory_state_7.y;\n}\n\nvoid initialize_animation(void) {\n    animation_sequence.steps = WEB64_ADDRESS(animation_steps);\n    animation_sequence.count = 4;\n    animation_sequence.flags = WEB64_ANIMATION_LOOP;\n    animation_bank.sequences = WEB64_ADDRESS(&animation_sequence);\n    animation_bank.count = 1;\n    web64_animation_init(&animation_player, WEB64_ADDRESS(&animation_bank));\n    web64_animation_play(&animation_player, 0, WEB64_ANIMATION_PLAY_RESTART);\n}\n\nvoid install_sprite_asset(void) {\n    if (web64_asset_copy_sprite(SPRITE_RAM, &trajectory_actors_asset) != WEB64_ASSET_COPY_OK) initialization_failed = 2;\n    *((uint8_t *)0xdd02) = *((uint8_t *)0xdd02) | 3;\n    *((uint8_t *)0xdd00) = (*((uint8_t *)0xdd00) & 0xfc) | 3;\n    *((uint8_t *)0xd018) = 0x15;\n    *((uint8_t *)0xd020) = 0;\n    *((uint8_t *)0xd021) = 0;\n    *((uint8_t *)0xd025) = trajectory_actors_asset.multicolor_1;\n    *((uint8_t *)0xd026) = trajectory_actors_asset.multicolor_2;\n    web64_sprite_renderer_init(&sprite_renderer, POINTER_TABLE);\n}\n\nvoid step_actors(void) {\n    web64_trajectory_step_fast(&trajectory_state_0);\n    web64_trajectory_step_fast(&trajectory_state_1);\n    web64_trajectory_step_fast(&trajectory_state_2);\n    web64_trajectory_step_fast(&trajectory_state_3);\n    web64_trajectory_step_fast(&trajectory_state_4);\n    web64_trajectory_step_fast(&trajectory_state_5);\n    web64_trajectory_step_fast(&trajectory_state_6);\n    web64_trajectory_step_fast(&trajectory_state_7);\n    web64_animation_tick(&animation_player);\n    if (trajectory_state_0.x != previous_x[0] || trajectory_state_0.y != previous_y[0]) movement_mask = movement_mask | 1;\n    previous_x[0] = trajectory_state_0.x;\n    previous_y[0] = trajectory_state_0.y;\n    animation_frame_masks[0] = animation_frame_masks[0] | (1 << ((animation_player.frame + 0) & 3));\n    if (trajectory_state_1.x != previous_x[1] || trajectory_state_1.y != previous_y[1]) movement_mask = movement_mask | 2;\n    previous_x[1] = trajectory_state_1.x;\n    previous_y[1] = trajectory_state_1.y;\n    animation_frame_masks[1] = animation_frame_masks[1] | (1 << ((animation_player.frame + 1) & 3));\n    if (trajectory_state_2.x != previous_x[2] || trajectory_state_2.y != previous_y[2]) movement_mask = movement_mask | 4;\n    previous_x[2] = trajectory_state_2.x;\n    previous_y[2] = trajectory_state_2.y;\n    animation_frame_masks[2] = animation_frame_masks[2] | (1 << ((animation_player.frame + 2) & 3));\n    if (trajectory_state_3.x != previous_x[3] || trajectory_state_3.y != previous_y[3]) movement_mask = movement_mask | 8;\n    previous_x[3] = trajectory_state_3.x;\n    previous_y[3] = trajectory_state_3.y;\n    animation_frame_masks[3] = animation_frame_masks[3] | (1 << ((animation_player.frame + 3) & 3));\n    if (trajectory_state_4.x != previous_x[4] || trajectory_state_4.y != previous_y[4]) movement_mask = movement_mask | 16;\n    previous_x[4] = trajectory_state_4.x;\n    previous_y[4] = trajectory_state_4.y;\n    animation_frame_masks[4] = animation_frame_masks[4] | (1 << ((animation_player.frame + 0) & 3));\n    if (trajectory_state_5.x != previous_x[5] || trajectory_state_5.y != previous_y[5]) movement_mask = movement_mask | 32;\n    previous_x[5] = trajectory_state_5.x;\n    previous_y[5] = trajectory_state_5.y;\n    animation_frame_masks[5] = animation_frame_masks[5] | (1 << ((animation_player.frame + 1) & 3));\n    if (trajectory_state_6.x != previous_x[6] || trajectory_state_6.y != previous_y[6]) movement_mask = movement_mask | 64;\n    previous_x[6] = trajectory_state_6.x;\n    previous_y[6] = trajectory_state_6.y;\n    animation_frame_masks[6] = animation_frame_masks[6] | (1 << ((animation_player.frame + 2) & 3));\n    if (trajectory_state_7.x != previous_x[7] || trajectory_state_7.y != previous_y[7]) movement_mask = movement_mask | 128;\n    previous_x[7] = trajectory_state_7.x;\n    previous_y[7] = trajectory_state_7.y;\n    animation_frame_masks[7] = animation_frame_masks[7] | (1 << ((animation_player.frame + 3) & 3));\n}\n\nvoid render_actor(Web64TrajectoryState *state, uint8_t slot, uint8_t color, uint8_t frame) {\n    uint16_t x;\n    x = state->x >> WEB64_SUBPIXEL_BITS;\n    web64_sprite_render(&sprite_renderer, slot, x, state->y >> WEB64_SUBPIXEL_BITS, frame, color, WEB64_SPRITE_VISIBLE | WEB64_SPRITE_MULTICOLOR);\n}\n\nvoid render_actors(void) {\n    render_actor(&trajectory_state_0, 0, 2, SPRITE_POINTER + ((animation_player.frame + 0) & 3));\n    render_actor(&trajectory_state_1, 1, 3, SPRITE_POINTER + ((animation_player.frame + 1) & 3));\n    render_actor(&trajectory_state_2, 2, 5, SPRITE_POINTER + ((animation_player.frame + 2) & 3));\n    render_actor(&trajectory_state_3, 3, 7, SPRITE_POINTER + ((animation_player.frame + 3) & 3));\n    render_actor(&trajectory_state_4, 4, 8, SPRITE_POINTER + ((animation_player.frame + 0) & 3));\n    render_actor(&trajectory_state_5, 5, 10, SPRITE_POINTER + ((animation_player.frame + 1) & 3));\n    render_actor(&trajectory_state_6, 6, 13, SPRITE_POINTER + ((animation_player.frame + 2) & 3));\n    render_actor(&trajectory_state_7, 7, 14, SPRITE_POINTER + ((animation_player.frame + 3) & 3));\n}\n\nvoid wait_frame(void) {\n#ifdef WEB64_EXAMPLE_VERIFY\n    return;\n#else\n    while (*((uint8_t *)0xd012) != 250) { }\n    while (*((uint8_t *)0xd012) == 250) { }\n#endif\n}\n\nvoid main(void) {\n    install_sprite_asset();\n    initialize_animation();\n    initialize_trajectories();\n    if (initialization_failed != 0) {\n        *((uint8_t *)0xd020) = 2;\n        return;\n    }\n    render_actors();\n    while (1) {\n        wait_frame();\n        step_actors();\n        render_actors();\n        frame_counter++;\n#ifdef WEB64_EXAMPLE_VERIFY\n        verification_frames++;\n        if (verification_frames == VERIFY_FRAMES) {\n            verification_complete = 1;\n            return;\n        }\n#endif\n    }\n}\n",
+    "selectedEntryLabel": "auto"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "abi": "web64-static-v0",
+    "entry": "main.c",
+    "entrySymbol": "",
+    "predefinedDefines": {},
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native",
+    "startup": {
+      "processorPort": null,
+      "disableInterrupts": false
+    },
+    "stack": {
+      "size": 512,
+      "address": null
+    },
+    "zeroPage": {
+      "reserved": []
+    },
+    "ir": {
+      "schemaVersion": 1,
+      "enabled": false,
+      "verifyLegacyEquivalence": true,
+      "emitSnapshots": false
+    },
+    "optimize": {
+      "schemaVersion": 2,
+      "mode": "speed",
+      "enabled": true,
+      "passGates": {
+        "generatorPeephole": true,
+        "registerTemporaryStack": true,
+        "constantStrengthReduction": true,
+        "fixedPointSpecialization": true,
+        "booleanBranch": true,
+        "controlFlowLoop": true,
+        "cc65Peephole": true,
+        "zeroPagePromotion": true,
+        "deadCode": true,
+        "conditionalInlining": true,
+        "hardwareAware": true,
+        "runtimeData": true
+      },
+      "frameCriticalFunctions": [],
+      "zeroPageReserved": [],
+      "budgets": {
+        "maxBuildByteGrowth": 0,
+        "maxFunctionByteGrowth": 0,
+        "maxWorstCaseCycles": null
+      },
+      "diagnostics": {
+        "trace": "summary",
+        "missedOptimizationRemarks": false
+      }
+    }
+  },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "compatibilityDefaults": [],
+    "targets": [
+      {
+        "id": "main",
+        "label": "Trajectory Actors (C)",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c"
+        ],
+        "entrySymbol": "",
+        "origin": "$4000",
+        "outputName": "trajectory-actors.prg",
+        "artifactContribution": "",
+        "defines": {},
+        "compatibilityModules": [],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
+        "c": {
+          "enabled": true
+        },
+        "cartridge": {},
+        "test": {}
+      }
+    ]
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": true,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": false,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "settings": {
+    "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "fit",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": true,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": false,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": true,
+      "dialect": "web64-c-v0.1",
+      "abi": "web64-static-v0",
+      "entry": "main.c",
+      "entrySymbol": "",
+      "predefinedDefines": {},
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "none",
+      "stdin": "none",
+      "runtimeProfile": "tiny",
+      "compilerBackend": "web64-native",
+      "startup": {
+        "processorPort": null,
+        "disableInterrupts": false
+      },
+      "stack": {
+        "size": 512,
+        "address": null
+      },
+      "zeroPage": {
+        "reserved": []
+      },
+      "ir": {
+        "schemaVersion": 1,
+        "enabled": false,
+        "verifyLegacyEquivalence": true,
+        "emitSnapshots": false
+      }
+    }
+  },
+  "workspace": {
+    "selectedFile": {
+      "scope": "root",
+      "path": "main.c"
+    },
+    "editor": null,
+    "emulatorCollapsed": false
+  },
+  "media": {
+    "version": 2,
+    "files": [],
+    "disks": [],
+    "diskSets": []
+  },
+  "files": [
+    {
+      "path": "main.c",
+      "name": "main.c",
+      "kind": "source",
+      "source": "#include <stdint.h>\n#include <assets/generated.h>\n#include <web64/assets.h>\n#include <web64/animation.h>\n#include <web64/trajectory.h>\n#include <web64/sprite-runtime.h>\n\n#define ACTOR_COUNT 8\n#define SPRITE_RAM ((uint8_t *)0x3000)\n#define SPRITE_POINTER 0xc0\n#define POINTER_TABLE 0x07f8\n#define VERIFY_FRAMES 600\n\nWeb64TrajectoryState trajectory_state_0;\nWeb64TrajectoryState trajectory_state_1;\nWeb64TrajectoryState trajectory_state_2;\nWeb64TrajectoryState trajectory_state_3;\nWeb64TrajectoryState trajectory_state_4;\nWeb64TrajectoryState trajectory_state_5;\nWeb64TrajectoryState trajectory_state_6;\nWeb64TrajectoryState trajectory_state_7;\nWeb64AnimationPlayer animation_player;\nWeb64AnimationStep animation_steps[4] = {{0,4,0,255},{1,4,0,255},{2,4,0,255},{3,4,0,255}};\nWeb64AnimationSequence animation_sequence;\nWeb64AnimationBank animation_bank;\nWeb64SpriteRenderer sprite_renderer;\nuint16_t previous_x[ACTOR_COUNT];\nuint16_t previous_y[ACTOR_COUNT];\nuint8_t animation_frame_masks[ACTOR_COUNT];\nuint8_t movement_mask;\nuint16_t frame_counter;\nuint16_t verification_frames;\nuint8_t verification_complete;\nuint8_t initialization_failed;\n\nvoid initialize_trajectories(void) {\n    if (web64_trajectory_init(&trajectory_state_0, &actor_1_box_loop_asset, 48 << WEB64_SUBPIXEL_BITS, 72 << WEB64_SUBPIXEL_BITS, actor_1_box_loop_default_options) != WEB64_TRAJECTORY_OK) initialization_failed = 1;\n    if (web64_trajectory_init(&trajectory_state_1, &actor_2_diamond_loop_asset, 112 << WEB64_SUBPIXEL_BITS, 76 << WEB64_SUBPIXEL_BITS, actor_2_diamond_loop_default_options) != WEB64_TRAJECTORY_OK) initialization_failed = 1;\n    if (web64_trajectory_init(&trajectory_state_2, &actor_3_wide_loop_asset, 160 << WEB64_SUBPIXEL_BITS, 68 << WEB64_SUBPIXEL_BITS, actor_3_wide_loop_default_options) != WEB64_TRAJECTORY_OK) initialization_failed = 1;\n    if (web64_trajectory_init(&trajectory_state_3, &actor_4_triangle_loop_asset, 232 << WEB64_SUBPIXEL_BITS, 78 << WEB64_SUBPIXEL_BITS, actor_4_triangle_loop_default_options) != WEB64_TRAJECTORY_OK) initialization_failed = 1;\n    if (web64_trajectory_init(&trajectory_state_4, &actor_5_kite_loop_asset, 48 << WEB64_SUBPIXEL_BITS, 156 << WEB64_SUBPIXEL_BITS, actor_5_kite_loop_default_options) != WEB64_TRAJECTORY_OK) initialization_failed = 1;\n    if (web64_trajectory_init(&trajectory_state_5, &actor_6_hourglass_loop_asset, 104 << WEB64_SUBPIXEL_BITS, 148 << WEB64_SUBPIXEL_BITS, actor_6_hourglass_loop_default_options) != WEB64_TRAJECTORY_OK) initialization_failed = 1;\n    if (web64_trajectory_init(&trajectory_state_6, &actor_7_vertical_loop_asset, 168 << WEB64_SUBPIXEL_BITS, 156 << WEB64_SUBPIXEL_BITS, actor_7_vertical_loop_default_options) != WEB64_TRAJECTORY_OK) initialization_failed = 1;\n    if (web64_trajectory_init(&trajectory_state_7, &actor_8_hex_loop_asset, 224 << WEB64_SUBPIXEL_BITS, 148 << WEB64_SUBPIXEL_BITS, actor_8_hex_loop_default_options) != WEB64_TRAJECTORY_OK) initialization_failed = 1;\n    previous_x[0] = trajectory_state_0.x;\n    previous_y[0] = trajectory_state_0.y;\n    previous_x[1] = trajectory_state_1.x;\n    previous_y[1] = trajectory_state_1.y;\n    previous_x[2] = trajectory_state_2.x;\n    previous_y[2] = trajectory_state_2.y;\n    previous_x[3] = trajectory_state_3.x;\n    previous_y[3] = trajectory_state_3.y;\n    previous_x[4] = trajectory_state_4.x;\n    previous_y[4] = trajectory_state_4.y;\n    previous_x[5] = trajectory_state_5.x;\n    previous_y[5] = trajectory_state_5.y;\n    previous_x[6] = trajectory_state_6.x;\n    previous_y[6] = trajectory_state_6.y;\n    previous_x[7] = trajectory_state_7.x;\n    previous_y[7] = trajectory_state_7.y;\n}\n\nvoid initialize_animation(void) {\n    animation_sequence.steps = WEB64_ADDRESS(animation_steps);\n    animation_sequence.count = 4;\n    animation_sequence.flags = WEB64_ANIMATION_LOOP;\n    animation_bank.sequences = WEB64_ADDRESS(&animation_sequence);\n    animation_bank.count = 1;\n    web64_animation_init(&animation_player, WEB64_ADDRESS(&animation_bank));\n    web64_animation_play(&animation_player, 0, WEB64_ANIMATION_PLAY_RESTART);\n}\n\nvoid install_sprite_asset(void) {\n    if (web64_asset_copy_sprite(SPRITE_RAM, &trajectory_actors_asset) != WEB64_ASSET_COPY_OK) initialization_failed = 2;\n    *((uint8_t *)0xdd02) = *((uint8_t *)0xdd02) | 3;\n    *((uint8_t *)0xdd00) = (*((uint8_t *)0xdd00) & 0xfc) | 3;\n    *((uint8_t *)0xd018) = 0x15;\n    *((uint8_t *)0xd020) = 0;\n    *((uint8_t *)0xd021) = 0;\n    *((uint8_t *)0xd025) = trajectory_actors_asset.multicolor_1;\n    *((uint8_t *)0xd026) = trajectory_actors_asset.multicolor_2;\n    web64_sprite_renderer_init(&sprite_renderer, POINTER_TABLE);\n}\n\nvoid step_actors(void) {\n    web64_trajectory_step_fast(&trajectory_state_0);\n    web64_trajectory_step_fast(&trajectory_state_1);\n    web64_trajectory_step_fast(&trajectory_state_2);\n    web64_trajectory_step_fast(&trajectory_state_3);\n    web64_trajectory_step_fast(&trajectory_state_4);\n    web64_trajectory_step_fast(&trajectory_state_5);\n    web64_trajectory_step_fast(&trajectory_state_6);\n    web64_trajectory_step_fast(&trajectory_state_7);\n    web64_animation_tick(&animation_player);\n    if (trajectory_state_0.x != previous_x[0] || trajectory_state_0.y != previous_y[0]) movement_mask = movement_mask | 1;\n    previous_x[0] = trajectory_state_0.x;\n    previous_y[0] = trajectory_state_0.y;\n    animation_frame_masks[0] = animation_frame_masks[0] | (1 << ((animation_player.frame + 0) & 3));\n    if (trajectory_state_1.x != previous_x[1] || trajectory_state_1.y != previous_y[1]) movement_mask = movement_mask | 2;\n    previous_x[1] = trajectory_state_1.x;\n    previous_y[1] = trajectory_state_1.y;\n    animation_frame_masks[1] = animation_frame_masks[1] | (1 << ((animation_player.frame + 1) & 3));\n    if (trajectory_state_2.x != previous_x[2] || trajectory_state_2.y != previous_y[2]) movement_mask = movement_mask | 4;\n    previous_x[2] = trajectory_state_2.x;\n    previous_y[2] = trajectory_state_2.y;\n    animation_frame_masks[2] = animation_frame_masks[2] | (1 << ((animation_player.frame + 2) & 3));\n    if (trajectory_state_3.x != previous_x[3] || trajectory_state_3.y != previous_y[3]) movement_mask = movement_mask | 8;\n    previous_x[3] = trajectory_state_3.x;\n    previous_y[3] = trajectory_state_3.y;\n    animation_frame_masks[3] = animation_frame_masks[3] | (1 << ((animation_player.frame + 3) & 3));\n    if (trajectory_state_4.x != previous_x[4] || trajectory_state_4.y != previous_y[4]) movement_mask = movement_mask | 16;\n    previous_x[4] = trajectory_state_4.x;\n    previous_y[4] = trajectory_state_4.y;\n    animation_frame_masks[4] = animation_frame_masks[4] | (1 << ((animation_player.frame + 0) & 3));\n    if (trajectory_state_5.x != previous_x[5] || trajectory_state_5.y != previous_y[5]) movement_mask = movement_mask | 32;\n    previous_x[5] = trajectory_state_5.x;\n    previous_y[5] = trajectory_state_5.y;\n    animation_frame_masks[5] = animation_frame_masks[5] | (1 << ((animation_player.frame + 1) & 3));\n    if (trajectory_state_6.x != previous_x[6] || trajectory_state_6.y != previous_y[6]) movement_mask = movement_mask | 64;\n    previous_x[6] = trajectory_state_6.x;\n    previous_y[6] = trajectory_state_6.y;\n    animation_frame_masks[6] = animation_frame_masks[6] | (1 << ((animation_player.frame + 2) & 3));\n    if (trajectory_state_7.x != previous_x[7] || trajectory_state_7.y != previous_y[7]) movement_mask = movement_mask | 128;\n    previous_x[7] = trajectory_state_7.x;\n    previous_y[7] = trajectory_state_7.y;\n    animation_frame_masks[7] = animation_frame_masks[7] | (1 << ((animation_player.frame + 3) & 3));\n}\n\nvoid render_actor(Web64TrajectoryState *state, uint8_t slot, uint8_t color, uint8_t frame) {\n    uint16_t x;\n    x = state->x >> WEB64_SUBPIXEL_BITS;\n    web64_sprite_render(&sprite_renderer, slot, x, state->y >> WEB64_SUBPIXEL_BITS, frame, color, WEB64_SPRITE_VISIBLE | WEB64_SPRITE_MULTICOLOR);\n}\n\nvoid render_actors(void) {\n    render_actor(&trajectory_state_0, 0, 2, SPRITE_POINTER + ((animation_player.frame + 0) & 3));\n    render_actor(&trajectory_state_1, 1, 3, SPRITE_POINTER + ((animation_player.frame + 1) & 3));\n    render_actor(&trajectory_state_2, 2, 5, SPRITE_POINTER + ((animation_player.frame + 2) & 3));\n    render_actor(&trajectory_state_3, 3, 7, SPRITE_POINTER + ((animation_player.frame + 3) & 3));\n    render_actor(&trajectory_state_4, 4, 8, SPRITE_POINTER + ((animation_player.frame + 0) & 3));\n    render_actor(&trajectory_state_5, 5, 10, SPRITE_POINTER + ((animation_player.frame + 1) & 3));\n    render_actor(&trajectory_state_6, 6, 13, SPRITE_POINTER + ((animation_player.frame + 2) & 3));\n    render_actor(&trajectory_state_7, 7, 14, SPRITE_POINTER + ((animation_player.frame + 3) & 3));\n}\n\nvoid wait_frame(void) {\n#ifdef WEB64_EXAMPLE_VERIFY\n    return;\n#else\n    while (*((uint8_t *)0xd012) != 250) { }\n    while (*((uint8_t *)0xd012) == 250) { }\n#endif\n}\n\nvoid main(void) {\n    install_sprite_asset();\n    initialize_animation();\n    initialize_trajectories();\n    if (initialization_failed != 0) {\n        *((uint8_t *)0xd020) = 2;\n        return;\n    }\n    render_actors();\n    while (1) {\n        wait_frame();\n        step_actors();\n        render_actors();\n        frame_counter++;\n#ifdef WEB64_EXAMPLE_VERIFY\n        verification_frames++;\n        if (verification_frames == VERIFY_FRAMES) {\n            verification_complete = 1;\n            return;\n        }\n#endif\n    }\n}\n"
+    },
+    {
+      "path": "assets/sprites/trajectory-actors.w64spr",
+      "name": "trajectory-actors.w64spr",
+      "kind": "spritebank",
+      "mode": "multicolor",
+      "width": 24,
+      "height": 21,
+      "count": 4,
+      "colors": {
+        "background": 0,
+        "multicolor1": 6,
+        "foreground": 1,
+        "multicolor2": 14,
+        "mode": "multicolor"
+      },
+      "includePath": "assets/sprites/trajectory-actors.inc",
+      "dirty": false,
+      "lastCompiledHash": null,
+      "lastPatchedHash": null,
+      "asset": {
+        "schema": "web64.ide.graphicsAsset",
+        "version": 3,
+        "kind": "spritebank",
+        "assetId": "w64-9b448be4",
+        "mode": "multicolor",
+        "displayMode": "text-multicolor",
+        "coloringMethod": "per-project",
+        "displayProfile": null,
+        "width": 24,
+        "height": 21,
+        "count": 4,
+        "colors": {
+          "background": 0,
+          "multicolor1": 6,
+          "foreground": 1,
+          "multicolor2": 14,
+          "mode": "multicolor"
+        },
+        "characterColors": [],
+        "screenColors": [],
+        "materials": [],
+        "characterNames": [],
+        "characterTags": [],
+        "frames": [
+          {
+            "id": "trajectory_actors-frame-0",
+            "name": "Orbit Pulse 1",
+            "tags": [
+              "trajectory",
+              "actor",
+              "orbit-pulse"
+            ],
+            "mode": "multicolor",
+            "foreground": 1,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trajectory_actors-frame-1",
+            "name": "Orbit Pulse 2",
+            "tags": [
+              "trajectory",
+              "actor",
+              "orbit-pulse"
+            ],
+            "mode": "multicolor",
+            "foreground": 1,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trajectory_actors-frame-2",
+            "name": "Orbit Pulse 3",
+            "tags": [
+              "trajectory",
+              "actor",
+              "orbit-pulse"
+            ],
+            "mode": "multicolor",
+            "foreground": 1,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          },
+          {
+            "id": "trajectory_actors-frame-3",
+            "name": "Orbit Pulse 4",
+            "tags": [
+              "trajectory",
+              "actor",
+              "orbit-pulse"
+            ],
+            "mode": "multicolor",
+            "foreground": 1,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          }
+        ],
+        "animations": [
+          {
+            "id": "orbit-pulse",
+            "name": "Orbit Pulse",
+            "frameIds": [
+              "trajectory_actors-frame-0",
+              "trajectory_actors-frame-1",
+              "trajectory_actors-frame-2",
+              "trajectory_actors-frame-3"
+            ],
+            "durations": [
+              4,
+              4,
+              4,
+              4
+            ],
+            "playback": "loop",
+            "fps": 50
+          }
+        ],
+        "tiles": [],
+        "paletteProfile": null,
+        "nextFrameSerial": 4,
+        "includePath": "assets/sprites/trajectory-actors.inc"
+      },
+      "assetId": "w64-9b448be4",
+      "encoding": "base64",
+      "bytes": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0AAH0AAb5AMapAAapAAGkAAFUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAA8AAF9QAG+QAG+QAaqkAGqQAGqQAFpQAAUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfQABvkAGvpAGvpAGqpwGqpAGqpABqkAAVQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwAAX1AAb5AAb5ABqqQAapAAapAAWlAABQAAAAwAAAAAAAAAAAAAAAAAAAAAA=="
+    },
+    {
+      "path": "assets/sprites/trajectory-actors.inc",
+      "name": "trajectory-actors.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/sprites/trajectory-actors.w64spr",
+      "source": "; Generated by Web64 IDE. Edit the graphics asset, not this file.\ntrajectory_actors_sprites_size = $0100\n; Editor color references\ntrajectory_actors_color_0 = 0\ntrajectory_actors_background_color = 0\ntrajectory_actors_color_1 = 6\ntrajectory_actors_multicolor_1 = 6\ntrajectory_actors_color_2 = 1\ntrajectory_actors_sprite_color = 1\ntrajectory_actors_color_3 = $0e\ntrajectory_actors_multicolor_2 = $0e\ntrajectory_actors_sprite_count = 4\ntrajectory_actors_sprites_end = trajectory_actors_sprites + trajectory_actors_sprites_size\ntrajectory_actors_frame_0 = trajectory_actors_sprites + 0\ntrajectory_actors_frame_0_color = 1\ntrajectory_actors_frame_0_flags = 1\ntrajectory_actors_frame_1 = trajectory_actors_sprites + $40\ntrajectory_actors_frame_1_color = 1\ntrajectory_actors_frame_1_flags = 1\ntrajectory_actors_frame_2 = trajectory_actors_sprites + $80\ntrajectory_actors_frame_2_color = 1\ntrajectory_actors_frame_2_flags = 1\ntrajectory_actors_frame_3 = trajectory_actors_sprites + $c0\ntrajectory_actors_frame_3_color = 1\ntrajectory_actors_frame_3_flags = 1\ntrajectory_actors_animation_orbit_pulse_count = 4\ntrajectory_actors_animation_orbit_pulse_frame_0 = 0\ntrajectory_actors_animation_orbit_pulse_duration_0 = 4\ntrajectory_actors_animation_orbit_pulse_frame_1 = 1\ntrajectory_actors_animation_orbit_pulse_duration_1 = 4\ntrajectory_actors_animation_orbit_pulse_frame_2 = 2\ntrajectory_actors_animation_orbit_pulse_duration_2 = 4\ntrajectory_actors_animation_orbit_pulse_frame_3 = 3\ntrajectory_actors_animation_orbit_pulse_duration_3 = 4\n"
+    },
+    {
+      "path": "assets/trajectories/actor-1-box-loop.w64traj",
+      "name": "actor-1-box-loop.w64traj",
+      "kind": "w64traj",
+      "asset": {
+        "schema": "web64.ide.trajectoryAsset",
+        "version": 1,
+        "kind": "web64.trajectory",
+        "assetId": "trajectory-actors-actor-1-box-loop"
+      },
+      "assetId": "trajectory-actors-actor-1-box-loop",
+      "source": "{\n  \"schema\": \"web64.ide.trajectoryAsset\",\n  \"version\": 1,\n  \"id\": \"trajectory-actors-actor-1-box-loop\",\n  \"name\": \"Actor 1 Box Loop\",\n  \"points\": [\n    {\n      \"id\": \"actor-1-box-loop-point-1\",\n      \"x\": 0,\n      \"y\": 0\n    },\n    {\n      \"id\": \"actor-1-box-loop-point-2\",\n      \"x\": 20,\n      \"y\": 0,\n      \"duration\": 13\n    },\n    {\n      \"id\": \"actor-1-box-loop-point-3\",\n      \"x\": 20,\n      \"y\": 16,\n      \"duration\": 11\n    },\n    {\n      \"id\": \"actor-1-box-loop-point-4\",\n      \"x\": 0,\n      \"y\": 16,\n      \"duration\": 13\n    },\n    {\n      \"id\": \"actor-1-box-loop-point-5\",\n      \"x\": 0,\n      \"y\": 0,\n      \"duration\": 11\n    }\n  ],\n  \"runtimeDefaults\": {\n    \"loop\": true,\n    \"pingPong\": false,\n    \"reverse\": false,\n    \"negateX\": false,\n    \"negateY\": false\n  },\n  \"authoring\": {\n    \"anchor\": {\n      \"x\": 48,\n      \"y\": 72\n    },\n    \"mapBackdrop\": null,\n    \"appearancePreview\": {\n      \"assetId\": \"w64-9b448be4\",\n      \"path\": \"assets/sprites/trajectory-actors.w64spr\",\n      \"selection\": {\n        \"kind\": \"animation\",\n        \"id\": \"orbit-pulse\"\n      }\n    },\n    \"grid\": {\n      \"visible\": true,\n      \"snap\": true,\n      \"spacingX\": 4,\n      \"spacingY\": 4,\n      \"preset\": \"fine\"\n    },\n    \"storedView\": {\n      \"centerX\": 8,\n      \"centerY\": 4,\n      \"zoom\": 2\n    }\n  }\n}\n"
+    },
+    {
+      "path": "assets/trajectories/actor-1-box-loop.traj",
+      "name": "actor-1-box-loop.traj",
+      "kind": "trajectory",
+      "count": 4,
+      "generated": true,
+      "generatedFrom": "assets/trajectories/actor-1-box-loop.w64traj",
+      "generatedFromHash": "79845ed0",
+      "asset": {
+        "schema": "web64.ide.trajectoryBinary",
+        "version": 1,
+        "sourceSchema": "web64.ide.trajectoryAsset",
+        "sourceVersion": 1,
+        "sourceHash": "79845ed0",
+        "segmentSize": 3,
+        "segmentCount": 4,
+        "defaultOptions": 4096
+      },
+      "encoding": "base64",
+      "bytes": "FAANABAL7AANAPAL"
+    },
+    {
+      "path": "assets/trajectories/actor-1-box-loop.inc",
+      "name": "actor-1-box-loop.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/trajectories/actor-1-box-loop.w64traj",
+      "generatedFromHash": "79845ed0",
+      "source": "; Generated by Web64 from a .w64traj authoring asset.\n; Runtime data remains raw signed dx, signed dy, unsigned duration triplets.\n; This include declares constants and an optional descriptor helper only.\n; It does not import a runtime, choose a load address, or own placement.\nactor_1_box_loop_segment_count = 4\nactor_1_box_loop_byte_size = 12\nactor_1_box_loop_default_options = $1000\n\n; Caller-owned placement example:\n; .incbin actor_1_box_loop_segments, \"assets/trajectories/actor-1-box-loop.traj\"\n\n; Invoke after defining/importing the segment label shown above.\n.macro actor_1_box_loop_emit_pattern\n    .word actor_1_box_loop_segments\n    .word actor_1_box_loop_segment_count\n.endmacro\n"
+    },
+    {
+      "path": "assets/trajectories/actor-2-diamond-loop.w64traj",
+      "name": "actor-2-diamond-loop.w64traj",
+      "kind": "w64traj",
+      "asset": {
+        "schema": "web64.ide.trajectoryAsset",
+        "version": 1,
+        "kind": "web64.trajectory",
+        "assetId": "trajectory-actors-actor-2-diamond-loop"
+      },
+      "assetId": "trajectory-actors-actor-2-diamond-loop",
+      "source": "{\n  \"schema\": \"web64.ide.trajectoryAsset\",\n  \"version\": 1,\n  \"id\": \"trajectory-actors-actor-2-diamond-loop\",\n  \"name\": \"Actor 2 Diamond Loop\",\n  \"points\": [\n    {\n      \"id\": \"actor-2-diamond-loop-point-1\",\n      \"x\": 0,\n      \"y\": 0\n    },\n    {\n      \"id\": \"actor-2-diamond-loop-point-2\",\n      \"x\": 12,\n      \"y\": -12,\n      \"duration\": 17\n    },\n    {\n      \"id\": \"actor-2-diamond-loop-point-3\",\n      \"x\": 24,\n      \"y\": 0,\n      \"duration\": 19\n    },\n    {\n      \"id\": \"actor-2-diamond-loop-point-4\",\n      \"x\": 12,\n      \"y\": 12,\n      \"duration\": 17\n    },\n    {\n      \"id\": \"actor-2-diamond-loop-point-5\",\n      \"x\": 0,\n      \"y\": 0,\n      \"duration\": 19\n    }\n  ],\n  \"runtimeDefaults\": {\n    \"loop\": true,\n    \"pingPong\": false,\n    \"reverse\": false,\n    \"negateX\": true,\n    \"negateY\": false\n  },\n  \"authoring\": {\n    \"anchor\": {\n      \"x\": 112,\n      \"y\": 76\n    },\n    \"mapBackdrop\": null,\n    \"appearancePreview\": {\n      \"assetId\": \"w64-9b448be4\",\n      \"path\": \"assets/sprites/trajectory-actors.w64spr\",\n      \"selection\": {\n        \"kind\": \"animation\",\n        \"id\": \"orbit-pulse\"\n      }\n    },\n    \"grid\": {\n      \"visible\": true,\n      \"snap\": true,\n      \"spacingX\": 4,\n      \"spacingY\": 4,\n      \"preset\": \"fine\"\n    },\n    \"storedView\": {\n      \"centerX\": 8,\n      \"centerY\": 4,\n      \"zoom\": 2\n    }\n  }\n}\n"
+    },
+    {
+      "path": "assets/trajectories/actor-2-diamond-loop.traj",
+      "name": "actor-2-diamond-loop.traj",
+      "kind": "trajectory",
+      "count": 4,
+      "generated": true,
+      "generatedFrom": "assets/trajectories/actor-2-diamond-loop.w64traj",
+      "generatedFromHash": "0cf89ec4",
+      "asset": {
+        "schema": "web64.ide.trajectoryBinary",
+        "version": 1,
+        "sourceSchema": "web64.ide.trajectoryAsset",
+        "sourceVersion": 1,
+        "sourceHash": "0cf89ec4",
+        "segmentSize": 3,
+        "segmentCount": 4,
+        "defaultOptions": 5120
+      },
+      "encoding": "base64",
+      "bytes": "DPQRDAwT9AwR9PQT"
+    },
+    {
+      "path": "assets/trajectories/actor-2-diamond-loop.inc",
+      "name": "actor-2-diamond-loop.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/trajectories/actor-2-diamond-loop.w64traj",
+      "generatedFromHash": "0cf89ec4",
+      "source": "; Generated by Web64 from a .w64traj authoring asset.\n; Runtime data remains raw signed dx, signed dy, unsigned duration triplets.\n; This include declares constants and an optional descriptor helper only.\n; It does not import a runtime, choose a load address, or own placement.\nactor_2_diamond_loop_segment_count = 4\nactor_2_diamond_loop_byte_size = 12\nactor_2_diamond_loop_default_options = $1400\n\n; Caller-owned placement example:\n; .incbin actor_2_diamond_loop_segments, \"assets/trajectories/actor-2-diamond-loop.traj\"\n\n; Invoke after defining/importing the segment label shown above.\n.macro actor_2_diamond_loop_emit_pattern\n    .word actor_2_diamond_loop_segments\n    .word actor_2_diamond_loop_segment_count\n.endmacro\n"
+    },
+    {
+      "path": "assets/trajectories/actor-3-wide-loop.w64traj",
+      "name": "actor-3-wide-loop.w64traj",
+      "kind": "w64traj",
+      "asset": {
+        "schema": "web64.ide.trajectoryAsset",
+        "version": 1,
+        "kind": "web64.trajectory",
+        "assetId": "trajectory-actors-actor-3-wide-loop"
+      },
+      "assetId": "trajectory-actors-actor-3-wide-loop",
+      "source": "{\n  \"schema\": \"web64.ide.trajectoryAsset\",\n  \"version\": 1,\n  \"id\": \"trajectory-actors-actor-3-wide-loop\",\n  \"name\": \"Actor 3 Wide Loop\",\n  \"points\": [\n    {\n      \"id\": \"actor-3-wide-loop-point-1\",\n      \"x\": 0,\n      \"y\": 0\n    },\n    {\n      \"id\": \"actor-3-wide-loop-point-2\",\n      \"x\": 30,\n      \"y\": 0,\n      \"duration\": 23\n    },\n    {\n      \"id\": \"actor-3-wide-loop-point-3\",\n      \"x\": 30,\n      \"y\": 10,\n      \"duration\": 9\n    },\n    {\n      \"id\": \"actor-3-wide-loop-point-4\",\n      \"x\": 0,\n      \"y\": 10,\n      \"duration\": 23\n    },\n    {\n      \"id\": \"actor-3-wide-loop-point-5\",\n      \"x\": 0,\n      \"y\": 0,\n      \"duration\": 9\n    }\n  ],\n  \"runtimeDefaults\": {\n    \"loop\": true,\n    \"pingPong\": false,\n    \"reverse\": false,\n    \"negateX\": false,\n    \"negateY\": true\n  },\n  \"authoring\": {\n    \"anchor\": {\n      \"x\": 160,\n      \"y\": 68\n    },\n    \"mapBackdrop\": null,\n    \"appearancePreview\": {\n      \"assetId\": \"w64-9b448be4\",\n      \"path\": \"assets/sprites/trajectory-actors.w64spr\",\n      \"selection\": {\n        \"kind\": \"animation\",\n        \"id\": \"orbit-pulse\"\n      }\n    },\n    \"grid\": {\n      \"visible\": true,\n      \"snap\": true,\n      \"spacingX\": 4,\n      \"spacingY\": 4,\n      \"preset\": \"fine\"\n    },\n    \"storedView\": {\n      \"centerX\": 8,\n      \"centerY\": 4,\n      \"zoom\": 2\n    }\n  }\n}\n"
+    },
+    {
+      "path": "assets/trajectories/actor-3-wide-loop.traj",
+      "name": "actor-3-wide-loop.traj",
+      "kind": "trajectory",
+      "count": 4,
+      "generated": true,
+      "generatedFrom": "assets/trajectories/actor-3-wide-loop.w64traj",
+      "generatedFromHash": "48465db1",
+      "asset": {
+        "schema": "web64.ide.trajectoryBinary",
+        "version": 1,
+        "sourceSchema": "web64.ide.trajectoryAsset",
+        "sourceVersion": 1,
+        "sourceHash": "48465db1",
+        "segmentSize": 3,
+        "segmentCount": 4,
+        "defaultOptions": 6144
+      },
+      "encoding": "base64",
+      "bytes": "HgAXAAoJ4gAXAPYJ"
+    },
+    {
+      "path": "assets/trajectories/actor-3-wide-loop.inc",
+      "name": "actor-3-wide-loop.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/trajectories/actor-3-wide-loop.w64traj",
+      "generatedFromHash": "48465db1",
+      "source": "; Generated by Web64 from a .w64traj authoring asset.\n; Runtime data remains raw signed dx, signed dy, unsigned duration triplets.\n; This include declares constants and an optional descriptor helper only.\n; It does not import a runtime, choose a load address, or own placement.\nactor_3_wide_loop_segment_count = 4\nactor_3_wide_loop_byte_size = 12\nactor_3_wide_loop_default_options = $1800\n\n; Caller-owned placement example:\n; .incbin actor_3_wide_loop_segments, \"assets/trajectories/actor-3-wide-loop.traj\"\n\n; Invoke after defining/importing the segment label shown above.\n.macro actor_3_wide_loop_emit_pattern\n    .word actor_3_wide_loop_segments\n    .word actor_3_wide_loop_segment_count\n.endmacro\n"
+    },
+    {
+      "path": "assets/trajectories/actor-4-triangle-loop.w64traj",
+      "name": "actor-4-triangle-loop.w64traj",
+      "kind": "w64traj",
+      "asset": {
+        "schema": "web64.ide.trajectoryAsset",
+        "version": 1,
+        "kind": "web64.trajectory",
+        "assetId": "trajectory-actors-actor-4-triangle-loop"
+      },
+      "assetId": "trajectory-actors-actor-4-triangle-loop",
+      "source": "{\n  \"schema\": \"web64.ide.trajectoryAsset\",\n  \"version\": 1,\n  \"id\": \"trajectory-actors-actor-4-triangle-loop\",\n  \"name\": \"Actor 4 Triangle Loop\",\n  \"points\": [\n    {\n      \"id\": \"actor-4-triangle-loop-point-1\",\n      \"x\": 0,\n      \"y\": 0\n    },\n    {\n      \"id\": \"actor-4-triangle-loop-point-2\",\n      \"x\": 14,\n      \"y\": -16,\n      \"duration\": 21\n    },\n    {\n      \"id\": \"actor-4-triangle-loop-point-3\",\n      \"x\": 30,\n      \"y\": 0,\n      \"duration\": 27\n    },\n    {\n      \"id\": \"actor-4-triangle-loop-point-4\",\n      \"x\": 0,\n      \"y\": 0,\n      \"duration\": 31\n    }\n  ],\n  \"runtimeDefaults\": {\n    \"loop\": true,\n    \"pingPong\": false,\n    \"reverse\": true,\n    \"negateX\": false,\n    \"negateY\": false\n  },\n  \"authoring\": {\n    \"anchor\": {\n      \"x\": 232,\n      \"y\": 78\n    },\n    \"mapBackdrop\": null,\n    \"appearancePreview\": {\n      \"assetId\": \"w64-9b448be4\",\n      \"path\": \"assets/sprites/trajectory-actors.w64spr\",\n      \"selection\": {\n        \"kind\": \"animation\",\n        \"id\": \"orbit-pulse\"\n      }\n    },\n    \"grid\": {\n      \"visible\": true,\n      \"snap\": true,\n      \"spacingX\": 4,\n      \"spacingY\": 4,\n      \"preset\": \"fine\"\n    },\n    \"storedView\": {\n      \"centerX\": 8,\n      \"centerY\": 4,\n      \"zoom\": 2\n    }\n  }\n}\n"
+    },
+    {
+      "path": "assets/trajectories/actor-4-triangle-loop.traj",
+      "name": "actor-4-triangle-loop.traj",
+      "kind": "trajectory",
+      "count": 3,
+      "generated": true,
+      "generatedFrom": "assets/trajectories/actor-4-triangle-loop.w64traj",
+      "generatedFromHash": "992550f7",
+      "asset": {
+        "schema": "web64.ide.trajectoryBinary",
+        "version": 1,
+        "sourceSchema": "web64.ide.trajectoryAsset",
+        "sourceVersion": 1,
+        "sourceHash": "992550f7",
+        "segmentSize": 3,
+        "segmentCount": 3,
+        "defaultOptions": 20480
+      },
+      "encoding": "base64",
+      "bytes": "DvAVEBAb4gAf"
+    },
+    {
+      "path": "assets/trajectories/actor-4-triangle-loop.inc",
+      "name": "actor-4-triangle-loop.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/trajectories/actor-4-triangle-loop.w64traj",
+      "generatedFromHash": "992550f7",
+      "source": "; Generated by Web64 from a .w64traj authoring asset.\n; Runtime data remains raw signed dx, signed dy, unsigned duration triplets.\n; This include declares constants and an optional descriptor helper only.\n; It does not import a runtime, choose a load address, or own placement.\nactor_4_triangle_loop_segment_count = 3\nactor_4_triangle_loop_byte_size = 9\nactor_4_triangle_loop_default_options = $5000\n\n; Caller-owned placement example:\n; .incbin actor_4_triangle_loop_segments, \"assets/trajectories/actor-4-triangle-loop.traj\"\n\n; Invoke after defining/importing the segment label shown above.\n.macro actor_4_triangle_loop_emit_pattern\n    .word actor_4_triangle_loop_segments\n    .word actor_4_triangle_loop_segment_count\n.endmacro\n"
+    },
+    {
+      "path": "assets/trajectories/actor-5-kite-loop.w64traj",
+      "name": "actor-5-kite-loop.w64traj",
+      "kind": "w64traj",
+      "asset": {
+        "schema": "web64.ide.trajectoryAsset",
+        "version": 1,
+        "kind": "web64.trajectory",
+        "assetId": "trajectory-actors-actor-5-kite-loop"
+      },
+      "assetId": "trajectory-actors-actor-5-kite-loop",
+      "source": "{\n  \"schema\": \"web64.ide.trajectoryAsset\",\n  \"version\": 1,\n  \"id\": \"trajectory-actors-actor-5-kite-loop\",\n  \"name\": \"Actor 5 Kite Loop\",\n  \"points\": [\n    {\n      \"id\": \"actor-5-kite-loop-point-1\",\n      \"x\": 0,\n      \"y\": 0\n    },\n    {\n      \"id\": \"actor-5-kite-loop-point-2\",\n      \"x\": 16,\n      \"y\": -9,\n      \"duration\": 14\n    },\n    {\n      \"id\": \"actor-5-kite-loop-point-3\",\n      \"x\": 34,\n      \"y\": 0,\n      \"duration\": 18\n    },\n    {\n      \"id\": \"actor-5-kite-loop-point-4\",\n      \"x\": 16,\n      \"y\": 11,\n      \"duration\": 22\n    },\n    {\n      \"id\": \"actor-5-kite-loop-point-5\",\n      \"x\": 0,\n      \"y\": 0,\n      \"duration\": 16\n    }\n  ],\n  \"runtimeDefaults\": {\n    \"loop\": true,\n    \"pingPong\": true,\n    \"reverse\": false,\n    \"negateX\": false,\n    \"negateY\": false\n  },\n  \"authoring\": {\n    \"anchor\": {\n      \"x\": 48,\n      \"y\": 156\n    },\n    \"mapBackdrop\": null,\n    \"appearancePreview\": {\n      \"assetId\": \"w64-9b448be4\",\n      \"path\": \"assets/sprites/trajectory-actors.w64spr\",\n      \"selection\": {\n        \"kind\": \"animation\",\n        \"id\": \"orbit-pulse\"\n      }\n    },\n    \"grid\": {\n      \"visible\": true,\n      \"snap\": true,\n      \"spacingX\": 4,\n      \"spacingY\": 4,\n      \"preset\": \"fine\"\n    },\n    \"storedView\": {\n      \"centerX\": 8,\n      \"centerY\": 4,\n      \"zoom\": 2\n    }\n  }\n}\n"
+    },
+    {
+      "path": "assets/trajectories/actor-5-kite-loop.traj",
+      "name": "actor-5-kite-loop.traj",
+      "kind": "trajectory",
+      "count": 4,
+      "generated": true,
+      "generatedFrom": "assets/trajectories/actor-5-kite-loop.w64traj",
+      "generatedFromHash": "441cedde",
+      "asset": {
+        "schema": "web64.ide.trajectoryBinary",
+        "version": 1,
+        "sourceSchema": "web64.ide.trajectoryAsset",
+        "sourceVersion": 1,
+        "sourceHash": "441cedde",
+        "segmentSize": 3,
+        "segmentCount": 4,
+        "defaultOptions": 12288
+      },
+      "encoding": "base64",
+      "bytes": "EPcOEgkS7gsW8PUQ"
+    },
+    {
+      "path": "assets/trajectories/actor-5-kite-loop.inc",
+      "name": "actor-5-kite-loop.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/trajectories/actor-5-kite-loop.w64traj",
+      "generatedFromHash": "441cedde",
+      "source": "; Generated by Web64 from a .w64traj authoring asset.\n; Runtime data remains raw signed dx, signed dy, unsigned duration triplets.\n; This include declares constants and an optional descriptor helper only.\n; It does not import a runtime, choose a load address, or own placement.\nactor_5_kite_loop_segment_count = 4\nactor_5_kite_loop_byte_size = 12\nactor_5_kite_loop_default_options = $3000\n\n; Caller-owned placement example:\n; .incbin actor_5_kite_loop_segments, \"assets/trajectories/actor-5-kite-loop.traj\"\n\n; Invoke after defining/importing the segment label shown above.\n.macro actor_5_kite_loop_emit_pattern\n    .word actor_5_kite_loop_segments\n    .word actor_5_kite_loop_segment_count\n.endmacro\n"
+    },
+    {
+      "path": "assets/trajectories/actor-6-hourglass-loop.w64traj",
+      "name": "actor-6-hourglass-loop.w64traj",
+      "kind": "w64traj",
+      "asset": {
+        "schema": "web64.ide.trajectoryAsset",
+        "version": 1,
+        "kind": "web64.trajectory",
+        "assetId": "trajectory-actors-actor-6-hourglass-loop"
+      },
+      "assetId": "trajectory-actors-actor-6-hourglass-loop",
+      "source": "{\n  \"schema\": \"web64.ide.trajectoryAsset\",\n  \"version\": 1,\n  \"id\": \"trajectory-actors-actor-6-hourglass-loop\",\n  \"name\": \"Actor 6 Hourglass Loop\",\n  \"points\": [\n    {\n      \"id\": \"actor-6-hourglass-loop-point-1\",\n      \"x\": 0,\n      \"y\": 0\n    },\n    {\n      \"id\": \"actor-6-hourglass-loop-point-2\",\n      \"x\": 26,\n      \"y\": 18,\n      \"duration\": 25\n    },\n    {\n      \"id\": \"actor-6-hourglass-loop-point-3\",\n      \"x\": 0,\n      \"y\": 18,\n      \"duration\": 15\n    },\n    {\n      \"id\": \"actor-6-hourglass-loop-point-4\",\n      \"x\": 26,\n      \"y\": 0,\n      \"duration\": 25\n    },\n    {\n      \"id\": \"actor-6-hourglass-loop-point-5\",\n      \"x\": 0,\n      \"y\": 0,\n      \"duration\": 15\n    }\n  ],\n  \"runtimeDefaults\": {\n    \"loop\": true,\n    \"pingPong\": true,\n    \"reverse\": true,\n    \"negateX\": false,\n    \"negateY\": false\n  },\n  \"authoring\": {\n    \"anchor\": {\n      \"x\": 104,\n      \"y\": 148\n    },\n    \"mapBackdrop\": null,\n    \"appearancePreview\": {\n      \"assetId\": \"w64-9b448be4\",\n      \"path\": \"assets/sprites/trajectory-actors.w64spr\",\n      \"selection\": {\n        \"kind\": \"animation\",\n        \"id\": \"orbit-pulse\"\n      }\n    },\n    \"grid\": {\n      \"visible\": true,\n      \"snap\": true,\n      \"spacingX\": 4,\n      \"spacingY\": 4,\n      \"preset\": \"fine\"\n    },\n    \"storedView\": {\n      \"centerX\": 8,\n      \"centerY\": 4,\n      \"zoom\": 2\n    }\n  }\n}\n"
+    },
+    {
+      "path": "assets/trajectories/actor-6-hourglass-loop.traj",
+      "name": "actor-6-hourglass-loop.traj",
+      "kind": "trajectory",
+      "count": 4,
+      "generated": true,
+      "generatedFrom": "assets/trajectories/actor-6-hourglass-loop.w64traj",
+      "generatedFromHash": "f98d271f",
+      "asset": {
+        "schema": "web64.ide.trajectoryBinary",
+        "version": 1,
+        "sourceSchema": "web64.ide.trajectoryAsset",
+        "sourceVersion": 1,
+        "sourceHash": "f98d271f",
+        "segmentSize": 3,
+        "segmentCount": 4,
+        "defaultOptions": 28672
+      },
+      "encoding": "base64",
+      "bytes": "GhIZ5gAPGu4Z5gAP"
+    },
+    {
+      "path": "assets/trajectories/actor-6-hourglass-loop.inc",
+      "name": "actor-6-hourglass-loop.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/trajectories/actor-6-hourglass-loop.w64traj",
+      "generatedFromHash": "f98d271f",
+      "source": "; Generated by Web64 from a .w64traj authoring asset.\n; Runtime data remains raw signed dx, signed dy, unsigned duration triplets.\n; This include declares constants and an optional descriptor helper only.\n; It does not import a runtime, choose a load address, or own placement.\nactor_6_hourglass_loop_segment_count = 4\nactor_6_hourglass_loop_byte_size = 12\nactor_6_hourglass_loop_default_options = $7000\n\n; Caller-owned placement example:\n; .incbin actor_6_hourglass_loop_segments, \"assets/trajectories/actor-6-hourglass-loop.traj\"\n\n; Invoke after defining/importing the segment label shown above.\n.macro actor_6_hourglass_loop_emit_pattern\n    .word actor_6_hourglass_loop_segments\n    .word actor_6_hourglass_loop_segment_count\n.endmacro\n"
+    },
+    {
+      "path": "assets/trajectories/actor-7-vertical-loop.w64traj",
+      "name": "actor-7-vertical-loop.w64traj",
+      "kind": "w64traj",
+      "asset": {
+        "schema": "web64.ide.trajectoryAsset",
+        "version": 1,
+        "kind": "web64.trajectory",
+        "assetId": "trajectory-actors-actor-7-vertical-loop"
+      },
+      "assetId": "trajectory-actors-actor-7-vertical-loop",
+      "source": "{\n  \"schema\": \"web64.ide.trajectoryAsset\",\n  \"version\": 1,\n  \"id\": \"trajectory-actors-actor-7-vertical-loop\",\n  \"name\": \"Actor 7 Vertical Loop\",\n  \"points\": [\n    {\n      \"id\": \"actor-7-vertical-loop-point-1\",\n      \"x\": 0,\n      \"y\": 0\n    },\n    {\n      \"id\": \"actor-7-vertical-loop-point-2\",\n      \"x\": 8,\n      \"y\": -20,\n      \"duration\": 29\n    },\n    {\n      \"id\": \"actor-7-vertical-loop-point-3\",\n      \"x\": 17,\n      \"y\": 0,\n      \"duration\": 13\n    },\n    {\n      \"id\": \"actor-7-vertical-loop-point-4\",\n      \"x\": 8,\n      \"y\": 22,\n      \"duration\": 29\n    },\n    {\n      \"id\": \"actor-7-vertical-loop-point-5\",\n      \"x\": 0,\n      \"y\": 0,\n      \"duration\": 13\n    }\n  ],\n  \"runtimeDefaults\": {\n    \"loop\": true,\n    \"pingPong\": false,\n    \"reverse\": false,\n    \"negateX\": true,\n    \"negateY\": true\n  },\n  \"authoring\": {\n    \"anchor\": {\n      \"x\": 168,\n      \"y\": 156\n    },\n    \"mapBackdrop\": null,\n    \"appearancePreview\": {\n      \"assetId\": \"w64-9b448be4\",\n      \"path\": \"assets/sprites/trajectory-actors.w64spr\",\n      \"selection\": {\n        \"kind\": \"animation\",\n        \"id\": \"orbit-pulse\"\n      }\n    },\n    \"grid\": {\n      \"visible\": true,\n      \"snap\": true,\n      \"spacingX\": 4,\n      \"spacingY\": 4,\n      \"preset\": \"fine\"\n    },\n    \"storedView\": {\n      \"centerX\": 8,\n      \"centerY\": 4,\n      \"zoom\": 2\n    }\n  }\n}\n"
+    },
+    {
+      "path": "assets/trajectories/actor-7-vertical-loop.traj",
+      "name": "actor-7-vertical-loop.traj",
+      "kind": "trajectory",
+      "count": 4,
+      "generated": true,
+      "generatedFrom": "assets/trajectories/actor-7-vertical-loop.w64traj",
+      "generatedFromHash": "73eb5c98",
+      "asset": {
+        "schema": "web64.ide.trajectoryBinary",
+        "version": 1,
+        "sourceSchema": "web64.ide.trajectoryAsset",
+        "sourceVersion": 1,
+        "sourceHash": "73eb5c98",
+        "segmentSize": 3,
+        "segmentCount": 4,
+        "defaultOptions": 7168
+      },
+      "encoding": "base64",
+      "bytes": "COwdCRQN9xYd+OoN"
+    },
+    {
+      "path": "assets/trajectories/actor-7-vertical-loop.inc",
+      "name": "actor-7-vertical-loop.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/trajectories/actor-7-vertical-loop.w64traj",
+      "generatedFromHash": "73eb5c98",
+      "source": "; Generated by Web64 from a .w64traj authoring asset.\n; Runtime data remains raw signed dx, signed dy, unsigned duration triplets.\n; This include declares constants and an optional descriptor helper only.\n; It does not import a runtime, choose a load address, or own placement.\nactor_7_vertical_loop_segment_count = 4\nactor_7_vertical_loop_byte_size = 12\nactor_7_vertical_loop_default_options = $1c00\n\n; Caller-owned placement example:\n; .incbin actor_7_vertical_loop_segments, \"assets/trajectories/actor-7-vertical-loop.traj\"\n\n; Invoke after defining/importing the segment label shown above.\n.macro actor_7_vertical_loop_emit_pattern\n    .word actor_7_vertical_loop_segments\n    .word actor_7_vertical_loop_segment_count\n.endmacro\n"
+    },
+    {
+      "path": "assets/trajectories/actor-8-hex-loop.w64traj",
+      "name": "actor-8-hex-loop.w64traj",
+      "kind": "w64traj",
+      "asset": {
+        "schema": "web64.ide.trajectoryAsset",
+        "version": 1,
+        "kind": "web64.trajectory",
+        "assetId": "trajectory-actors-actor-8-hex-loop"
+      },
+      "assetId": "trajectory-actors-actor-8-hex-loop",
+      "source": "{\n  \"schema\": \"web64.ide.trajectoryAsset\",\n  \"version\": 1,\n  \"id\": \"trajectory-actors-actor-8-hex-loop\",\n  \"name\": \"Actor 8 Hex Loop\",\n  \"points\": [\n    {\n      \"id\": \"actor-8-hex-loop-point-1\",\n      \"x\": 0,\n      \"y\": 0\n    },\n    {\n      \"id\": \"actor-8-hex-loop-point-2\",\n      \"x\": 12,\n      \"y\": -9,\n      \"duration\": 11\n    },\n    {\n      \"id\": \"actor-8-hex-loop-point-3\",\n      \"x\": 28,\n      \"y\": -5,\n      \"duration\": 13\n    },\n    {\n      \"id\": \"actor-8-hex-loop-point-4\",\n      \"x\": 34,\n      \"y\": 10,\n      \"duration\": 17\n    },\n    {\n      \"id\": \"actor-8-hex-loop-point-5\",\n      \"x\": 19,\n      \"y\": 22,\n      \"duration\": 19\n    },\n    {\n      \"id\": \"actor-8-hex-loop-point-6\",\n      \"x\": 3,\n      \"y\": 15,\n      \"duration\": 13\n    },\n    {\n      \"id\": \"actor-8-hex-loop-point-7\",\n      \"x\": 0,\n      \"y\": 0,\n      \"duration\": 11\n    }\n  ],\n  \"runtimeDefaults\": {\n    \"loop\": true,\n    \"pingPong\": true,\n    \"reverse\": false,\n    \"negateX\": true,\n    \"negateY\": false\n  },\n  \"authoring\": {\n    \"anchor\": {\n      \"x\": 224,\n      \"y\": 148\n    },\n    \"mapBackdrop\": null,\n    \"appearancePreview\": {\n      \"assetId\": \"w64-9b448be4\",\n      \"path\": \"assets/sprites/trajectory-actors.w64spr\",\n      \"selection\": {\n        \"kind\": \"animation\",\n        \"id\": \"orbit-pulse\"\n      }\n    },\n    \"grid\": {\n      \"visible\": true,\n      \"snap\": true,\n      \"spacingX\": 4,\n      \"spacingY\": 4,\n      \"preset\": \"fine\"\n    },\n    \"storedView\": {\n      \"centerX\": 8,\n      \"centerY\": 4,\n      \"zoom\": 2\n    }\n  }\n}\n"
+    },
+    {
+      "path": "assets/trajectories/actor-8-hex-loop.traj",
+      "name": "actor-8-hex-loop.traj",
+      "kind": "trajectory",
+      "count": 6,
+      "generated": true,
+      "generatedFrom": "assets/trajectories/actor-8-hex-loop.w64traj",
+      "generatedFromHash": "050013d6",
+      "asset": {
+        "schema": "web64.ide.trajectoryBinary",
+        "version": 1,
+        "sourceSchema": "web64.ide.trajectoryAsset",
+        "sourceVersion": 1,
+        "sourceHash": "050013d6",
+        "segmentSize": 3,
+        "segmentCount": 6,
+        "defaultOptions": 13312
+      },
+      "encoding": "base64",
+      "bytes": "DPcLEAQNBg8R8QwT8PkN/fEL"
+    },
+    {
+      "path": "assets/trajectories/actor-8-hex-loop.inc",
+      "name": "actor-8-hex-loop.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/trajectories/actor-8-hex-loop.w64traj",
+      "generatedFromHash": "050013d6",
+      "source": "; Generated by Web64 from a .w64traj authoring asset.\n; Runtime data remains raw signed dx, signed dy, unsigned duration triplets.\n; This include declares constants and an optional descriptor helper only.\n; It does not import a runtime, choose a load address, or own placement.\nactor_8_hex_loop_segment_count = 6\nactor_8_hex_loop_byte_size = 18\nactor_8_hex_loop_default_options = $3400\n\n; Caller-owned placement example:\n; .incbin actor_8_hex_loop_segments, \"assets/trajectories/actor-8-hex-loop.traj\"\n\n; Invoke after defining/importing the segment label shown above.\n.macro actor_8_hex_loop_emit_pattern\n    .word actor_8_hex_loop_segments\n    .word actor_8_hex_loop_segment_count\n.endmacro\n"
+    },
+    {
+      "path": "README.md",
+      "name": "README.md",
+      "kind": "source",
+      "source": "# Trajectory Actors (C)\n\nThis project is a complete C-side example of Web64's first-class trajectory and sprite authoring assets. Run **trajectory-actors.web64proj** to see eight phase-staggered animated VIC-II sprites follow eight different paths.\n\n## What is editable\n\n- Each file under **assets/trajectories/** with the **.w64traj** extension is a distinct editable Trajectory Editor asset. Every actor therefore has its own local path, timing, authoring anchor, and runtime-default preview.\n- Each authoritative **.w64traj** deterministically generates a raw **.traj** and a companion **.inc**. The C program consumes the generated descriptors through **assets/generated.h**.\n- **assets/sprites/trajectory-actors.w64spr** is an editable four-frame multicolor sprite asset. Its **orbit-pulse** animation metadata records the authored 4/4/4/4 PAL timing.\n\n## Runtime ownership and purity\n\nThe **.traj** payloads remain only compact three-byte **dx, dy, duration** segments. Authoring anchors, appearance references, viewport state, and animation metadata never enter those runtime bytes. The program supplies every actor's starting position, owns eight public **Web64TrajectoryState** records, performs checked initialization once, and uses the fast trajectory step thereafter.\n\nAppearance preview is not runtime binding. The **.w64traj** files reference the sprite animation so the Trajectory Editor can preview it, while this application deliberately constructs its own **Web64AnimationStep**, sequence, bank, and shared player. Per-actor phase offsets remain application-owned and avoid seven redundant per-frame animation ticks. The program copies the generated sprite descriptor to **$3000**, explicitly selects its CIA2/VIC bank and **$0400** screen pointer table, applies the authored multicolor palette, and renders the actors directly with **web64_sprite_render**.\n\nWeb64 exact-links only the trajectory, animation, direct-sprite, and typed asset-copy modules actually called here. There is no actor framework, scene, map, camera, IRQ, hidden allocation, or engine-owned gameplay state.\n\nThe companion **../trajectory-actors-asm/trajectory-actors-asm.web64proj** demonstrates the same eight editable trajectory families and animated sprite asset from assembly, including direct use of the generated **.traj/.inc** products.\n"
+    }
+  ]
+}

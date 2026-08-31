@@ -1,4 +1,5 @@
 .include "web64/trajectory.inc"
+.include "assets/trajectories/square-loop.inc"
 
 ; This is an open mixed C/assembly example. The only C work is entering this
 ; routine once. Every per-frame operation below is native assembly.
@@ -183,7 +184,7 @@ trajectory_frame_counted:
 
 trajectory_init_states:
     ; The shared pattern argument is invariant across all eight initializations.
-    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_pattern, trajectory_pattern
+    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_pattern, square_loop_pattern
     web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_state, (trajectory_states+0)
     web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_x, $0310
     web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_y, $0410
@@ -432,15 +433,13 @@ trajectory_setup_sprite_loop:
     sta VIC_SPRITE_X_EXPAND
     rts
 
-; Four continuously moving segments form one closed 12x12 path. All eight states
-; remain lockstep, while the option bits mirror one immutable path four ways.
-trajectory_segments:
-    web64_trajectory_emit_segment 12, 0, 12
-    web64_trajectory_emit_segment 0, 12, 12
-    web64_trajectory_emit_segment $f4, 0, 12
-    web64_trajectory_emit_segment 0, $f4, 12
-trajectory_pattern:
-    web64_trajectory_emit_pattern trajectory_segments, 4
+; The first-class .w64traj authoring asset deterministically generates this raw
+; 3-byte segment stream and source-only descriptor macro. Assembly remains free
+; to place the bytes, use this runtime, or parse the .traj with custom code.
+square_loop_segments:
+    .incbin "assets/trajectories/square-loop.traj"
+square_loop_pattern:
+    square_loop_emit_pattern
 
 trajectory_sprite_colors:
     .byte 3, 5, 6, 7, 10, 13, 14, 1

@@ -1,7 +1,7 @@
 {
   "kind": "web64.ide.project",
   "version": 4,
-  "savedAt": "2026-08-28T10:29:51.107Z",
+  "savedAt": "2026-08-30T16:36:13.532Z",
   "main": {
     "fileName": "main.c",
     "origin": "$4000",
@@ -23,6 +23,10 @@
     "stdin": "none",
     "runtimeProfile": "tiny",
     "compilerBackend": "web64-native",
+    "startup": {
+      "processorPort": null,
+      "disableInterrupts": false
+    },
     "stack": {
       "size": 512,
       "address": null
@@ -30,8 +34,41 @@
     "zeroPage": {
       "reserved": []
     },
+    "ir": {
+      "schemaVersion": 1,
+      "enabled": false,
+      "verifyLegacyEquivalence": true,
+      "emitSnapshots": false
+    },
     "optimize": {
-      "mode": "speed"
+      "schemaVersion": 2,
+      "mode": "speed",
+      "enabled": true,
+      "passGates": {
+        "generatorPeephole": true,
+        "registerTemporaryStack": true,
+        "constantStrengthReduction": true,
+        "fixedPointSpecialization": true,
+        "booleanBranch": true,
+        "controlFlowLoop": true,
+        "cc65Peephole": true,
+        "zeroPagePromotion": true,
+        "deadCode": true,
+        "conditionalInlining": true,
+        "hardwareAware": true,
+        "runtimeData": true
+      },
+      "frameCriticalFunctions": [],
+      "zeroPageReserved": [],
+      "budgets": {
+        "maxBuildByteGrowth": 0,
+        "maxFunctionByteGrowth": 0,
+        "maxWorstCaseCycles": null
+      },
+      "diagnostics": {
+        "trace": "summary",
+        "missedOptimizationRemarks": false
+      }
     }
   },
   "build": {
@@ -51,8 +88,12 @@
         "entrySymbol": "",
         "origin": "$4000",
         "outputName": "trajectory-patterns-asm.prg",
+        "artifactContribution": "",
         "defines": {},
         "compatibilityModules": [],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
         "c": {
           "enabled": true
         },
@@ -76,6 +117,33 @@
   },
   "settings": {
     "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "fit",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": true,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": false,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
     "compiler": {
       "enabled": true,
       "dialect": "web64-c-v0.1",
@@ -91,6 +159,10 @@
       "stdin": "none",
       "runtimeProfile": "tiny",
       "compilerBackend": "web64-native",
+      "startup": {
+        "processorPort": null,
+        "disableInterrupts": false
+      },
       "stack": {
         "size": 512,
         "address": null
@@ -98,16 +170,12 @@
       "zeroPage": {
         "reserved": []
       },
-      "optimize": {
-        "mode": "speed"
+      "ir": {
+        "schemaVersion": 1,
+        "enabled": false,
+        "verifyLegacyEquivalence": true,
+        "emitSnapshots": false
       }
-    },
-    "optimizer": {
-      "profile": "default",
-      "peephole": true,
-      "simplification": true,
-      "runtimeDependencySelection": true,
-      "unsupportedNativeFlags": "diagnostic"
     }
   },
   "workspace": {
@@ -135,13 +203,56 @@
       "path": "trajectory-demo.asm",
       "name": "trajectory-demo.asm",
       "kind": "source",
-      "source": ".include \"web64/trajectory.inc\"\n\n; This is an open mixed C/assembly example. The only C work is entering this\n; routine once. Every per-frame operation below is native assembly.\n\nTRAJECTORY_ACTORS = 8\nSPRITE_POINTER_TABLE = $07f8\nSPRITE_DATA = $3000\nSPRITE_POINTER = $c0\nVIC_SPRITE_X_MSB = $d010\nVIC_SPRITE_ENABLE = $d015\nVIC_SPRITE_Y_EXPAND = $d017\nVIC_SPRITE_PRIORITY = $d01b\nVIC_SPRITE_MULTICOLOR = $d01c\nVIC_SPRITE_X_EXPAND = $d01d\nVIC_BORDER = $d020\nVIC_BACKGROUND = $d021\nVIC_RASTER = $d012\n\nasm_trajectory_demo:\n_asm_trajectory_demo:\n    sei\n    jsr trajectory_clear_screen\n    jsr trajectory_install_sprite\n    jsr trajectory_init_states\n\n    ; Prepare the stable five-byte window once; the frame loop then pays only JSR.\n    web64_rt_prepare_trajectory_step_batch_fast trajectory_states, TRAJECTORY_ACTORS, trajectory_events\n\n    jsr trajectory_project_positions\n    lda #0\n    sta trajectory_frame_counter\n    sta trajectory_frame_counter+1\n\ntrajectory_frame_loop:\ntrajectory_wait_raster:\n    lda VIC_RASTER\n    cmp #250\n    bne trajectory_wait_raster\ntrajectory_wait_leave:\n    lda VIC_RASTER\n    cmp #250\n    beq trajectory_wait_leave\n\n; The purple border interval is the complete hot workload: one public fast\n; batch call plus direct projection of the one VIC axis changed this frame.\n    lda #4\n    sta VIC_BORDER\ntrajectory_hot_start:\n    ; This pattern is axis-aligned and the batch is lockstep. Inspecting the\n    ; public pre-step segment index identifies the changed axis without a mirror.\n    lda trajectory_states+WEB64_TRAJECTORY_STATE_CONTROL\n    and #1\n    bne trajectory_hot_y\ntrajectory_hot_x:\n    jsr _web64_trajectory_step_batch_fast\n    lda trajectory_states+0+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$30\n    sta $d000\n    lda trajectory_states+19+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$50\n    sta $d002\n    lda trajectory_states+38+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$80\n    sta $d004\n    lda trajectory_states+57+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$a0\n    sta $d006\n    lda trajectory_states+76+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$30\n    sta $d008\n    lda trajectory_states+95+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$50\n    sta $d00a\n    lda trajectory_states+114+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$80\n    sta $d00c\n    lda trajectory_states+133+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$a0\n    sta $d00e\n\n    jmp trajectory_hot_projected\ntrajectory_hot_y:\n    jsr _web64_trajectory_step_batch_fast\n    lda trajectory_states+0+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$40\n    sta $d001\n    lda trajectory_states+19+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$40\n    sta $d003\n    lda trajectory_states+38+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$50\n    sta $d005\n    lda trajectory_states+57+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$50\n    sta $d007\n    lda trajectory_states+76+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$90\n    sta $d009\n    lda trajectory_states+95+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$90\n    sta $d00b\n    lda trajectory_states+114+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$a0\n    sta $d00d\n    lda trajectory_states+133+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$a0\n    sta $d00f\n\ntrajectory_hot_projected:\n    lda #0\n    sta VIC_BORDER\ntrajectory_hot_end:\n    inc trajectory_frame_counter\n    bne trajectory_frame_counted\n    inc trajectory_frame_counter+1\ntrajectory_frame_counted:\n    jmp trajectory_frame_loop\n\ntrajectory_init_states:\n    ; The shared pattern argument is invariant across all eight initializations.\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_pattern, trajectory_pattern\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_state, (trajectory_states+0)\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_x, $0310\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_y, $0410\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_options, $1000\n    jsr _web64_trajectory_init_fast\n    cmp #WEB64_TRAJECTORY_OK\n    beq trajectory_init_ok_0\n    jmp trajectory_init_failed\ntrajectory_init_ok_0:\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_state, (trajectory_states+19)\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_x, $05e0\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_y, $0410\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_options, $1400\n    jsr _web64_trajectory_init_fast\n    cmp #WEB64_TRAJECTORY_OK\n    beq trajectory_init_ok_1\n    jmp trajectory_init_failed\ntrajectory_init_ok_1:\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_state, (trajectory_states+38)\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_x, $0810\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_y, $05e0\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_options, $1800\n    jsr _web64_trajectory_init_fast\n    cmp #WEB64_TRAJECTORY_OK\n    beq trajectory_init_ok_2\n    jmp trajectory_init_failed\ntrajectory_init_ok_2:\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_state, (trajectory_states+57)\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_x, $0ae0\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_y, $05e0\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_options, $1c00\n    jsr _web64_trajectory_init_fast\n    cmp #WEB64_TRAJECTORY_OK\n    beq trajectory_init_ok_3\n    jmp trajectory_init_failed\ntrajectory_init_ok_3:\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_state, (trajectory_states+76)\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_x, $0310\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_y, $0910\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_options, $1000\n    jsr _web64_trajectory_init_fast\n    cmp #WEB64_TRAJECTORY_OK\n    beq trajectory_init_ok_4\n    jmp trajectory_init_failed\ntrajectory_init_ok_4:\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_state, (trajectory_states+95)\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_x, $05e0\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_y, $0910\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_options, $1400\n    jsr _web64_trajectory_init_fast\n    cmp #WEB64_TRAJECTORY_OK\n    beq trajectory_init_ok_5\n    jmp trajectory_init_failed\ntrajectory_init_ok_5:\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_state, (trajectory_states+114)\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_x, $0810\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_y, $0ae0\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_options, $1800\n    jsr _web64_trajectory_init_fast\n    cmp #WEB64_TRAJECTORY_OK\n    beq trajectory_init_ok_6\n    jmp trajectory_init_failed\ntrajectory_init_ok_6:\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_state, (trajectory_states+133)\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_x, $0ae0\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_y, $0ae0\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_options, $1c00\n    jsr _web64_trajectory_init_fast\n    cmp #WEB64_TRAJECTORY_OK\n    beq trajectory_init_ok_7\n    jmp trajectory_init_failed\ntrajectory_init_ok_7:\n\n    rts\n\ntrajectory_init_failed:\n    lda #2\n    sta VIC_BORDER\n    sta VIC_BACKGROUND\ntrajectory_init_failed_loop:\n    jmp trajectory_init_failed_loop\n\ntrajectory_project_positions:\n    ; Every lane stays inside its compile-time 16-pixel X/Y band. The public\n    ; state remains full 16-bit Q12.4 and the verifier proves this specialization.\n    ; Sprite 0: public Q12.4 low bytes plus proven 16-pixel bands.\n    lda trajectory_states+0+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$30\n    sta $d000\n    lda trajectory_states+0+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$40\n    sta $d001\n    ; Sprite 1: public Q12.4 low bytes plus proven 16-pixel bands.\n    lda trajectory_states+19+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$50\n    sta $d002\n    lda trajectory_states+19+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$40\n    sta $d003\n    ; Sprite 2: public Q12.4 low bytes plus proven 16-pixel bands.\n    lda trajectory_states+38+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$80\n    sta $d004\n    lda trajectory_states+38+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$50\n    sta $d005\n    ; Sprite 3: public Q12.4 low bytes plus proven 16-pixel bands.\n    lda trajectory_states+57+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$a0\n    sta $d006\n    lda trajectory_states+57+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$50\n    sta $d007\n    ; Sprite 4: public Q12.4 low bytes plus proven 16-pixel bands.\n    lda trajectory_states+76+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$30\n    sta $d008\n    lda trajectory_states+76+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$90\n    sta $d009\n    ; Sprite 5: public Q12.4 low bytes plus proven 16-pixel bands.\n    lda trajectory_states+95+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$50\n    sta $d00a\n    lda trajectory_states+95+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$90\n    sta $d00b\n    ; Sprite 6: public Q12.4 low bytes plus proven 16-pixel bands.\n    lda trajectory_states+114+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$80\n    sta $d00c\n    lda trajectory_states+114+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$a0\n    sta $d00d\n    ; Sprite 7: public Q12.4 low bytes plus proven 16-pixel bands.\n    lda trajectory_states+133+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$a0\n    sta $d00e\n    lda trajectory_states+133+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$a0\n    sta $d00f\n\n    rts\n\ntrajectory_clear_screen:\n    lda #0\n    sta VIC_BORDER\n    sta VIC_BACKGROUND\n    tax\n    lda #$20\ntrajectory_clear_screen_loop:\n    sta $0400,x\n    sta $0500,x\n    sta $0600,x\n    sta $0700,x\n    inx\n    bne trajectory_clear_screen_loop\n    rts\n\ntrajectory_install_sprite:\n    ldx #63\ntrajectory_copy_sprite_loop:\n    lda trajectory_sprite_bytes,x\n    sta SPRITE_DATA,x\n    dex\n    bpl trajectory_copy_sprite_loop\n    ldx #7\ntrajectory_setup_sprite_loop:\n    lda #SPRITE_POINTER\n    sta SPRITE_POINTER_TABLE,x\n    lda trajectory_sprite_colors,x\n    sta $d027,x\n    dex\n    bpl trajectory_setup_sprite_loop\n    lda #$ff\n    sta VIC_SPRITE_ENABLE\n    lda #0\n    sta VIC_SPRITE_X_MSB\n    sta VIC_SPRITE_Y_EXPAND\n    sta VIC_SPRITE_PRIORITY\n    sta VIC_SPRITE_MULTICOLOR\n    sta VIC_SPRITE_X_EXPAND\n    rts\n\n; Four continuously moving segments form one closed 12x12 path. All eight states\n; remain lockstep, while the option bits mirror one immutable path four ways.\ntrajectory_segments:\n    web64_trajectory_emit_segment 12, 0, 12\n    web64_trajectory_emit_segment 0, 12, 12\n    web64_trajectory_emit_segment $f4, 0, 12\n    web64_trajectory_emit_segment 0, $f4, 12\ntrajectory_pattern:\n    web64_trajectory_emit_pattern trajectory_segments, 4\n\ntrajectory_sprite_colors:\n    .byte 3, 5, 6, 7, 10, 13, 14, 1\ntrajectory_sprite_bytes:\n    .byte $00, $18, $00, $00, $3c, $00, $00, $7e, $00, $00, $ff, $00, $01, $ff, $80, $03, $ff, $c0, $07, $ff, $e0, $0f, $ff, $f0, $1f, $ff, $f8, $3f, $ff, $fc, $7f, $ff, $fe, $0f, $ff, $f0, $0f, $ff, $f0, $0f, $ff, $f0, $0f, $ff, $f0, $0f, $ff, $f0, $0f, $ff, $f0, $03, $ff, $c0, $01, $ff, $80, $00, $7e, $00, $00, $3c, $00\n    .byte 0\n\n; Public buffers: assembly, C, KickAssembler, or another runtime may inspect or\n; transform these directly. No private semantic mirror exists.\n; This visible 280-byte pad keeps the entire 152-byte state array within one page\n; in both published C ABIs. The verifier checks that invariant, so layout drift\n; cannot silently reintroduce indexed page-cross penalties.\n    .fill 280, 0\ntrajectory_states:\n    web64_trajectory_reserve_states TRAJECTORY_ACTORS\ntrajectory_events:\n    web64_trajectory_reserve_events TRAJECTORY_ACTORS\ntrajectory_frame_counter:\n    .word 0\n"
+      "source": ".include \"web64/trajectory.inc\"\n.include \"assets/trajectories/square-loop.inc\"\n\n; This is an open mixed C/assembly example. The only C work is entering this\n; routine once. Every per-frame operation below is native assembly.\n\nTRAJECTORY_ACTORS = 8\nSPRITE_POINTER_TABLE = $07f8\nSPRITE_DATA = $3000\nSPRITE_POINTER = $c0\nVIC_SPRITE_X_MSB = $d010\nVIC_SPRITE_ENABLE = $d015\nVIC_SPRITE_Y_EXPAND = $d017\nVIC_SPRITE_PRIORITY = $d01b\nVIC_SPRITE_MULTICOLOR = $d01c\nVIC_SPRITE_X_EXPAND = $d01d\nVIC_BORDER = $d020\nVIC_BACKGROUND = $d021\nVIC_RASTER = $d012\n\nasm_trajectory_demo:\n_asm_trajectory_demo:\n    sei\n    jsr trajectory_clear_screen\n    jsr trajectory_install_sprite\n    jsr trajectory_init_states\n\n    ; Prepare the stable five-byte window once; the frame loop then pays only JSR.\n    web64_rt_prepare_trajectory_step_batch_fast trajectory_states, TRAJECTORY_ACTORS, trajectory_events\n\n    jsr trajectory_project_positions\n    lda #0\n    sta trajectory_frame_counter\n    sta trajectory_frame_counter+1\n\ntrajectory_frame_loop:\ntrajectory_wait_raster:\n    lda VIC_RASTER\n    cmp #250\n    bne trajectory_wait_raster\ntrajectory_wait_leave:\n    lda VIC_RASTER\n    cmp #250\n    beq trajectory_wait_leave\n\n; The purple border interval is the complete hot workload: one public fast\n; batch call plus direct projection of the one VIC axis changed this frame.\n    lda #4\n    sta VIC_BORDER\ntrajectory_hot_start:\n    ; This pattern is axis-aligned and the batch is lockstep. Inspecting the\n    ; public pre-step segment index identifies the changed axis without a mirror.\n    lda trajectory_states+WEB64_TRAJECTORY_STATE_CONTROL\n    and #1\n    bne trajectory_hot_y\ntrajectory_hot_x:\n    jsr _web64_trajectory_step_batch_fast\n    lda trajectory_states+0+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$30\n    sta $d000\n    lda trajectory_states+19+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$50\n    sta $d002\n    lda trajectory_states+38+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$80\n    sta $d004\n    lda trajectory_states+57+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$a0\n    sta $d006\n    lda trajectory_states+76+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$30\n    sta $d008\n    lda trajectory_states+95+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$50\n    sta $d00a\n    lda trajectory_states+114+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$80\n    sta $d00c\n    lda trajectory_states+133+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$a0\n    sta $d00e\n\n    jmp trajectory_hot_projected\ntrajectory_hot_y:\n    jsr _web64_trajectory_step_batch_fast\n    lda trajectory_states+0+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$40\n    sta $d001\n    lda trajectory_states+19+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$40\n    sta $d003\n    lda trajectory_states+38+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$50\n    sta $d005\n    lda trajectory_states+57+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$50\n    sta $d007\n    lda trajectory_states+76+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$90\n    sta $d009\n    lda trajectory_states+95+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$90\n    sta $d00b\n    lda trajectory_states+114+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$a0\n    sta $d00d\n    lda trajectory_states+133+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$a0\n    sta $d00f\n\ntrajectory_hot_projected:\n    lda #0\n    sta VIC_BORDER\ntrajectory_hot_end:\n    inc trajectory_frame_counter\n    bne trajectory_frame_counted\n    inc trajectory_frame_counter+1\ntrajectory_frame_counted:\n    jmp trajectory_frame_loop\n\ntrajectory_init_states:\n    ; The shared pattern argument is invariant across all eight initializations.\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_pattern, square_loop_pattern\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_state, (trajectory_states+0)\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_x, $0310\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_y, $0410\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_options, $1000\n    jsr _web64_trajectory_init_fast\n    cmp #WEB64_TRAJECTORY_OK\n    beq trajectory_init_ok_0\n    jmp trajectory_init_failed\ntrajectory_init_ok_0:\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_state, (trajectory_states+19)\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_x, $05e0\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_y, $0410\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_options, $1400\n    jsr _web64_trajectory_init_fast\n    cmp #WEB64_TRAJECTORY_OK\n    beq trajectory_init_ok_1\n    jmp trajectory_init_failed\ntrajectory_init_ok_1:\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_state, (trajectory_states+38)\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_x, $0810\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_y, $05e0\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_options, $1800\n    jsr _web64_trajectory_init_fast\n    cmp #WEB64_TRAJECTORY_OK\n    beq trajectory_init_ok_2\n    jmp trajectory_init_failed\ntrajectory_init_ok_2:\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_state, (trajectory_states+57)\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_x, $0ae0\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_y, $05e0\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_options, $1c00\n    jsr _web64_trajectory_init_fast\n    cmp #WEB64_TRAJECTORY_OK\n    beq trajectory_init_ok_3\n    jmp trajectory_init_failed\ntrajectory_init_ok_3:\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_state, (trajectory_states+76)\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_x, $0310\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_y, $0910\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_options, $1000\n    jsr _web64_trajectory_init_fast\n    cmp #WEB64_TRAJECTORY_OK\n    beq trajectory_init_ok_4\n    jmp trajectory_init_failed\ntrajectory_init_ok_4:\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_state, (trajectory_states+95)\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_x, $05e0\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_y, $0910\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_options, $1400\n    jsr _web64_trajectory_init_fast\n    cmp #WEB64_TRAJECTORY_OK\n    beq trajectory_init_ok_5\n    jmp trajectory_init_failed\ntrajectory_init_ok_5:\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_state, (trajectory_states+114)\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_x, $0810\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_y, $0ae0\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_options, $1800\n    jsr _web64_trajectory_init_fast\n    cmp #WEB64_TRAJECTORY_OK\n    beq trajectory_init_ok_6\n    jmp trajectory_init_failed\ntrajectory_init_ok_6:\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_state, (trajectory_states+133)\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_x, $0ae0\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_y, $0ae0\n    web64_trajectory_arg_u16 _web64_trajectory_init_fast__arg_options, $1c00\n    jsr _web64_trajectory_init_fast\n    cmp #WEB64_TRAJECTORY_OK\n    beq trajectory_init_ok_7\n    jmp trajectory_init_failed\ntrajectory_init_ok_7:\n\n    rts\n\ntrajectory_init_failed:\n    lda #2\n    sta VIC_BORDER\n    sta VIC_BACKGROUND\ntrajectory_init_failed_loop:\n    jmp trajectory_init_failed_loop\n\ntrajectory_project_positions:\n    ; Every lane stays inside its compile-time 16-pixel X/Y band. The public\n    ; state remains full 16-bit Q12.4 and the verifier proves this specialization.\n    ; Sprite 0: public Q12.4 low bytes plus proven 16-pixel bands.\n    lda trajectory_states+0+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$30\n    sta $d000\n    lda trajectory_states+0+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$40\n    sta $d001\n    ; Sprite 1: public Q12.4 low bytes plus proven 16-pixel bands.\n    lda trajectory_states+19+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$50\n    sta $d002\n    lda trajectory_states+19+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$40\n    sta $d003\n    ; Sprite 2: public Q12.4 low bytes plus proven 16-pixel bands.\n    lda trajectory_states+38+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$80\n    sta $d004\n    lda trajectory_states+38+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$50\n    sta $d005\n    ; Sprite 3: public Q12.4 low bytes plus proven 16-pixel bands.\n    lda trajectory_states+57+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$a0\n    sta $d006\n    lda trajectory_states+57+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$50\n    sta $d007\n    ; Sprite 4: public Q12.4 low bytes plus proven 16-pixel bands.\n    lda trajectory_states+76+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$30\n    sta $d008\n    lda trajectory_states+76+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$90\n    sta $d009\n    ; Sprite 5: public Q12.4 low bytes plus proven 16-pixel bands.\n    lda trajectory_states+95+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$50\n    sta $d00a\n    lda trajectory_states+95+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$90\n    sta $d00b\n    ; Sprite 6: public Q12.4 low bytes plus proven 16-pixel bands.\n    lda trajectory_states+114+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$80\n    sta $d00c\n    lda trajectory_states+114+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$a0\n    sta $d00d\n    ; Sprite 7: public Q12.4 low bytes plus proven 16-pixel bands.\n    lda trajectory_states+133+WEB64_TRAJECTORY_STATE_X\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$a0\n    sta $d00e\n    lda trajectory_states+133+WEB64_TRAJECTORY_STATE_Y\n    lsr\n    lsr\n    lsr\n    lsr\n    ora #$a0\n    sta $d00f\n\n    rts\n\ntrajectory_clear_screen:\n    lda #0\n    sta VIC_BORDER\n    sta VIC_BACKGROUND\n    tax\n    lda #$20\ntrajectory_clear_screen_loop:\n    sta $0400,x\n    sta $0500,x\n    sta $0600,x\n    sta $0700,x\n    inx\n    bne trajectory_clear_screen_loop\n    rts\n\ntrajectory_install_sprite:\n    ldx #63\ntrajectory_copy_sprite_loop:\n    lda trajectory_sprite_bytes,x\n    sta SPRITE_DATA,x\n    dex\n    bpl trajectory_copy_sprite_loop\n    ldx #7\ntrajectory_setup_sprite_loop:\n    lda #SPRITE_POINTER\n    sta SPRITE_POINTER_TABLE,x\n    lda trajectory_sprite_colors,x\n    sta $d027,x\n    dex\n    bpl trajectory_setup_sprite_loop\n    lda #$ff\n    sta VIC_SPRITE_ENABLE\n    lda #0\n    sta VIC_SPRITE_X_MSB\n    sta VIC_SPRITE_Y_EXPAND\n    sta VIC_SPRITE_PRIORITY\n    sta VIC_SPRITE_MULTICOLOR\n    sta VIC_SPRITE_X_EXPAND\n    rts\n\n; The first-class .w64traj authoring asset deterministically generates this raw\n; 3-byte segment stream and source-only descriptor macro. Assembly remains free\n; to place the bytes, use this runtime, or parse the .traj with custom code.\nsquare_loop_segments:\n    .incbin \"assets/trajectories/square-loop.traj\"\nsquare_loop_pattern:\n    square_loop_emit_pattern\n\ntrajectory_sprite_colors:\n    .byte 3, 5, 6, 7, 10, 13, 14, 1\ntrajectory_sprite_bytes:\n    .byte $00, $18, $00, $00, $3c, $00, $00, $7e, $00, $00, $ff, $00, $01, $ff, $80, $03, $ff, $c0, $07, $ff, $e0, $0f, $ff, $f0, $1f, $ff, $f8, $3f, $ff, $fc, $7f, $ff, $fe, $0f, $ff, $f0, $0f, $ff, $f0, $0f, $ff, $f0, $0f, $ff, $f0, $0f, $ff, $f0, $0f, $ff, $f0, $03, $ff, $c0, $01, $ff, $80, $00, $7e, $00, $00, $3c, $00\n    .byte 0\n\n; Public buffers: assembly, C, KickAssembler, or another runtime may inspect or\n; transform these directly. No private semantic mirror exists.\n; This visible 280-byte pad keeps the entire 152-byte state array within one page\n; in both published C ABIs. The verifier checks that invariant, so layout drift\n; cannot silently reintroduce indexed page-cross penalties.\n    .fill 280, 0\ntrajectory_states:\n    web64_trajectory_reserve_states TRAJECTORY_ACTORS\ntrajectory_events:\n    web64_trajectory_reserve_events TRAJECTORY_ACTORS\ntrajectory_frame_counter:\n    .word 0\n"
+    },
+    {
+      "path": "assets/trajectories/square-loop.w64traj",
+      "name": "square-loop.w64traj",
+      "kind": "w64traj",
+      "asset": {
+        "schema": "web64.ide.trajectoryAsset",
+        "version": 1,
+        "kind": "web64.trajectory",
+        "assetId": "trajectory-patterns-asm-square-loop"
+      },
+      "assetId": "trajectory-patterns-asm-square-loop",
+      "source": "{\n  \"schema\": \"web64.ide.trajectoryAsset\",\n  \"version\": 1,\n  \"id\": \"trajectory-patterns-asm-square-loop\",\n  \"name\": \"Square Loop\",\n  \"points\": [\n    {\n      \"id\": \"square-loop-point-1\",\n      \"x\": 0,\n      \"y\": 0\n    },\n    {\n      \"id\": \"square-loop-point-2\",\n      \"x\": 12,\n      \"y\": 0,\n      \"duration\": 12\n    },\n    {\n      \"id\": \"square-loop-point-3\",\n      \"x\": 12,\n      \"y\": 12,\n      \"duration\": 12\n    },\n    {\n      \"id\": \"square-loop-point-4\",\n      \"x\": 0,\n      \"y\": 12,\n      \"duration\": 12\n    },\n    {\n      \"id\": \"square-loop-point-5\",\n      \"x\": 0,\n      \"y\": 0,\n      \"duration\": 12\n    }\n  ],\n  \"runtimeDefaults\": {\n    \"loop\": true,\n    \"pingPong\": false,\n    \"reverse\": false,\n    \"negateX\": false,\n    \"negateY\": false\n  },\n  \"authoring\": {\n    \"anchor\": {\n      \"x\": 49,\n      \"y\": 65\n    },\n    \"mapBackdrop\": null,\n    \"appearancePreview\": null,\n    \"grid\": {\n      \"visible\": true,\n      \"snap\": true,\n      \"spacingX\": 8,\n      \"spacingY\": 8,\n      \"preset\": \"character\"\n    },\n    \"storedView\": {\n      \"centerX\": 0,\n      \"centerY\": 0,\n      \"zoom\": 1\n    }\n  }\n}\n"
+    },
+    {
+      "path": "assets/trajectories/square-loop.traj",
+      "name": "square-loop.traj",
+      "kind": "trajectory",
+      "count": 4,
+      "generated": true,
+      "generatedFrom": "assets/trajectories/square-loop.w64traj",
+      "generatedFromHash": "c55da227",
+      "asset": {
+        "schema": "web64.ide.trajectoryBinary",
+        "version": 1,
+        "sourceSchema": "web64.ide.trajectoryAsset",
+        "sourceVersion": 1,
+        "sourceHash": "c55da227",
+        "segmentSize": 3,
+        "segmentCount": 4,
+        "defaultOptions": 4096
+      },
+      "encoding": "base64",
+      "bytes": "DAAMAAwM9AAMAPQM"
+    },
+    {
+      "path": "assets/trajectories/square-loop.inc",
+      "name": "square-loop.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/trajectories/square-loop.w64traj",
+      "generatedFromHash": "c55da227",
+      "source": "; Generated by Web64 from a .w64traj authoring asset.\n; Runtime data remains raw signed dx, signed dy, unsigned duration triplets.\n; This include declares constants and an optional descriptor helper only.\n; It does not import a runtime, choose a load address, or own placement.\nsquare_loop_segment_count = 4\nsquare_loop_byte_size = 12\nsquare_loop_default_options = $1000\n\n; Caller-owned placement example:\n; .incbin square_loop_segments, \"assets/trajectories/square-loop.traj\"\n\n; Invoke after defining/importing the segment label shown above.\n.macro square_loop_emit_pattern\n    .word square_loop_segments\n    .word square_loop_segment_count\n.endmacro\n"
     },
     {
       "path": "README.md",
       "name": "README.md",
       "kind": "source",
-      "source": "# Trajectory Patterns — Optimized Assembly\n\nThis is the native hot-loop companion to the C-oriented `trajectory-patterns` example.\n\n- C enters `asm_trajectory_demo()` once and performs no per-frame work.\n- Eight contiguous caller-owned `Web64TrajectoryState` records share one immutable four-segment pattern.\n- One `_web64_trajectory_step_batch_fast` call advances eight lockstep states while the option bits provide all four X/Y mirroring combinations.\n- The assembly reads the published Q12.4 state layout and writes owned VIC-II sprite coordinates directly. Each lane is intentionally constrained to a compile-time 16x16 band, allowing the projection to combine the public low byte with a constant high nibble. Because the shared pattern is axis-aligned and lockstep, the public pre-step segment index also identifies the only coordinate that changes that frame. The verifier proves both specializations; a game whose actors cross bands or whose pattern mixes axes must use a generic 16-bit projection. No private semantic mirror is introduced.\n- The purple border interval measures the complete hot workload: one exact-window batch call, trajectory execution, public event writes, changed-axis Q12.4 projection, and all eight changed sprite coordinates. It is intentionally much smaller than the C example's repeated C call/marshalling interval.\n- The assembly uses the generated `web64/trajectory.inc` helpers for immediate arguments, one-time batch-window preparation, packed segment/pattern emission, and caller-owned state/event storage. These are source macros only: their emitted instructions and data are byte-identical to the handwritten ABI sequence, and the stable batch window is still prepared outside the frame loop.\n- All sprites remain in motion on a closed path. Sprite payload placement at `$3000`, pointer-table placement at `$07f8`, and hardware ownership are explicit in `trajectory-demo.asm`.\n\nThe example includes only the family-owned `web64/trajectory.inc`, which provides the standard `web64_rt_prepare_*`/`web64_rt_call_*` helpers plus the trajectory layouts and constants. The optional `web64/runtime.inc` remains a whole-registry ABI catalog. Exact linkage adds only `game-trajectory.asm` and `game-trajectory-batch.asm`.\n\nOpen `trajectory-patterns-asm.web64proj` in Web64 IDE and run it. The verifier executes 600 PAL frames under both Web64 C ABIs, checks exact closure and public-state/VIC agreement, rejects a complete hot interval above the 20% PAL acceptance target, and retains 25% as the absolute rejection ceiling. Unlike the runtime-only benchmark, this visual gate also includes the example's explicit VIC projection work.\n"
+      "source": "# Trajectory Patterns — Optimized Assembly\n\nThis is the native hot-loop companion to the C-oriented `trajectory-patterns` example.\n\n- C enters `asm_trajectory_demo()` once and performs no per-frame work.\n- Eight contiguous caller-owned `Web64TrajectoryState` records share one immutable four-segment pattern.\n- `assets/trajectories/square-loop.w64traj` is edited visually, while native assembly consumes only its deterministic `square-loop.traj` and `square-loop.inc` outputs. The source asset is never a runtime dependency, and the same raw triplets can be parsed by completely custom assembly.\n- One `_web64_trajectory_step_batch_fast` call advances eight lockstep states while the option bits provide all four X/Y mirroring combinations.\n- The assembly reads the published Q12.4 state layout and writes owned VIC-II sprite coordinates directly. Each lane is intentionally constrained to a compile-time 16x16 band, allowing the projection to combine the public low byte with a constant high nibble. Because the shared pattern is axis-aligned and lockstep, the public pre-step segment index also identifies the only coordinate that changes that frame. The verifier proves both specializations; a game whose actors cross bands or whose pattern mixes axes must use a generic 16-bit projection. No private semantic mirror is introduced.\n- The purple border interval measures the complete hot workload: one exact-window batch call, trajectory execution, public event writes, changed-axis Q12.4 projection, and all eight changed sprite coordinates. It is intentionally much smaller than the C example's repeated C call/marshalling interval.\n- The assembly uses the generated `web64/trajectory.inc` helpers for immediate arguments, one-time batch-window preparation, packed segment/pattern emission, and caller-owned state/event storage. These are source macros only: their emitted instructions and data are byte-identical to the handwritten ABI sequence, and the stable batch window is still prepared outside the frame loop.\n- All sprites remain in motion on a closed path. Sprite payload placement at `$3000`, pointer-table placement at `$07f8`, and hardware ownership are explicit in `trajectory-demo.asm`.\n\nThe example includes only the family-owned `web64/trajectory.inc`, which provides the standard `web64_rt_prepare_*`/`web64_rt_call_*` helpers plus the trajectory layouts and constants. The optional `web64/runtime.inc` remains a whole-registry ABI catalog. Exact linkage adds only `game-trajectory.asm` and `game-trajectory-batch.asm`.\n\nOpen `trajectory-patterns-asm.web64proj` in Web64 IDE and run it. The verifier executes 600 PAL frames under both Web64 C ABIs, checks exact closure and public-state/VIC agreement, rejects a complete hot interval above the 20% PAL acceptance target, and retains 25% as the absolute rejection ceiling. Unlike the runtime-only benchmark, this visual gate also includes the example's explicit VIC projection work.\n"
     }
   ]
 }

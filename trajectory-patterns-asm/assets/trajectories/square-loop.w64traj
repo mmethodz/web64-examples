@@ -1,0 +1,64 @@
+{
+  "schema": "web64.ide.trajectoryAsset",
+  "version": 1,
+  "id": "trajectory-patterns-asm-square-loop",
+  "name": "Square Loop",
+  "points": [
+    {
+      "id": "square-loop-point-1",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "square-loop-point-2",
+      "x": 12,
+      "y": 0,
+      "duration": 12
+    },
+    {
+      "id": "square-loop-point-3",
+      "x": 12,
+      "y": 12,
+      "duration": 12
+    },
+    {
+      "id": "square-loop-point-4",
+      "x": 0,
+      "y": 12,
+      "duration": 12
+    },
+    {
+      "id": "square-loop-point-5",
+      "x": 0,
+      "y": 0,
+      "duration": 12
+    }
+  ],
+  "runtimeDefaults": {
+    "loop": true,
+    "pingPong": false,
+    "reverse": false,
+    "negateX": false,
+    "negateY": false
+  },
+  "authoring": {
+    "anchor": {
+      "x": 49,
+      "y": 65
+    },
+    "mapBackdrop": null,
+    "appearancePreview": null,
+    "grid": {
+      "visible": true,
+      "snap": true,
+      "spacingX": 8,
+      "spacingY": 8,
+      "preset": "character"
+    },
+    "storedView": {
+      "centerX": 0,
+      "centerY": 0,
+      "zoom": 1
+    }
+  }
+}

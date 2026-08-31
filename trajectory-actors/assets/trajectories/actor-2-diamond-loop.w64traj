@@ -1,0 +1,71 @@
+{
+  "schema": "web64.ide.trajectoryAsset",
+  "version": 1,
+  "id": "trajectory-actors-actor-2-diamond-loop",
+  "name": "Actor 2 Diamond Loop",
+  "points": [
+    {
+      "id": "actor-2-diamond-loop-point-1",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "actor-2-diamond-loop-point-2",
+      "x": 12,
+      "y": -12,
+      "duration": 17
+    },
+    {
+      "id": "actor-2-diamond-loop-point-3",
+      "x": 24,
+      "y": 0,
+      "duration": 19
+    },
+    {
+      "id": "actor-2-diamond-loop-point-4",
+      "x": 12,
+      "y": 12,
+      "duration": 17
+    },
+    {
+      "id": "actor-2-diamond-loop-point-5",
+      "x": 0,
+      "y": 0,
+      "duration": 19
+    }
+  ],
+  "runtimeDefaults": {
+    "loop": true,
+    "pingPong": false,
+    "reverse": false,
+    "negateX": true,
+    "negateY": false
+  },
+  "authoring": {
+    "anchor": {
+      "x": 112,
+      "y": 76
+    },
+    "mapBackdrop": null,
+    "appearancePreview": {
+      "assetId": "w64-9b448be4",
+      "path": "assets/sprites/trajectory-actors.w64spr",
+      "selection": {
+        "kind": "animation",
+        "id": "orbit-pulse"
+      }
+    },
+    "grid": {
+      "visible": true,
+      "snap": true,
+      "spacingX": 4,
+      "spacingY": 4,
+      "preset": "fine"
+    },
+    "storedView": {
+      "centerX": 8,
+      "centerY": 4,
+      "zoom": 2
+    }
+  }
+}
