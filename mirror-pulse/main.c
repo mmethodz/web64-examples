@@ -1211,6 +1211,7 @@ void main(void) {
     int8_t mn_position;
     uint8_t mn_choice;
     initialize_bitmap();
+    POKE(0x00cc, 1); /* Disable the text cursor over the bitmap display. */
     if (verification_status != WEB64_BITMAP_OK) return;
 #ifdef WEB64_RENDER_VERIFY
     verify_rendering();
