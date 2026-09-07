@@ -6,6 +6,10 @@ The suite covers assembly-only projects, Web64 C projects, mixed C/ASM projects,
 
 Open a .web64proj in the Web64 IDE to inspect, build, and run it.
 
+## Cycle-timed demo
+
+- `event-horizon/event-horizon.web64proj` is an assembly-only PAL C64 demo: a dithered inverse-polar tunnel, live double-buffered wireframe sprites, orbiting white stars, original three-voice SID music and an exact-cycle border prism. The tunnel and stars update at 50 Hz; the 6510 draws complete wireframe poses at 25 Hz. Its measured work window reaches 19,421 PAL cycles, with zero missed deadlines across 3,330 verified updates. Open the native project and press F5, or run `event-horizon/dist/event-horizon.prg`. All code and visual tables remain editable in the IDE; no external build machinery is required.
+
 ## Productivity application
 
 - `margin64/margin64.web64proj` is a keyboard-driven C64 word-processor example for Web64 2.4.1 or later. Its C/ASM virtual sources, resident safe document I/O, two-drive support, capped Undo/clipboard, and real disk-loaded search/print targets are editable in the IDE. Use Disk/Media > Build Dependencies > Run Disk, or the supplied `margin64/dist/margin64.d64`. The accompanying README and verification record report the 15,866-byte physical document limit, exercised 14 KiB working sample, accepted resident-size miss and remaining limitations. No external build machinery is required.
