@@ -6,6 +6,10 @@ The suite covers assembly-only projects, Web64 C projects, mixed C/ASM projects,
 
 Open a .web64proj in the Web64 IDE to inspect, build, and run it.
 
+## Productivity application
+
+- `margin64/margin64.web64proj` is a keyboard-driven C64 word-processor example for Web64 2.4.1 or later. Its C/ASM virtual sources, resident safe document I/O, two-drive support, capped Undo/clipboard, and real disk-loaded search/print targets are editable in the IDE. Use Disk/Media > Build Dependencies > Run Disk, or the supplied `margin64/dist/margin64.d64`. The accompanying README and verification record report the 15,866-byte physical document limit, exercised 14 KiB working sample, accepted resident-size miss and remaining limitations. No external build machinery is required.
+
 ## Complete game
 
 - `cyber-mole/cyber-mole.web64proj` is a 48-room, single-screen PAL arcade puzzle. Bit drills, patches colored packets, reverses gravity and evades reactive sentinel AI. A presentation-only remaster preserves all thirty original solutions; Deep Descent continues through the Disconnected Archive, 1897 Works and Original Core. Native sprites, all character/block/map planes, the dithered title logo and regional SID music remain editable. Web64's hardware-loader runtime transfers raw and packed banks while the game-owned IRQ animates Bit or a cutscene. The directory contains only the complete Web64 project and accompanying source, native assets, guides and outputs: open it in Web64 2.4.0 or later, then use Disk/Media > Build Dependencies > Run Disk. No Node installation or Web64 source checkout is required. `cyber-mole/dist/cyber-mole.d64` is the supplied one-disk release with writable initials/high scores.
