@@ -1,0 +1,32 @@
+# Cyber-Mole changelog
+
+## 2026-09-07
+
+- Published the example as a self-contained Web64 2.4.0 project with accompanying native assets, source, documentation and playable outputs. Removed development tools, authoring intermediates, checkpoints and verification reports from the example distribution; retained that history separately for maintenance.
+- Rewrote build/edit instructions around the public IDE, Build Targets and Disk/Media. No Node installation, external tools or access to Web64 source is needed. Documentation embedded in the project matches the accompanying readmes; game and disk bytes are unchanged.
+
+- Migrated reusable transport, validation, bounded decompression and lifecycle to Web64 2.4.0's native hardware-loader SDK. Direct ASM macros and caller-placed SDK images replace game-private implementations; application presentation, region policy and six-room cache remain game-owned.
+- Strengthened installation to decode and CRC every selected record in disjoint scratch before the first live write. Malformed streams with recomputed container CRC cannot partially corrupt an active bank. Score SAVE explicitly shuts down and reinstalls drive code; stale reads are refused.
+- Rebalanced RAM without changing gameplay assets: packed staging uses inactive routing/plane storage at $b000, decoded scratch uses $e000, the unchanged 512-byte C stack moves to $fc00 and the music envelope ends at $a600. Normal C/ASM execution keeps RAM visible with $01=$35. Native in-IDE targets and disk mastering remain the complete authoring path.
+
+## 2026-09-06
+
+- Redesigned the title around a generated dithered steel/cyan/gold bitmap wordmark, converted to the ordinary editable native charset and Color RAM map. Removed technical/promotional captions; only instructions and start prompts remain. Added hero-sized animated Bit, two animated packets, circuit rails and a restrained prompt pulse. The same 2 KB title bank retains the exact shared menu font; the title adds no disk read. Dedicated native/VIC title checks accompany the unchanged original 30-room state replay and complete 48-room campaign authority.
+- Replaced the cooperative ROM receiver with a native, IRQ-friendly Covert Bitops drive loader, bounded decode and CRC validation. Added IDE-created W64X compressed targets and six-room Deep Descent caches. Read timeouts, bounded sector retries, ATN recovery, bank/stream bounds and re-upload after native score SAVE are explicit. Original gameplay, editable assets and accepted music remain unchanged; title prefetch stays off because the blocking API cannot guarantee unchanged title input latency.
+- Fixed intermittent garbled text over the high-score table: disk I/O now temporarily disables inherited KERNAL console messages and restores the previous policy afterward. Saving/saved/RAM-only messages clear their complete status row and restore hires cyan, preventing leftover text. Regression tests cover enabled/disabled message policies, success/failure and repeated real-VICE saves.
+- Fixed native music editing end to end: Tracker Save's `.sid`/`.inc` outputs now feed four assembly PRG targets and raw disk placements. Removed separately exported music PRGs from the project, restored ordinary filename-derived include defaults, and derive loader lengths/call addresses from generated symbols. The accepted musical fields and all four disk music payloads remain byte-identical. Growth/shrink, reload, actual loader, fresh native creation and invalid-layout regression tests cover the workflow.
+- Documented in-IDE music/bank creation and mastering in `MUSIC.md`. The accompanying IDE change exposes the existing Raw data / Runnable (SYS) logical-file setting and exact mastered-file downloads, so multi-load projects no longer require hidden media-field editing.
+- Added Deep Descent / Final Descent: 48 rooms, Disconnected Archive, 1897 Works and Original Core, native regional graphics/music, ordered registers, clutches, powered locks, reversible belts and Eetu's complementary maintenance behavior.
+- Added Bit's sixteen native acting frames, regional arrival scenes that animate during loading, staged master-clock restoration, an animated dark-to-light ending, score entry and return to the original title.
+- Added an example-local cooperative IEC loader with native Web64 file primitives, bounded IRQ presentation, transactional RAM-under-ROM staging, exact bank validation and protected installation. No gameplay clock runs during loading; this is not a drive-code fastloader.
+- Preserved the complete original 30-room release in a hashed checkpoint. Remastered Act One as presentation only: all four native map planes, individual lighting bays, corporate routing and machinery, sparse readable substrate, warning zones and subtle older-hardware hints. Original materials, object positions, difficulty, solutions and scoring remain authoritative; exact joystick/state replay covers all thirty rooms.
+- Separated Act One mechanical `GRID` banks from native `SKIN` presentation banks. Extended the corporate blockset using spare glyphs and shared existing character animation without additional animation copies per frame.
+- Corrected all generated charset editor profiles: Text multicolor / Per block with hires text and multicolor artwork. Fresh project loads now render charsets, blocks and maps correctly without toggling display mode; the metadata repair itself does not alter pixel bytes. Both authoring paths emit the corrected profile, with fresh-import regression coverage.
+- Sentinels now roam in both axes around machinery, avoid each other and pursue nearby Bit along clear sightlines. Bounded AI replaces the original bottom-row horizontal patrol.
+- Added an eight-frame native electrical death animation and a dedicated SID shutdown effect. Gameplay/countdown pause for the sequence, including on the last life, followed by protected recovery or game over.
+- Added the native field manual page: Up from title, Fire back to title. A separate Fire press starts play; the accepted title music continues throughout.
+- Preserved the original title art, gameplay sprites, level layouts and existing song/SFX fields. Added native assets through a guarded upgrade rather than re-authoring existing content.
+
+## 2026-09-05
+
+- Initial thirty-level C/ASM hybrid game, native editable assets, original SID soundtrack, five disk-loaded district banks and writable high scores.

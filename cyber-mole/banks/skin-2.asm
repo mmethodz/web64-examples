@@ -1,0 +1,21 @@
+; Native presentation only: six (structure, Color RAM, video) triplets.
+.incbin skin_6_art, "assets/maps/grid-07.w64map"
+.incbin skin_6_color, "assets/maps/grid-07.color.bin"
+.incbin skin_6_screen, "assets/maps/grid-07.screen.bin"
+.incbin skin_7_art, "assets/maps/grid-08.w64map"
+.incbin skin_7_color, "assets/maps/grid-08.color.bin"
+.incbin skin_7_screen, "assets/maps/grid-08.screen.bin"
+.incbin skin_8_art, "assets/maps/grid-09.w64map"
+.incbin skin_8_color, "assets/maps/grid-09.color.bin"
+.incbin skin_8_screen, "assets/maps/grid-09.screen.bin"
+.incbin skin_9_art, "assets/maps/grid-10.w64map"
+.incbin skin_9_color, "assets/maps/grid-10.color.bin"
+.incbin skin_9_screen, "assets/maps/grid-10.screen.bin"
+.incbin skin_10_art, "assets/maps/grid-11.w64map"
+.incbin skin_10_color, "assets/maps/grid-11.color.bin"
+.incbin skin_10_screen, "assets/maps/grid-11.screen.bin"
+.incbin skin_11_art, "assets/maps/grid-12.w64map"
+.incbin skin_11_color, "assets/maps/grid-12.color.bin"
+.incbin skin_11_screen, "assets/maps/grid-12.screen.bin"
+    .byte 67,89,65,1,1,6
+    .fill 490,0
