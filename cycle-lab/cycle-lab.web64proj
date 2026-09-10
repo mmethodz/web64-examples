@@ -1,0 +1,229 @@
+{
+  "kind": "web64.ide.project",
+  "version": 4,
+  "savedAt": "2026-09-10T08:08:00.294Z",
+  "main": {
+    "fileName": "main.asm",
+    "origin": "$2000",
+    "source": "; CYCLE LAB: an editable frame-budget experiment.\n; IRQ entry/body, display badlines and a deliberately expensive idle loop.\n; Run on PAL. Profiling derives the actual model rather than assuming 312x63.\nstart:\n    sei\n    lda #$7f\n    sta $dc0d\n    sta $dd0d\n    lda $dc0d\n    lda $dd0d\n    lda #$35\n    sta $01\n    lda #<raster_irq\n    sta $fffe\n    lda #>raster_irq\n    sta $ffff\n    lda #$1b\n    sta $d011\n    lda #50\n    sta $d012\n    lda #1\n    sta $d019\n    sta $d01a\n    lda #0\n    sta $d020\n    sta $d021\n    ldx #0\nclear:\n    lda #32\n    sta $0400,x\n    sta $0500,x\n    sta $0600,x\n    sta $0700,x\n    lda #3\n    sta $d800,x\n    sta $d900,x\n    sta $da00,x\n    sta $db00,x\n    inx\n    bne clear\n    cli\n\n; Busy waiting still counts as CPU work. It is not a claim of useful work.\nidle:\n    jmp idle\n\nraster_irq:\n    pha\n    txa\n    pha\n    tya\n    pha\n    inc $d020\n    jsr paint_row\n    dec $d020\n    lda #1\n    sta $d019\n    pla\n    tay\n    pla\n    tax\n    pla\n    rti\n\n; Inspect this named PC range separately from the polling loop.\n; LDA absolute,X can have a read page penalty; STA absolute,X is fixed cost.\npaint_row:\n    ldx #39\npaint_loop:\n    lda message,x\n    sta $0400,x\n    dex\n    bpl paint_loop\n    inc $d021\n    rts\npaint_end:\n\n; Native screen codes: CYCLE LAB / IRQ + BADLINES + CPU\nmessage:\n    .byte 3,25,3,12,5,32,12,1,2,32,47,32,9,18,17,32,43,32,2,1\n    .byte 4,12,9,14,5,19,32,43,32,3,16,21,32,32,32,32,32,32,32,32\n",
+    "selectedEntryLabel": "auto"
+  },
+  "c": {
+    "enabled": false,
+    "dialect": "web64-c-v0.1",
+    "abi": "web64-static-v0",
+    "entry": "main.c",
+    "entrySymbol": "",
+    "predefinedDefines": {},
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "screen",
+    "stdin": "keyboard",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native",
+    "startup": {
+      "processorPort": null,
+      "disableInterrupts": false
+    },
+    "stack": {
+      "size": 512,
+      "address": null
+    },
+    "zeroPage": {
+      "reserved": []
+    },
+    "ir": {
+      "schemaVersion": 1,
+      "enabled": false,
+      "verifyLegacyEquivalence": true,
+      "emitSnapshots": false
+    },
+    "optimize": {
+      "schemaVersion": 2,
+      "mode": "debug",
+      "enabled": false,
+      "passGates": {
+        "generatorPeephole": false,
+        "registerTemporaryStack": false,
+        "constantStrengthReduction": false,
+        "fixedPointSpecialization": false,
+        "booleanBranch": false,
+        "controlFlowLoop": false,
+        "cc65Peephole": false,
+        "zeroPagePromotion": false,
+        "deadCode": false,
+        "conditionalInlining": false,
+        "hardwareAware": false,
+        "runtimeData": false
+      },
+      "frameCriticalFunctions": [],
+      "zeroPageReserved": [],
+      "budgets": {
+        "maxBuildByteGrowth": 0,
+        "maxFunctionByteGrowth": 0,
+        "maxWorstCaseCycles": null
+      },
+      "diagnostics": {
+        "trace": "summary",
+        "missedOptimizationRemarks": false
+      }
+    }
+  },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "compatibilityDefaults": [],
+    "targets": [
+      {
+        "id": "main",
+        "label": "Cycle Lab",
+        "kind": "prg",
+        "rootPath": "main.asm",
+        "inputs": [
+          "main.asm"
+        ],
+        "entrySymbol": "start",
+        "origin": "$2000",
+        "outputName": "cycle-lab.prg",
+        "artifactContribution": "",
+        "defines": {},
+        "compatibilityModules": [],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
+        "c": {
+          "enabled": false
+        },
+        "cartridge": {},
+        "test": {},
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
+        }
+      }
+    ]
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "settings": {
+    "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "fit",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": false,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": true,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": false,
+      "dialect": "web64-c-v0.1",
+      "abi": "web64-static-v0",
+      "entry": "main.c",
+      "entrySymbol": "",
+      "predefinedDefines": {},
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "screen",
+      "stdin": "keyboard",
+      "runtimeProfile": "tiny",
+      "compilerBackend": "web64-native",
+      "startup": {
+        "processorPort": null,
+        "disableInterrupts": false
+      },
+      "stack": {
+        "size": 512,
+        "address": null
+      },
+      "zeroPage": {
+        "reserved": []
+      },
+      "ir": {
+        "schemaVersion": 1,
+        "enabled": false,
+        "verifyLegacyEquivalence": true,
+        "emitSnapshots": false
+      }
+    }
+  },
+  "workspace": {
+    "selectedFile": {
+      "scope": "root",
+      "path": "main.asm"
+    },
+    "editor": {
+      "file": {
+        "scope": "root",
+        "path": "main.asm"
+      },
+      "selectionStart": 0,
+      "selectionEnd": 0,
+      "scrollTop": 0,
+      "scrollLeft": 0
+    },
+    "emulatorCollapsed": false
+  },
+  "template": {
+    "templateId": "structured-asm-starter",
+    "templateVersion": 1,
+    "catalogVersion": 5,
+    "contentHash": "3d1754f2"
+  },
+  "media": {
+    "version": 2,
+    "files": [],
+    "disks": [],
+    "diskSets": []
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "name": "README.md",
+      "kind": "source",
+      "source": "# Cycle Lab\n\nA small, assembly-only experiment for Web64's Cycle / Raster Profiler.\nOpen `cycle-lab.web64proj` in the IDE and choose **Run PRG** (F5).\nThe saved project is authoritative; `main.asm` is an accompanying source export.\nNo external tools or source repositories are needed to build it.\n\n## Measure a frame\n\n1. Open **Profiler** and choose **Restart with profiling runtime**. This clears\n   the emulated machine, not your project or editor. Run the program again.\n2. Capture one detailed frame. PAL has 312 lines × 63 clocks = 19,656 clocks.\n   CPU progress plus measured bus stalls must equal that total.\n3. Select a raster line with the strip or arrow keys. The horizontal strip\n   shows instruction/interrupt intervals and their bus-stall subintervals.\n4. Inspect a hotspot and follow **Source** or **Generated ASM**. The `idle`\n   loop is intentionally the hottest address: waiting is CPU work too!\n5. Use the addresses of `paint_row` and `paint_end` in the Symbols pane as an\n   exclusive-end PC range. Name it `Paint row` to separate useful work from\n   the polling loop. The copy's STA indexed cost is fixed; indexed reads can\n   incur a page-cross penalty depending on the source address.\n\nThe IRQ runs at line 50. Display badlines steal bus cycles later in the frame.\nThe border brackets a short paint routine, not the entire frame; its elapsed\ntime and the whole-frame budget answer different questions.\n\n## Try an edit\n\nChange the copy length or add a bounded task to `paint_row`, save, and run again.\nCapture a new frame. A previous capture belongs to its original build: editing\ndoes not silently attach old timings to new source lines. Live Patch can stop\nan active capture when it changes guest memory; finish editing and capture again.\n\nDetailed captures have fixed memory limits and can end early. An incomplete\ncapture is not a full-frame measurement. Aggregate captures do not provide\nindividual instruction timing or branch-path evidence. Inclusive call costs\noverlap; never add them to the CPU/stall partition.\n\n**Export W64P** streams a local capture through the browser file picker\n(Chrome/Edge). Importing preserves the measured ledger; source navigation also\nrequires the matching build. Exports contain timing and fetched instruction\nbytes, not the source document. No capture is uploaded to a service.\n\nReturn to **Restart with normal runtime** when finished. Normal operation does\nnot load the profiling Wasm. This experiment targets the stock C64 and has no\ndisk, asset, or runtime-library dependencies.\n"
+    },
+    {
+      "path": "TEMPLATE.md",
+      "name": "TEMPLATE.md",
+      "kind": "source",
+      "source": "; CYCLE LAB: an editable frame-budget experiment.\n; IRQ entry/body, display badlines and a deliberately expensive idle loop.\n; Run on PAL. Profiling derives the actual model rather than assuming 312x63.\nstart:\n    sei\n    lda #$7f\n    sta $dc0d\n    sta $dd0d\n    lda $dc0d\n    lda $dd0d\n    lda #$35\n    sta $01\n    lda #<raster_irq\n    sta $fffe\n    lda #>raster_irq\n    sta $ffff\n    lda #$1b\n    sta $d011\n    lda #50\n    sta $d012\n    lda #1\n    sta $d019\n    sta $d01a\n    lda #0\n    sta $d020\n    sta $d021\n    ldx #0\nclear:\n    lda #32\n    sta $0400,x\n    sta $0500,x\n    sta $0600,x\n    sta $0700,x\n    lda #3\n    sta $d800,x\n    sta $d900,x\n    sta $da00,x\n    sta $db00,x\n    inx\n    bne clear\n    cli\n\n; Busy waiting still counts as CPU work. It is not a claim of useful work.\nidle:\n    jmp idle\n\nraster_irq:\n    pha\n    txa\n    pha\n    tya\n    pha\n    inc $d020\n    jsr paint_row\n    dec $d020\n    lda #1\n    sta $d019\n    pla\n    tay\n    pla\n    tax\n    pla\n    rti\n\n; Inspect this named PC range separately from the polling loop.\n; LDA absolute,X can have a read page penalty; STA absolute,X is fixed cost.\npaint_row:\n    ldx #39\npaint_loop:\n    lda message,x\n    sta $0400,x\n    dex\n    bpl paint_loop\n    inc $d021\n    rts\npaint_end:\n\n; Native screen codes: CYCLE LAB / IRQ + BADLINES + CPU\nmessage:\n    .byte 3,25,3,12,5,32,12,1,2,32,47,32,9,18,17,32,43,32,2,1\n    .byte 4,12,9,14,5,19,32,43,32,3,16,21,32,32,32,32,32,32,32,32\n"
+    }
+  ]
+}

@@ -8,6 +8,8 @@ Open a .web64proj in the Web64 IDE to inspect, build, and run it.
 
 ## Cycle-timed demo
 
+- `cycle-lab/cycle-lab.web64proj` is a small assembly-only companion for Web64's Cycle / Raster Profiler. Open and run the native project, explicitly select the profiling runtime, and compare a raster IRQ's paint routine with a busy waiting loop. The README covers exact frame accounting, source navigation and bounded capture files. It requires an IDE build with the Profiler workspace; no external tools are needed.
+
 - `event-horizon/event-horizon.web64proj` is an assembly-only PAL C64 demo: a dithered inverse-polar tunnel, live double-buffered wireframe sprites, orbiting white stars, original three-voice SID music and an exact-cycle border prism. The tunnel and stars update at 50 Hz; the 6510 draws complete wireframe poses at 25 Hz. Its measured work window reaches 19,421 PAL cycles, with zero missed deadlines across 3,330 verified updates. Open the native project and press F5, or run `event-horizon/dist/event-horizon.prg`. All code and visual tables remain editable in the IDE; no external build machinery is required.
 
 ## Productivity application
