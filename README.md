@@ -6,6 +6,10 @@ The suite covers assembly-only projects, Web64 C projects, mixed C/ASM projects,
 
 Open a .web64proj in the Web64 IDE to inspect, build, and run it.
 
+## Audio example
+
+- `sample-playback/sample-playback.web64proj` plays a spoken “Welcome to Web64” sample through cycle-counted SID volume updates and displays a centered title afterward. Enable emulator audio before pressing Run; see its README for the playback format.
+
 ## Cycle-timed demo
 
 - `cycle-lab/cycle-lab.web64proj` is a small assembly-only companion for Web64's Cycle / Raster Profiler. Open and run the native project, explicitly select the profiling runtime, and compare a raster IRQ's paint routine with a busy waiting loop. The README covers exact frame accounting, source navigation and bounded capture files. It requires an IDE build with the Profiler workspace; no external tools are needed.
