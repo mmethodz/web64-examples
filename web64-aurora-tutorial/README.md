@@ -4,7 +4,7 @@ A C64 character plasma, custom font, dither graphics and character scroller. The
 
 ## Watch and run
 
-- `Web64-Aurora-Tutorial.mp4`: 14-minute English tutorial, 1080p/30 fps, captions in the bottom margin.
+- [Watch the Aurora tutorial on YouTube](https://www.youtube.com/watch?v=cQtb9groSE8): 14-minute English tutorial, 1080p/30 fps, captions in the bottom margin.
 - `Plasma-Tutorial.web64proj`: complete native project with the edited “MAKE SOMETHING NEW!” message.
 - `aurora.prg`: executable compiled from the saved native project.
 - `teaching-files/`: original charset, C source and assembly include.

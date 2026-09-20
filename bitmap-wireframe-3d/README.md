@@ -11,3 +11,9 @@ This standalone Web64 project renders a perspective wireframe cube with the opti
 - The project owns its bitmap, palette, transformed coordinates, and rotation indices; the runtime adds no scene graph or hidden object state.
 
 Open `bitmap-wireframe-3d.web64proj` in Web64 IDE and run it. Keep keyboard focus on the emulator while using WASD.
+
+## Build and edit
+
+The saved project is authoritative. In **Build Targets**, use **Interactive 3D Wireframe**, with `main.c` as the single translation unit, origin `$4000`, and output `bitmap-wireframe-3d.prg`. The `rotation-matrices.h` header is included by `main.c`; do not add it as a separate translation unit. The project uses the native Web64 Bitmap runtime, not the c64lib compatibility layer.
+
+Edit the virtual source/header in the IDE and use **Build Target** or **Run**. Saving is not required to build; use **Save Web64 project** to retain your edits. No external compiler, Node tooling or Web64 source checkout is required.

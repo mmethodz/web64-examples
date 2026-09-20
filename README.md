@@ -1,10 +1,25 @@
 # Web64 Examples
 
-A standalone suite of Web64 IDE example projects. Each folder contains one self-contained .web64proj file and a README.
+A standalone suite of Web64 IDE example projects. The `.web64proj` files contain their virtual sources, assets and build settings; accompanying files are references and release outputs. Some collections contain several projects.
 
 The suite covers assembly-only projects, Web64 C projects, mixed C/ASM projects, asset/include workflows, input, raster timing, sprites, screen memory, compiler conformance, and diagnostic scenarios.
 
-Open a .web64proj in the Web64 IDE to inspect, build, and run it.
+Open a `.web64proj` in the [Web64 IDE](https://web64.nofs.ai/ide/) to inspect, build, and run it. No local compiler, assembler, Node installation or Web64 implementation repository is required.
+
+## Start, change, run
+
+1. Download a project's `.web64proj` and use **Open Web64 project**. The IDE's **New from template... → Examples** collection also offers curated examples from this repository.
+2. For an ordinary PRG example, press **F5** or **Start PRG**. Click the emulator when keyboard/game input is needed; each example's README describes its controls.
+3. Change the virtual source or a native asset in its editor, then run again. Builds use the current virtual filesystem, including unsaved edits.
+4. Use **Save Web64 project** to retain those changes. Editing an adjacent loose source export does not update the project automatically.
+
+For multi-target projects, select the intended target in **Build Targets** and inspect **Build Output**. For disk applications, use **Disk/Media → Build Dependencies → Run Disk**; **Run Disk** builds missing or stale dependencies. Use the configured disk layout rather than manually combining PRGs. Supplied release binaries are convenient snapshots, not the editable project authority.
+
+## Native assets and compatibility examples
+
+Native character, sprite, block, map, trajectory and tracker assets belong in their corresponding IDE editors. Generated includes, asset headers and binary planes are derived outputs: edit their owning asset, then consume the generated bindings from C or assembly. Map structure, material, video-matrix and Color RAM planes describe the displayed world and its behavior; they are not interchangeable arbitrary level-data buffers.
+
+The current IDE supplies the SDK. A saved project's ABI, memory placement, PAL timing and interrupt ownership remain part of that example's design; do not change them just to match a newer default. The [c64lib collection](c64lib/README.md) intentionally teaches compatibility interfaces. For new native scrolling worlds, start with the [World examples](WORLD_RUNTIME_EXAMPLES.md).
 
 ## Audio example
 
@@ -38,7 +53,7 @@ Open a .web64proj in the Web64 IDE to inspect, build, and run it.
 
 ## Web64 v2 workstream examples
 
-- `actor-batch-arena/actor-batch-arena.web64proj` is the standalone open actor-batch demonstration: 32 caller-owned SoA actors, 21 visible actors, sine-driven Q12.4 movement, independent base/overlay animation, public culling and actor-pair buffers, descriptor-backed atomic sprite pairs, repeated six-slot PAL mux reuse, two reserved direct HUD slots, and a deterministic priority drop. Its application-owned IRQ wrapper documents the acknowledgement and chaining boundary; `WEB64_EXAMPLE_VERIFY` exercises 120 frames without hiding any phase buffer or asset placement.
+- `actor-batch-arena/actor-batch-arena.web64proj` is the standalone open actor-batch demonstration: 32 caller-owned SoA actors, an 18-actor visible cohort, sine-driven Q12.4 movement, independent base/overlay animation, public culling and actor-pair buffers, descriptor-backed atomic sprite pairs, repeated six-slot PAL mux reuse, two reserved direct HUD slots, and a deterministic priority drop. Its application-owned IRQ wrapper documents the acknowledgement and chaining boundary; `WEB64_EXAMPLE_VERIFY` exercises 120 frames without hiding any phase buffer or asset placement.
 - `trajectory-patterns/trajectory-patterns.web64proj` demonstrates eight independent trajectory states sharing one immutable compact waypoint pattern authored as `assets/trajectories/shared-loop.w64traj`. The editable asset deterministically generates the raw `.traj` consumed through `assets/generated.h`; its anchor and editor context never enter the C64 program. The example covers all four X/Y mirroring combinations, looping, ping-pong, phase staggering, exact prime-duration interpolation, direct C-owned VIC-II rendering, and native assembly inspection through `web64/trajectory.inc` while linking only the trajectory runtime module.
 - `trajectory-patterns-asm/trajectory-patterns-asm.web64proj` is the cycle-critical native companion. Its independent `square-loop.w64traj` generates a `.traj`/`.inc` pair, and the assembly consumes only those placement-neutral outputs. C enters assembly once; one `_web64_trajectory_step_batch_fast` call advances eight caller-owned lockstep states, and open assembly projects the changed Q12.4 axis directly into all eight VIC-II sprites. The complete measured hot interval stays at or below 3,783 cycles / 19.246% PAL under both C ABIs, including event writes and VIC projection, while exact-linking only the scalar and batch trajectory modules.
 - `trajectory-actors/trajectory-actors.web64proj` is the comprehensive C composition example: eight actors each use a distinct editable `.w64traj`, while all eight share a four-frame animated Web64 sprite asset. Every trajectory carries an authoring-only animation preview reference; C explicitly owns runtime placement, animation binding, sprite-RAM installation, stepping, and rendering.

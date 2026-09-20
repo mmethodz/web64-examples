@@ -1,6 +1,6 @@
 # Trike Mania frame budget
 
-The generator compiles the release, verification, and visual-evidence targets before publishing this project. The dedicated verification route profiles production-equivalent race frames after initializing all four racers.
+These are retained measurements from the original acceptance pass, not new measurements of every subsequent compiler release. The saved native project contains the release, verification and visual-evidence build targets. The dedicated verification route profiles production-equivalent race frames after initializing all four racers.
 
 Budget contract:
 
@@ -22,4 +22,4 @@ Budget contract:
 
 Acceptance also completes one natural, ordered-checkpoint circuit with all four active racers for every teddy/track combination. A timeout fallback is present for the playable game but is forbidden by the verification target.
 
-Reproduce with `npm run test:trike-mania` and `npm run test:trike-mania-visual` in the Web64 IDE repository.
+Open `trike-mania.web64proj` in Web64. In **Build Targets**, select the playable release, deterministic verification or visual-evidence target and build it. Inspect **Build Output** for diagnostics. For interactive cycle investigation, use the IDE's **Profiler** with its profiling runtime explicitly enabled. Exact automated acceptance assertions belong to the original maintainer verification; ordinary users do not need that tooling or access to Web64's implementation repository. A successful build alone is not a new timing measurement.

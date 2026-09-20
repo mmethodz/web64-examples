@@ -1,7 +1,7 @@
 {
   "kind": "web64.ide.project",
   "version": 4,
-  "savedAt": "2026-08-29T09:22:22.323Z",
+  "savedAt": "2026-09-20T16:31:21.604Z",
   "main": {
     "fileName": "main.c",
     "origin": "$4000",
@@ -23,6 +23,10 @@
     "stdin": "none",
     "runtimeProfile": "tiny",
     "compilerBackend": "web64-native",
+    "startup": {
+      "processorPort": null,
+      "disableInterrupts": false
+    },
     "stack": {
       "size": 512,
       "address": null
@@ -30,34 +34,74 @@
     "zeroPage": {
       "reserved": []
     },
+    "ir": {
+      "schemaVersion": 1,
+      "enabled": false,
+      "verifyLegacyEquivalence": true,
+      "emitSnapshots": false
+    },
     "optimize": {
-      "mode": "speed"
+      "schemaVersion": 2,
+      "mode": "speed",
+      "enabled": true,
+      "passGates": {
+        "generatorPeephole": true,
+        "registerTemporaryStack": true,
+        "constantStrengthReduction": true,
+        "fixedPointSpecialization": true,
+        "booleanBranch": true,
+        "controlFlowLoop": true,
+        "cc65Peephole": true,
+        "zeroPagePromotion": true,
+        "deadCode": true,
+        "conditionalInlining": true,
+        "hardwareAware": true,
+        "runtimeData": true
+      },
+      "frameCriticalFunctions": [],
+      "zeroPageReserved": [],
+      "budgets": {
+        "maxBuildByteGrowth": 0,
+        "maxFunctionByteGrowth": 0,
+        "maxWorstCaseCycles": null
+      },
+      "diagnostics": {
+        "trace": "summary",
+        "missedOptimizationRemarks": false
+      }
     }
   },
   "build": {
     "version": 1,
-    "activeTargetId": "main",
+    "activeTargetId": "Target-2",
     "compatibilityDefaults": [],
     "targets": [
       {
-        "id": "main",
+        "id": "Target-2",
         "label": "Interactive 3D Wireframe",
         "kind": "prg",
         "rootPath": "main.c",
         "inputs": [
-          "main.c",
-          "rotation-matrices.h"
+          "main.c"
         ],
         "entrySymbol": "",
         "origin": "$4000",
         "outputName": "bitmap-wireframe-3d.prg",
+        "artifactContribution": "",
         "defines": {},
         "compatibilityModules": [],
-        "c": {
-          "enabled": true
-        },
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
+        "c": {},
         "cartridge": {},
-        "test": {}
+        "test": {},
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
+        }
       }
     ]
   },
@@ -76,6 +120,33 @@
   },
   "settings": {
     "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "fit",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": true,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": false,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
     "compiler": {
       "enabled": true,
       "dialect": "web64-c-v0.1",
@@ -91,6 +162,10 @@
       "stdin": "none",
       "runtimeProfile": "tiny",
       "compilerBackend": "web64-native",
+      "startup": {
+        "processorPort": null,
+        "disableInterrupts": false
+      },
       "stack": {
         "size": 512,
         "address": null
@@ -98,16 +173,12 @@
       "zeroPage": {
         "reserved": []
       },
-      "optimize": {
-        "mode": "speed"
+      "ir": {
+        "schemaVersion": 1,
+        "enabled": false,
+        "verifyLegacyEquivalence": true,
+        "emitSnapshots": false
       }
-    },
-    "optimizer": {
-      "profile": "default",
-      "peephole": true,
-      "simplification": true,
-      "runtimeDependencySelection": true,
-      "unsupportedNativeFlags": "diagnostic"
     }
   },
   "workspace": {
@@ -115,7 +186,16 @@
       "scope": "root",
       "path": "main.c"
     },
-    "editor": null,
+    "editor": {
+      "file": {
+        "scope": "root",
+        "path": "main.c"
+      },
+      "selectionStart": 0,
+      "selectionEnd": 0,
+      "scrollTop": 0,
+      "scrollLeft": 0
+    },
     "emulatorCollapsed": false
   },
   "media": {
@@ -125,12 +205,6 @@
     "diskSets": []
   },
   "files": [
-    {
-      "path": "main.c",
-      "name": "main.c",
-      "kind": "source",
-      "source": "#include <stdint.h>\n#include <peekpoke.h>\n#include <web64/bitmap.h>\n#include \"rotation-matrices.h\"\n\n#define BITMAP_MEMORY ((uint8_t *)0x2000)\n#define SCREEN_MEMORY ((uint8_t *)0x0400)\n#define CURRENT_KEY 0x00c5\n#define VIC_RASTER 0xd012\n#define KEY_NONE 64\n#define KEY_W 9\n#define KEY_A 10\n#define KEY_S 13\n#define KEY_D 18\n#define VERTEX_COUNT 8\n#define EDGE_COUNT 12\n#define ANGLE_MASK (ROTATION_X_STEPS - 1)\n\nstatic const int8_t cube_vertices[VERTEX_COUNT][3] = {\n    { -24, -24, -24 }, { 24, -24, -24 },\n    { 24, 24, -24 }, { -24, 24, -24 },\n    { -24, -24, 24 }, { 24, -24, 24 },\n    { 24, 24, 24 }, { -24, 24, 24 }\n};\n\nstatic const uint8_t cube_edges[EDGE_COUNT][2] = {\n    { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 0 },\n    { 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 4 },\n    { 0, 4 }, { 1, 5 }, { 2, 6 }, { 3, 7 }\n};\n\nWeb64Bitmap bitmap;\nWeb64BitmapPalette palette;\nint16_t rotated_x[VERTEX_COUNT];\nint16_t rotated_y[VERTEX_COUNT];\nint16_t rotated_z[VERTEX_COUNT];\nuint16_t screen_x[VERTEX_COUNT];\nuint8_t screen_y[VERTEX_COUNT];\nuint8_t angle_x;\nuint8_t angle_y;\nuint8_t verification_status;\nuint8_t verification_complete;\nuint8_t verification_frames;\nuint16_t verification_initial_x;\nuint8_t verification_initial_y;\nuint16_t verification_final_x;\nuint8_t verification_final_y;\n\nint16_t matrix_pair(int16_t a, int16_t u, int16_t b, int16_t v) {\n    int16_t result;\n    result = a * u;\n    result = result + b * v;\n    return result >> 8;\n}\n\nvoid project_object(void) {\n    uint8_t vertex;\n    int16_t x;\n    int16_t y;\n    int16_t z;\n    int16_t pitch_y;\n    int16_t pitch_z;\n    int16_t view_x;\n    int16_t view_z;\n    int16_t depth_scale;\n    int16_t projected;\n\n    for (vertex = 0; vertex < VERTEX_COUNT; vertex++) {\n        x = cube_vertices[vertex][0];\n        y = cube_vertices[vertex][1];\n        z = cube_vertices[vertex][2];\n\n        pitch_y = matrix_pair(rotation_x[angle_x][1][1], y, rotation_x[angle_x][1][2], z);\n        pitch_z = matrix_pair(rotation_x[angle_x][2][1], y, rotation_x[angle_x][2][2], z);\n        view_x = matrix_pair(rotation_y[angle_y][0][0], x, rotation_y[angle_y][0][2], pitch_z);\n        view_z = matrix_pair(rotation_y[angle_y][2][0], x, rotation_y[angle_y][2][2], pitch_z);\n\n        rotated_x[vertex] = view_x;\n        rotated_y[vertex] = pitch_y;\n        rotated_z[vertex] = view_z;\n\n        depth_scale = 96 + view_z;\n        projected = view_x * depth_scale;\n        screen_x[vertex] = 160 + (projected >> 6);\n        projected = pitch_y * depth_scale;\n        screen_y[vertex] = 100 - (projected >> 6);\n    }\n}\n\nvoid draw_object(void) {\n    uint8_t edge;\n    uint8_t first;\n    uint8_t second;\n    for (edge = 0; edge < EDGE_COUNT; edge++) {\n        first = cube_edges[edge][0];\n        second = cube_edges[edge][1];\n        web64_bitmap_line_fast(\n            &bitmap,\n            screen_x[first], screen_y[first],\n            screen_x[second], screen_y[second],\n            1, WEB64_BITMAP_OP_XOR\n        );\n    }\n}\n\nvoid wait_frame(void) {\n#ifdef WEB64_EXAMPLE_VERIFY\n    return;\n#else\n    while (PEEK(VIC_RASTER) != 250) { }\n    while (PEEK(VIC_RASTER) == 250) { }\n#endif\n}\n\nuint8_t read_rotation_key(void) {\n#ifdef WEB64_EXAMPLE_VERIFY\n    if (verification_frames < 4) return KEY_D;\n    if (verification_frames < 8) return KEY_S;\n    if (verification_frames < 10) return KEY_A;\n    if (verification_frames == 10) return KEY_W;\n    return KEY_NONE;\n#else\n    return PEEK(CURRENT_KEY);\n#endif\n}\n\nvoid main(void) {\n    uint8_t key;\n    uint8_t next_x;\n    uint8_t next_y;\n\n    palette.color0 = 0;\n    palette.color1 = 3;\n    palette.color2 = 0;\n    palette.color3 = 0;\n    verification_status = web64_bitmap_init(\n        &bitmap, BITMAP_MEMORY, SCREEN_MEMORY, WEB64_BITMAP_MODE_HIRES, &palette\n    );\n    if (verification_status != WEB64_BITMAP_OK) return;\n\n    angle_x = 0;\n    angle_y = 0;\n    verification_frames = 0;\n    project_object();\n    verification_initial_x = screen_x[0];\n    verification_initial_y = screen_y[0];\n    draw_object();\n\n    while (1) {\n        wait_frame();\n        key = read_rotation_key();\n        next_x = angle_x;\n        next_y = angle_y;\n        if (key == KEY_W) next_x = (angle_x - 1) & ANGLE_MASK;\n        if (key == KEY_S) next_x = (angle_x + 1) & ANGLE_MASK;\n        if (key == KEY_A) next_y = (angle_y - 1) & ANGLE_MASK;\n        if (key == KEY_D) next_y = (angle_y + 1) & ANGLE_MASK;\n\n        if (next_x != angle_x || next_y != angle_y) {\n            draw_object();\n            angle_x = next_x;\n            angle_y = next_y;\n            project_object();\n            draw_object();\n        }\n\n#ifdef WEB64_EXAMPLE_VERIFY\n        verification_frames++;\n        if (verification_frames == 12) {\n            verification_final_x = screen_x[0];\n            verification_final_y = screen_y[0];\n            verification_complete = 1;\n            return;\n        }\n#endif\n    }\n}\n"
-    },
     {
       "path": "rotation-matrices.h",
       "name": "rotation-matrices.h",

@@ -35,7 +35,7 @@ The project uses Web64-native c64lib VIC-II names for hardware-facing setup. A b
 
 ## CPU and SID budget
 
-PAL provides 19,656 CPU cycles per frame. Verification reserves 2,200 cycles for an ordinary SID player call and 3,200 cycles on the worst frame. The measured worst game frame is 8,607 cycles; with the worst SID reserve it uses 11,807 cycles and leaves 7,849 cycles free. See `PERFORMANCE.md` for reproducible evidence.
+PAL provides 19,656 CPU cycles per frame. Original acceptance verification reserved 2,200 cycles for an ordinary SID player call and 3,200 cycles on the worst frame. That pass measured a worst game frame of 8,607 cycles; with the worst SID reserve it used 11,807 cycles and left 7,849 cycles free. See `PERFORMANCE.md` for measurement context and the native IDE inspection workflow. These retained numbers are not a fresh timing claim for every compiler release.
 
 Every planned music or sound trigger is marked with a `TODO MUSIC` or `TODO SFX` comment in `main.c`. The per-frame placeholder is `sid_player_todo()`.
 
@@ -45,4 +45,6 @@ Every planned music or sound trigger is marked with a `TODO MUSIC` or `TODO SFX`
 - **Trike Mania Verification**: deterministic twelve-case exercise target covering every teddy on every track, boost/jump/oil behavior, four natural checkpoint-validated finishes per race, results, and cycle markers
 - **Visual Evidence** targets: deterministic title, selection, and three-track screenshots used by the repository acceptance route
 
-The memory plan keeps the software C stack at `$0800-$09ff`, reserves `$1000-$1fff` for the future SID, stores the charset at `$2000-$23ff`, stores 33 sprite frames at `$2400-$2c3f`, and places code at `$2d00+`. Startup selects processor-port value `$35`, exposing RAM beneath BASIC/KERNAL ROM while keeping C64 I/O visible. The generator rejects any target that would reach the C64 I/O window at `$d000`.
+The memory plan keeps the software C stack at `$0800-$09ff`, reserves `$1000-$1fff` for the future SID, stores the charset at `$2000-$23ff`, stores 33 sprite frames at `$2400-$2c3f`, and places code at `$2d00+`. Startup selects processor-port value `$35`, exposing RAM beneath BASIC/KERNAL ROM while keeping C64 I/O visible. Preserve this layout when editing and inspect target addresses in Build Output; the program must remain below the I/O window at `$d000`.
+
+Open `trike-mania.web64proj` in the public Web64 IDE and select the playable **Trike Mania** target for normal use. Use **F5 / Start PRG** after editing virtual sources or native assets. **Save Web64 project** preserves those changes; adjacent loose exports and supplied binaries are not a second source authority. No generator or implementation-repository checkout is needed.
