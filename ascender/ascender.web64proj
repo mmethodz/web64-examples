@@ -1,7 +1,7 @@
 {
   "kind": "web64.ide.project",
   "version": 4,
-  "savedAt": "2026-09-04T15:56:07.308Z",
+  "savedAt": "2026-09-21T14:58:15.534Z",
   "main": {
     "fileName": "main.c",
     "origin": "$4000",
@@ -101,7 +101,13 @@
           "abi": "web64-stack-v1"
         },
         "cartridge": {},
-        "test": {}
+        "test": {},
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
+        }
       },
       {
         "id": "verify",
@@ -131,6 +137,12 @@
         "test": {
           "kind": "deterministic",
           "frames": 640
+        },
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
         }
       }
     ]

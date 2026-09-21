@@ -1,18 +1,80 @@
 {
   "kind": "web64.ide.project",
   "version": 4,
+  "savedAt": "2026-09-21T14:58:15.663Z",
   "main": {
     "fileName": "main.asm",
     "origin": "$c000",
-    "selectedEntryLabel": "start",
-    "source": ".include \"web64/c64lib/text.inc\"\n\nstart:\n    lda #0\n    sta $d020\n    sta $d021\n    lda #<tile_config\n    sta __web64_c64lib_c64lib_tile2_init_config\n    lda #>tile_config\n    sta __web64_c64lib_c64lib_tile2_init_config+1\n    jsr web64_c64lib_tile2_init\nmain_loop:\nwait_not_f8:\n    lda $d012\n    cmp #$f8\n    beq wait_not_f8\nwait_f8:\n    lda $d012\n    cmp #$f8\n    bne wait_f8\n    inc scroll_delay\n    lda scroll_delay\n    and #7\n    bne main_loop\n    lda scroll_direction\n    bne scroll_back\nscroll_forward:\n    jsr web64_c64lib_tile2_scroll_left\n    inc scroll_position\n    lda scroll_position\n    cmp #8\n    bcc main_loop\n    lda #1\n    sta scroll_direction\n    jmp main_loop\nscroll_back:\n    jsr web64_c64lib_tile2_scroll_right\n    dec scroll_position\n    bne main_loop\n    lda #0\n    sta scroll_direction\n    jmp main_loop\n\nscroll_delay: .byte 0\nscroll_position: .byte 0\nscroll_direction: .byte 0\n\ntile_config:\n    web64_c64lib_tile2_config tile_map, tile_planes, tile_colors, tile_materials, 0, 0, $0400, $d800, row_offsets_lo, row_offsets_hi, 24, 12, 40, 25, 0, 24, 0, 0, 1\n\ntile_map:\n    .byte 0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3\n    .byte 1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0\n    .byte 2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1\n    .byte 3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2\n    .byte 0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3\n    .byte 1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0\n    .byte 2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1\n    .byte 3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2\n    .byte 0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3\n    .byte 1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0\n    .byte 2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1\n    .byte 3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2\ntile_planes:\n    .byte 1,5,9,13\n    .fill 252,1\n    .byte 2,6,10,14\n    .fill 252,2\n    .byte 3,7,11,15\n    .fill 252,3\n    .byte 4,8,12,16\n    .fill 252,4\ntile_colors:\n    .byte 6,14,3,1\ntile_materials:\n    .byte 0,1,2,3\nrow_offsets_lo:\n    .fill 12,0\nrow_offsets_hi:\n    .fill 12,0\n"
+    "source": ".include \"web64/c64lib/text.inc\"\n\nstart:\n    lda #0\n    sta $d020\n    sta $d021\n    lda #<tile_config\n    sta __web64_c64lib_c64lib_tile2_init_config\n    lda #>tile_config\n    sta __web64_c64lib_c64lib_tile2_init_config+1\n    jsr web64_c64lib_tile2_init\nmain_loop:\nwait_not_f8:\n    lda $d012\n    cmp #$f8\n    beq wait_not_f8\nwait_f8:\n    lda $d012\n    cmp #$f8\n    bne wait_f8\n    inc scroll_delay\n    lda scroll_delay\n    and #7\n    bne main_loop\n    lda scroll_direction\n    bne scroll_back\nscroll_forward:\n    jsr web64_c64lib_tile2_scroll_left\n    inc scroll_position\n    lda scroll_position\n    cmp #8\n    bcc main_loop\n    lda #1\n    sta scroll_direction\n    jmp main_loop\nscroll_back:\n    jsr web64_c64lib_tile2_scroll_right\n    dec scroll_position\n    bne main_loop\n    lda #0\n    sta scroll_direction\n    jmp main_loop\n\nscroll_delay: .byte 0\nscroll_position: .byte 0\nscroll_direction: .byte 0\n\ntile_config:\n    web64_c64lib_tile2_config tile_map, tile_planes, tile_colors, tile_materials, 0, 0, $0400, $d800, row_offsets_lo, row_offsets_hi, 24, 12, 40, 25, 0, 24, 0, 0, 1\n\ntile_map:\n    .byte 0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3\n    .byte 1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0\n    .byte 2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1\n    .byte 3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2\n    .byte 0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3\n    .byte 1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0\n    .byte 2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1\n    .byte 3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2\n    .byte 0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3\n    .byte 1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0\n    .byte 2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1\n    .byte 3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,0,1,2\ntile_planes:\n    .byte 1,5,9,13\n    .fill 252,1\n    .byte 2,6,10,14\n    .fill 252,2\n    .byte 3,7,11,15\n    .fill 252,3\n    .byte 4,8,12,16\n    .fill 252,4\ntile_colors:\n    .byte 6,14,3,1\ntile_materials:\n    .byte 0,1,2,3\nrow_offsets_lo:\n    .fill 12,0\nrow_offsets_hi:\n    .fill 12,0\n",
+    "selectedEntryLabel": "start"
   },
   "c": {
-    "enabled": false
+    "enabled": false,
+    "dialect": "web64-c-v0.1",
+    "abi": "web64-static-v0",
+    "entry": "main.c",
+    "entrySymbol": "",
+    "predefinedDefines": {},
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "screen",
+    "stdin": "keyboard",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native",
+    "startup": {
+      "processorPort": null,
+      "disableInterrupts": false
+    },
+    "stack": {
+      "size": 512,
+      "address": null
+    },
+    "zeroPage": {
+      "reserved": []
+    },
+    "ir": {
+      "schemaVersion": 1,
+      "enabled": false,
+      "verifyLegacyEquivalence": true,
+      "emitSnapshots": false
+    },
+    "optimize": {
+      "schemaVersion": 2,
+      "mode": "debug",
+      "enabled": false,
+      "passGates": {
+        "generatorPeephole": false,
+        "registerTemporaryStack": false,
+        "constantStrengthReduction": false,
+        "fixedPointSpecialization": false,
+        "booleanBranch": false,
+        "controlFlowLoop": false,
+        "cc65Peephole": false,
+        "zeroPagePromotion": false,
+        "deadCode": false,
+        "conditionalInlining": false,
+        "hardwareAware": false,
+        "runtimeData": false
+      },
+      "frameCriticalFunctions": [],
+      "zeroPageReserved": [],
+      "budgets": {
+        "maxBuildByteGrowth": 0,
+        "maxFunctionByteGrowth": 0,
+        "maxWorstCaseCycles": null
+      },
+      "diagnostics": {
+        "trace": "summary",
+        "missedOptimizationRemarks": false
+      }
+    }
   },
   "build": {
     "version": 1,
     "activeTargetId": "main",
+    "compatibilityDefaults": [],
     "targets": [
       {
         "id": "main",
@@ -25,15 +87,116 @@
         "entrySymbol": "start",
         "origin": "$c000",
         "outputName": "c64lib-tile2-scroll.prg",
+        "artifactContribution": "",
         "defines": {},
         "compatibilityModules": [
+          "c64lib.common",
+          "c64lib.chipset",
           "c64lib.text"
         ],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
         "c": {
           "enabled": false
+        },
+        "cartridge": {},
+        "test": {},
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
         }
       }
     ]
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "settings": {
+    "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "fit",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": false,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": true,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": false,
+      "dialect": "web64-c-v0.1",
+      "abi": "web64-static-v0",
+      "entry": "main.c",
+      "entrySymbol": "",
+      "predefinedDefines": {},
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "screen",
+      "stdin": "keyboard",
+      "runtimeProfile": "tiny",
+      "compilerBackend": "web64-native",
+      "startup": {
+        "processorPort": null,
+        "disableInterrupts": false
+      },
+      "stack": {
+        "size": 512,
+        "address": null
+      },
+      "zeroPage": {
+        "reserved": []
+      },
+      "ir": {
+        "schemaVersion": 1,
+        "enabled": false,
+        "verifyLegacyEquivalence": true,
+        "emitSnapshots": false
+      }
+    }
+  },
+  "workspace": {
+    "selectedFile": null,
+    "editor": null,
+    "emulatorCollapsed": false
+  },
+  "media": {
+    "version": 2,
+    "files": [],
+    "disks": [],
+    "diskSets": []
   },
   "files": []
 }

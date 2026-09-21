@@ -1,29 +1,202 @@
 {
   "kind": "web64.ide.project",
   "version": 4,
+  "savedAt": "2026-09-21T14:58:15.652Z",
   "main": {
     "fileName": "main.c",
     "origin": "$c000",
-    "selectedEntryLabel": "main",
-    "source": "#include <stdint.h>\n#include <c64.h>\n#include <c64lib/common.h>\n#include <c64lib/chipset.h>\n\nvoid main(void) {\n    c64lib_fill_screen((void*)0x0400, 32);\n    c64lib_set_vic_bank(C64LIB_BANK_0);\n    VIC->border_color = COLOR_BLUE;\n    VIC->background_color0 = COLOR_BLACK;\n    while (1) {\n    }\n}\n"
+    "source": "#include <stdint.h>\n#include <c64.h>\n#include <c64lib/common.h>\n#include <c64lib/chipset.h>\n\nvoid main(void) {\n    c64lib_fill_screen((void*)0x0400, 32);\n    c64lib_set_vic_bank(C64LIB_BANK_0);\n    VIC->border_color = COLOR_BLUE;\n    VIC->background_color0 = COLOR_BLACK;\n    while (1) {\n    }\n}\n",
+    "selectedEntryLabel": "main"
   },
-  "c": { "enabled": true, "entry": "main.c", "abi": "web64-stack-v1" },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "abi": "web64-stack-v1",
+    "entry": "main.c",
+    "entrySymbol": "",
+    "predefinedDefines": {},
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "screen",
+    "stdin": "keyboard",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native",
+    "startup": {
+      "processorPort": null,
+      "disableInterrupts": false
+    },
+    "stack": {
+      "size": 512,
+      "address": null
+    },
+    "zeroPage": {
+      "reserved": []
+    },
+    "ir": {
+      "schemaVersion": 1,
+      "enabled": false,
+      "verifyLegacyEquivalence": true,
+      "emitSnapshots": false
+    },
+    "optimize": {
+      "schemaVersion": 2,
+      "mode": "debug",
+      "enabled": false,
+      "passGates": {
+        "generatorPeephole": false,
+        "registerTemporaryStack": false,
+        "constantStrengthReduction": false,
+        "fixedPointSpecialization": false,
+        "booleanBranch": false,
+        "controlFlowLoop": false,
+        "cc65Peephole": false,
+        "zeroPagePromotion": false,
+        "deadCode": false,
+        "conditionalInlining": false,
+        "hardwareAware": false,
+        "runtimeData": false
+      },
+      "frameCriticalFunctions": [],
+      "zeroPageReserved": [],
+      "budgets": {
+        "maxBuildByteGrowth": 0,
+        "maxFunctionByteGrowth": 0,
+        "maxWorstCaseCycles": null
+      },
+      "diagnostics": {
+        "trace": "summary",
+        "missedOptimizationRemarks": false
+      }
+    }
+  },
   "build": {
     "version": 1,
     "activeTargetId": "main",
-    "targets": [{
-      "id": "main",
-      "label": "c64lib Common C",
-      "kind": "prg",
-      "rootPath": "main.c",
-      "inputs": ["main.c"],
-      "entrySymbol": "main",
-      "origin": "$c000",
-      "outputName": "c64lib-common-c.prg",
-      "defines": {},
-      "compatibilityModules": ["c64lib.common", "c64lib.chipset"],
-      "c": { "enabled": true, "abi": "web64-stack-v1" }
-    }]
+    "compatibilityDefaults": [],
+    "targets": [
+      {
+        "id": "main",
+        "label": "c64lib Common C",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c"
+        ],
+        "entrySymbol": "main",
+        "origin": "$c000",
+        "outputName": "c64lib-common-c.prg",
+        "artifactContribution": "",
+        "defines": {},
+        "compatibilityModules": [
+          "c64lib.common",
+          "c64lib.chipset"
+        ],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
+        "c": {
+          "enabled": true,
+          "abi": "web64-stack-v1"
+        },
+        "cartridge": {},
+        "test": {},
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
+        }
+      }
+    ]
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "settings": {
+    "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "fit",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": false,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": true,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": true,
+      "dialect": "web64-c-v0.1",
+      "abi": "web64-stack-v1",
+      "entry": "main.c",
+      "entrySymbol": "",
+      "predefinedDefines": {},
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "screen",
+      "stdin": "keyboard",
+      "runtimeProfile": "tiny",
+      "compilerBackend": "web64-native",
+      "startup": {
+        "processorPort": null,
+        "disableInterrupts": false
+      },
+      "stack": {
+        "size": 512,
+        "address": null
+      },
+      "zeroPage": {
+        "reserved": []
+      },
+      "ir": {
+        "schemaVersion": 1,
+        "enabled": false,
+        "verifyLegacyEquivalence": true,
+        "emitSnapshots": false
+      }
+    }
+  },
+  "workspace": {
+    "selectedFile": null,
+    "editor": null,
+    "emulatorCollapsed": false
+  },
+  "media": {
+    "version": 2,
+    "files": [],
+    "disks": [],
+    "diskSets": []
   },
   "files": []
 }

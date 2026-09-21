@@ -1,7 +1,7 @@
 {
   "kind": "web64.ide.project",
   "version": 4,
-  "savedAt": "2026-08-31T10:40:39.335Z",
+  "savedAt": "2026-09-21T14:58:16.409Z",
   "main": {
     "fileName": "main.c",
     "origin": "$4000",
@@ -98,7 +98,13 @@
           "enabled": true
         },
         "cartridge": {},
-        "test": {}
+        "test": {},
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
+        }
       }
     ]
   },
@@ -193,12 +199,6 @@
     "diskSets": []
   },
   "files": [
-    {
-      "path": "main.c",
-      "name": "main.c",
-      "kind": "source",
-      "source": "/* C enters native assembly once. The application-owned assembly module owns\n * trajectory stepping, animation cadence, VIC projection, and the PAL loop.\n */\nvoid asm_trajectory_actors_demo(void);\n\nvoid main(void) {\n    asm_trajectory_actors_demo();\n}\n"
-    },
     {
       "path": "trajectory-actors-demo.asm",
       "name": "trajectory-actors-demo.asm",

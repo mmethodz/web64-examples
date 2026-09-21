@@ -1,7 +1,7 @@
 {
   "kind": "web64.ide.project",
   "version": 4,
-  "savedAt": "2026-08-30T16:36:13.532Z",
+  "savedAt": "2026-09-21T14:58:16.434Z",
   "main": {
     "fileName": "main.c",
     "origin": "$4000",
@@ -98,7 +98,13 @@
           "enabled": true
         },
         "cartridge": {},
-        "test": {}
+        "test": {},
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
+        }
       }
     ]
   },
@@ -193,12 +199,6 @@
     "diskSets": []
   },
   "files": [
-    {
-      "path": "main.c",
-      "name": "main.c",
-      "kind": "source",
-      "source": "/* The C entry is deliberately outside the frame loop.\n * The assembly module owns the visible demo and calls the public _web64_rt ABI.\n */\nvoid asm_trajectory_demo(void);\n\nvoid main(void) {\n    asm_trajectory_demo();\n}\n"
-    },
     {
       "path": "trajectory-demo.asm",
       "name": "trajectory-demo.asm",

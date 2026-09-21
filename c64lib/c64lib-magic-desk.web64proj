@@ -1,33 +1,205 @@
 {
   "kind": "web64.ide.project",
   "version": 4,
+  "savedAt": "2026-09-21T14:58:15.655Z",
   "main": {
     "fileName": "cartridge.asm",
     "origin": "$8000",
-    "selectedEntryLabel": "start",
-    "source": ".include \"web64/c64lib/magic-desk-crt.inc\"\n\nstart:\n    web64_c64lib_magic_desk_bootstrap $02, $04, $06, loader_end-loader, loader, $c000\nloader:\n    lda #$06\n    sta $d020\n    lda #$00\n    sta $d021\nforever:\n    jmp forever\nloader_end:\n"
+    "source": ".include \"web64/c64lib/magic-desk-crt.inc\"\n\nstart:\n    web64_c64lib_magic_desk_bootstrap $02, $04, $06, loader_end-loader, loader, $c000\nloader:\n    lda #$06\n    sta $d020\n    lda #$00\n    sta $d021\nforever:\n    jmp forever\nloader_end:\n",
+    "selectedEntryLabel": "start"
   },
-  "c": { "enabled": false },
+  "c": {
+    "enabled": false,
+    "dialect": "web64-c-v0.1",
+    "abi": "web64-static-v0",
+    "entry": "main.c",
+    "entrySymbol": "",
+    "predefinedDefines": {},
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "screen",
+    "stdin": "keyboard",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native",
+    "startup": {
+      "processorPort": null,
+      "disableInterrupts": false
+    },
+    "stack": {
+      "size": 512,
+      "address": null
+    },
+    "zeroPage": {
+      "reserved": []
+    },
+    "ir": {
+      "schemaVersion": 1,
+      "enabled": false,
+      "verifyLegacyEquivalence": true,
+      "emitSnapshots": false
+    },
+    "optimize": {
+      "schemaVersion": 2,
+      "mode": "debug",
+      "enabled": false,
+      "passGates": {
+        "generatorPeephole": false,
+        "registerTemporaryStack": false,
+        "constantStrengthReduction": false,
+        "fixedPointSpecialization": false,
+        "booleanBranch": false,
+        "controlFlowLoop": false,
+        "cc65Peephole": false,
+        "zeroPagePromotion": false,
+        "deadCode": false,
+        "conditionalInlining": false,
+        "hardwareAware": false,
+        "runtimeData": false
+      },
+      "frameCriticalFunctions": [],
+      "zeroPageReserved": [],
+      "budgets": {
+        "maxBuildByteGrowth": 0,
+        "maxFunctionByteGrowth": 0,
+        "maxWorstCaseCycles": null
+      },
+      "diagnostics": {
+        "trace": "summary",
+        "missedOptimizationRemarks": false
+      }
+    }
+  },
   "build": {
     "version": 1,
     "activeTargetId": "cartridge",
-    "targets": [{
-      "id": "cartridge",
-      "label": "c64lib Magic Desk",
-      "kind": "magic-desk-crt",
-      "rootPath": "cartridge.asm",
-      "inputs": ["cartridge.asm"],
-      "entrySymbol": "start",
-      "origin": "$8000",
-      "outputName": "c64lib-magic-desk.crt",
-      "defines": {},
-      "compatibilityModules": ["c64lib.magic-desk-crt"],
-      "cartridge": {
-        "name": "WEB64 C64LIB",
-        "requireAutostartHeader": true
+    "compatibilityDefaults": [],
+    "targets": [
+      {
+        "id": "cartridge",
+        "label": "c64lib Magic Desk",
+        "kind": "magic-desk-crt",
+        "rootPath": "cartridge.asm",
+        "inputs": [
+          "cartridge.asm"
+        ],
+        "entrySymbol": "start",
+        "origin": "$8000",
+        "outputName": "c64lib-magic-desk.crt",
+        "artifactContribution": "",
+        "defines": {},
+        "compatibilityModules": [
+          "c64lib.common",
+          "c64lib.chipset",
+          "c64lib.magic-desk-crt"
+        ],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
+        "c": {
+          "enabled": false
+        },
+        "cartridge": {
+          "name": "WEB64 C64LIB",
+          "requireAutostartHeader": true
+        },
+        "test": {},
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
+        }
+      }
+    ]
+  },
+  "emulator": {
+    "emulatorScale": "fit",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "drive9Enabled": true,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "settings": {
+    "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "fit",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": false,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": true,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": false,
+      "dialect": "web64-c-v0.1",
+      "abi": "web64-static-v0",
+      "entry": "main.c",
+      "entrySymbol": "",
+      "predefinedDefines": {},
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "screen",
+      "stdin": "keyboard",
+      "runtimeProfile": "tiny",
+      "compilerBackend": "web64-native",
+      "startup": {
+        "processorPort": null,
+        "disableInterrupts": false
       },
-      "c": { "enabled": false }
-    }]
+      "stack": {
+        "size": 512,
+        "address": null
+      },
+      "zeroPage": {
+        "reserved": []
+      },
+      "ir": {
+        "schemaVersion": 1,
+        "enabled": false,
+        "verifyLegacyEquivalence": true,
+        "emitSnapshots": false
+      }
+    }
+  },
+  "workspace": {
+    "selectedFile": null,
+    "editor": null,
+    "emulatorCollapsed": false
+  },
+  "media": {
+    "version": 2,
+    "files": [],
+    "disks": [],
+    "diskSets": []
   },
   "files": []
 }

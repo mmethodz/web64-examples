@@ -1,7 +1,7 @@
 {
   "kind": "web64.ide.project",
   "version": 4,
-  "savedAt": "2026-08-19T13:45:44.834Z",
+  "savedAt": "2026-09-21T14:58:16.557Z",
   "main": {
     "fileName": "main.c",
     "origin": "$5000",
@@ -23,6 +23,10 @@
     "stdin": "none",
     "runtimeProfile": "freestanding",
     "compilerBackend": "web64-native",
+    "startup": {
+      "processorPort": null,
+      "disableInterrupts": false
+    },
     "stack": {
       "size": 512,
       "address": null
@@ -94,7 +98,13 @@
           "abi": "web64-stack-v1"
         },
         "cartridge": {},
-        "test": {}
+        "test": {},
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
+        }
       }
     ]
   },
@@ -155,6 +165,10 @@
       "stdin": "none",
       "runtimeProfile": "freestanding",
       "compilerBackend": "web64-native",
+      "startup": {
+        "processorPort": null,
+        "disableInterrupts": false
+      },
       "stack": {
         "size": 512,
         "address": null

@@ -1,7 +1,7 @@
 {
   "kind": "web64.ide.project",
   "version": 4,
-  "savedAt": "2026-08-08T18:48:17.736Z",
+  "savedAt": "2026-09-21T14:58:15.638Z",
   "main": {
     "fileName": "c-screen-memory.asm",
     "origin": "$c000",
@@ -23,12 +23,52 @@
     "stdin": "none",
     "runtimeProfile": "tiny",
     "compilerBackend": "web64-native",
+    "startup": {
+      "processorPort": null,
+      "disableInterrupts": false
+    },
     "stack": {
       "size": 512,
       "address": null
     },
     "zeroPage": {
       "reserved": []
+    },
+    "ir": {
+      "schemaVersion": 1,
+      "enabled": false,
+      "verifyLegacyEquivalence": true,
+      "emitSnapshots": false
+    },
+    "optimize": {
+      "schemaVersion": 2,
+      "mode": "balanced",
+      "enabled": true,
+      "passGates": {
+        "generatorPeephole": true,
+        "registerTemporaryStack": true,
+        "constantStrengthReduction": true,
+        "fixedPointSpecialization": true,
+        "booleanBranch": true,
+        "controlFlowLoop": true,
+        "cc65Peephole": true,
+        "zeroPagePromotion": true,
+        "deadCode": true,
+        "conditionalInlining": true,
+        "hardwareAware": false,
+        "runtimeData": true
+      },
+      "frameCriticalFunctions": [],
+      "zeroPageReserved": [],
+      "budgets": {
+        "maxBuildByteGrowth": 0,
+        "maxFunctionByteGrowth": 0,
+        "maxWorstCaseCycles": null
+      },
+      "diagnostics": {
+        "trace": "summary",
+        "missedOptimizationRemarks": false
+      }
     }
   },
   "build": {
@@ -48,13 +88,23 @@
         "entrySymbol": "",
         "origin": "$c000",
         "outputName": "c-screen-memory.prg",
+        "artifactContribution": "",
         "defines": {},
         "compatibilityModules": [],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
         "c": {
           "enabled": true
         },
         "cartridge": {},
-        "test": {}
+        "test": {},
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
+        }
       }
     ]
   },
@@ -115,20 +165,23 @@
       "stdin": "none",
       "runtimeProfile": "tiny",
       "compilerBackend": "web64-native",
+      "startup": {
+        "processorPort": null,
+        "disableInterrupts": false
+      },
       "stack": {
         "size": 512,
         "address": null
       },
       "zeroPage": {
         "reserved": []
+      },
+      "ir": {
+        "schemaVersion": 1,
+        "enabled": false,
+        "verifyLegacyEquivalence": true,
+        "emitSnapshots": false
       }
-    },
-    "optimizer": {
-      "profile": "default",
-      "peephole": true,
-      "simplification": true,
-      "runtimeDependencySelection": true,
-      "unsupportedNativeFlags": "diagnostic"
     }
   },
   "workspace": {

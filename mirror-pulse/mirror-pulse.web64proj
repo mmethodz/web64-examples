@@ -1,7 +1,7 @@
 {
   "kind": "web64.ide.project",
   "version": 4,
-  "savedAt": "2026-09-02T15:30:24.465Z",
+  "savedAt": "2026-09-21T14:58:16.344Z",
   "main": {
     "fileName": "main.c",
     "origin": "$4000",
@@ -34,8 +34,41 @@
     "zeroPage": {
       "reserved": []
     },
+    "ir": {
+      "schemaVersion": 1,
+      "enabled": false,
+      "verifyLegacyEquivalence": true,
+      "emitSnapshots": false
+    },
     "optimize": {
-      "mode": "speed"
+      "schemaVersion": 2,
+      "mode": "speed",
+      "enabled": true,
+      "passGates": {
+        "generatorPeephole": true,
+        "registerTemporaryStack": true,
+        "constantStrengthReduction": true,
+        "fixedPointSpecialization": true,
+        "booleanBranch": true,
+        "controlFlowLoop": true,
+        "cc65Peephole": true,
+        "zeroPagePromotion": true,
+        "deadCode": true,
+        "conditionalInlining": true,
+        "hardwareAware": true,
+        "runtimeData": true
+      },
+      "frameCriticalFunctions": [],
+      "zeroPageReserved": [],
+      "budgets": {
+        "maxBuildByteGrowth": 0,
+        "maxFunctionByteGrowth": 0,
+        "maxWorstCaseCycles": null
+      },
+      "diagnostics": {
+        "trace": "summary",
+        "missedOptimizationRemarks": false
+      }
     }
   },
   "build": {
@@ -54,13 +87,23 @@
         "entrySymbol": "",
         "origin": "$4000",
         "outputName": "mirror-pulse.prg",
+        "artifactContribution": "",
         "defines": {},
         "compatibilityModules": [],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
         "c": {
           "enabled": true
         },
         "cartridge": {},
-        "test": {}
+        "test": {},
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
+        }
       }
     ]
   },
@@ -79,6 +122,33 @@
   },
   "settings": {
     "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "fit",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": true,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": false,
+      "gamepadEnabled": true,
+      "joystickPort": 2
+    },
     "compiler": {
       "enabled": true,
       "dialect": "web64-c90",
@@ -105,16 +175,12 @@
       "zeroPage": {
         "reserved": []
       },
-      "optimize": {
-        "mode": "speed"
+      "ir": {
+        "schemaVersion": 1,
+        "enabled": false,
+        "verifyLegacyEquivalence": true,
+        "emitSnapshots": false
       }
-    },
-    "optimizer": {
-      "profile": "default",
-      "peephole": true,
-      "simplification": true,
-      "runtimeDependencySelection": true,
-      "unsupportedNativeFlags": "diagnostic"
     }
   },
   "workspace": {

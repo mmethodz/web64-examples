@@ -1,7 +1,7 @@
 {
   "kind": "web64.ide.project",
   "version": 4,
-  "savedAt": "2026-08-22T18:40:11.744Z",
+  "savedAt": "2026-09-21T14:58:16.391Z",
   "main": {
     "fileName": "main.c",
     "origin": "$6000",
@@ -23,8 +23,9 @@
     "stdin": "none",
     "runtimeProfile": "tiny",
     "compilerBackend": "web64-native",
-    "optimize": {
-      "mode": "size"
+    "startup": {
+      "processorPort": null,
+      "disableInterrupts": false
     },
     "stack": {
       "size": 512,
@@ -32,6 +33,42 @@
     },
     "zeroPage": {
       "reserved": []
+    },
+    "ir": {
+      "schemaVersion": 1,
+      "enabled": false,
+      "verifyLegacyEquivalence": true,
+      "emitSnapshots": false
+    },
+    "optimize": {
+      "schemaVersion": 2,
+      "mode": "size",
+      "enabled": true,
+      "passGates": {
+        "generatorPeephole": true,
+        "registerTemporaryStack": true,
+        "constantStrengthReduction": true,
+        "fixedPointSpecialization": true,
+        "booleanBranch": true,
+        "controlFlowLoop": true,
+        "cc65Peephole": true,
+        "zeroPagePromotion": true,
+        "deadCode": true,
+        "conditionalInlining": true,
+        "hardwareAware": false,
+        "runtimeData": true
+      },
+      "frameCriticalFunctions": [],
+      "zeroPageReserved": [],
+      "budgets": {
+        "maxBuildByteGrowth": 0,
+        "maxFunctionByteGrowth": 0,
+        "maxWorstCaseCycles": null
+      },
+      "diagnostics": {
+        "trace": "summary",
+        "missedOptimizationRemarks": false
+      }
     }
   },
   "build": {
@@ -51,13 +88,23 @@
         "entrySymbol": "",
         "origin": "$6000",
         "outputName": "sprite-multiplexer-overlay.prg",
+        "artifactContribution": "",
         "defines": {},
         "compatibilityModules": [],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
         "c": {
           "enabled": true
         },
         "cartridge": {},
-        "test": {}
+        "test": {},
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
+        }
       }
     ]
   },
@@ -76,6 +123,33 @@
   },
   "settings": {
     "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "1",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": true,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": false,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
     "compiler": {
       "enabled": true,
       "dialect": "web64-c90",
@@ -91,8 +165,9 @@
       "stdin": "none",
       "runtimeProfile": "tiny",
       "compilerBackend": "web64-native",
-      "optimize": {
-        "mode": "size"
+      "startup": {
+        "processorPort": null,
+        "disableInterrupts": false
       },
       "stack": {
         "size": 512,
@@ -100,14 +175,13 @@
       },
       "zeroPage": {
         "reserved": []
+      },
+      "ir": {
+        "schemaVersion": 1,
+        "enabled": false,
+        "verifyLegacyEquivalence": true,
+        "emitSnapshots": false
       }
-    },
-    "optimizer": {
-      "profile": "default",
-      "peephole": true,
-      "simplification": true,
-      "runtimeDependencySelection": true,
-      "unsupportedNativeFlags": "diagnostic"
     }
   },
   "workspace": {
@@ -138,11 +212,7 @@
       "path": "assets/sprites/pilot_mc.spr",
       "name": "pilot_mc.spr",
       "kind": "spritebank",
-      "assetId": "w64-ae2ad370",
       "mode": "multicolor",
-      "displayMode": "text-multicolor",
-      "coloringMethod": "per-project",
-      "displayProfile": null,
       "width": 24,
       "height": 21,
       "count": 4,
@@ -153,62 +223,10 @@
         "multicolor2": 10,
         "mode": "multicolor"
       },
-      "characterColors": {},
-      "screenColors": {},
-      "materials": {},
-      "characterNames": [],
-      "characterTags": [],
-      "frames": [
-        {
-          "id": "pilot_mc-frame-0",
-          "name": "Frame 1",
-          "tags": [],
-          "mode": "multicolor",
-          "foreground": 7,
-          "expandedX": false,
-          "expandedY": false,
-          "overlayFrameId": null
-        },
-        {
-          "id": "pilot_mc-frame-1",
-          "name": "Frame 2",
-          "tags": [],
-          "mode": "multicolor",
-          "foreground": 7,
-          "expandedX": false,
-          "expandedY": false,
-          "overlayFrameId": null
-        },
-        {
-          "id": "pilot_mc-frame-2",
-          "name": "Frame 3",
-          "tags": [],
-          "mode": "multicolor",
-          "foreground": 7,
-          "expandedX": false,
-          "expandedY": false,
-          "overlayFrameId": null
-        },
-        {
-          "id": "pilot_mc-frame-3",
-          "name": "Frame 4",
-          "tags": [],
-          "mode": "multicolor",
-          "foreground": 7,
-          "expandedX": false,
-          "expandedY": false,
-          "overlayFrameId": null
-        }
-      ],
-      "animations": [],
-      "tiles": [],
-      "paletteProfile": null,
-      "nextFrameSerial": 4,
       "includePath": "assets/sprites/pilot_mc.inc",
       "dirty": true,
       "lastCompiledHash": null,
       "lastPatchedHash": null,
-      "bytes": "ABQAABQAABQAAFUAAVVAFVVUFVVUK+voL6+sPr68Ovr4K+voL6+sPr68Ovr4C+vgA6+AAL4AADgAACgAACwAAAAUAAAUAAAUAABVAAFVQBVVVBVVVC+vrD6+vDr6+Cvr6C+vrD6+vDr6+Cvr6A+voAK+gAD6AAAoAAAsAAA8AAAAFAAAFAAAFAAAVQABVUAVVVQVVVQ+vrw6+vgr6+gvr6w+vrw6+vgr6+gvr6wOvrAC+sAA6wAALAAAPAAAOAAAABQAABQAABQAAFUAAVVAFVVUFVVUOvr4K+voL6+sPr68Ovr4K+voL6+sPr68CvrwA+vAAK8AADwAADgAACgAAA==",
       "asset": {
         "schema": "web64.ide.graphicsAsset",
         "version": 3,
@@ -281,17 +299,15 @@
         "nextFrameSerial": 4,
         "includePath": "assets/sprites/pilot_mc.inc"
       },
-      "encoding": "base64"
+      "assetId": "w64-ae2ad370",
+      "encoding": "base64",
+      "bytes": "ABQAABQAABQAAFUAAVVAFVVUFVVUK+voL6+sPr68Ovr4K+voL6+sPr68Ovr4C+vgA6+AAL4AADgAACgAACwAAAAUAAAUAAAUAABVAAFVQBVVVBVVVC+vrD6+vDr6+Cvr6C+vrD6+vDr6+Cvr6A+voAK+gAD6AAAoAAAsAAA8AAAAFAAAFAAAFAAAVQABVUAVVVQVVVQ+vrw6+vgr6+gvr6w+vrw6+vgr6+gvr6wOvrAC+sAA6wAALAAAPAAAOAAAABQAABQAABQAAFUAAVVAFVVUFVVUOvr4K+voL6+sPr68Ovr4K+voL6+sPr68CvrwA+vAAK8AADwAADgAACgAAA=="
     },
     {
       "path": "assets/sprites/pilot_ol.spr",
       "name": "pilot_ol.spr",
       "kind": "spritebank",
-      "assetId": "w64-82ba2b67",
       "mode": "mono",
-      "displayMode": "text-hires",
-      "coloringMethod": "per-project",
-      "displayProfile": null,
       "width": 24,
       "height": 21,
       "count": 4,
@@ -302,62 +318,10 @@
         "multicolor2": 10,
         "mode": "mono"
       },
-      "characterColors": {},
-      "screenColors": {},
-      "materials": {},
-      "characterNames": [],
-      "characterTags": [],
-      "frames": [
-        {
-          "id": "pilot_ol-frame-0",
-          "name": "Frame 1",
-          "tags": [],
-          "mode": "mono",
-          "foreground": 1,
-          "expandedX": false,
-          "expandedY": false,
-          "overlayFrameId": null
-        },
-        {
-          "id": "pilot_ol-frame-1",
-          "name": "Frame 2",
-          "tags": [],
-          "mode": "mono",
-          "foreground": 1,
-          "expandedX": false,
-          "expandedY": false,
-          "overlayFrameId": null
-        },
-        {
-          "id": "pilot_ol-frame-2",
-          "name": "Frame 3",
-          "tags": [],
-          "mode": "mono",
-          "foreground": 1,
-          "expandedX": false,
-          "expandedY": false,
-          "overlayFrameId": null
-        },
-        {
-          "id": "pilot_ol-frame-3",
-          "name": "Frame 4",
-          "tags": [],
-          "mode": "mono",
-          "foreground": 1,
-          "expandedX": false,
-          "expandedY": false,
-          "overlayFrameId": null
-        }
-      ],
-      "animations": [],
-      "tiles": [],
-      "paletteProfile": null,
-      "nextFrameSerial": 4,
       "includePath": "assets/sprites/pilot_ol.inc",
       "dirty": true,
       "lastCompiledHash": null,
       "lastPatchedHash": null,
-      "bytes": "AAAAAAAAADwAAIEAAgBAIAAEIXcEIXcEIXcEIXcEIAAEIAAEIAAEIAAEIAAECAAQAgBAAIEAACQAADwAAAAAAAAAAAAAAAA8AACBAAIAQCAABCDuhCDuhCDuhCDuhCAABCAABCAABCAABCAABAgAEAIAQACBAAAkAAA8AAAAAAAAAAAAAAAAPAAAgQACAEAgAAQh3YQh3YQh3YQh3YQgAAQgAAQgAAQgAAQgAAQIABACAEAAgQAAJAAAPAAAAAAAAAAAAAAAADwAAIEAAgBAIAAEIbuEIbuEIbuEIbuEIAAEIAAEIAAEIAAEIAAECAAQAgBAAIEAACQAADwAAAAAAA==",
       "asset": {
         "schema": "web64.ide.graphicsAsset",
         "version": 3,
@@ -430,30 +394,16 @@
         "nextFrameSerial": 4,
         "includePath": "assets/sprites/pilot_ol.inc"
       },
-      "encoding": "base64"
+      "assetId": "w64-82ba2b67",
+      "encoding": "base64",
+      "bytes": "AAAAAAAAADwAAIEAAgBAIAAEIXcEIXcEIXcEIXcEIAAEIAAEIAAEIAAEIAAECAAQAgBAAIEAACQAADwAAAAAAAAAAAAAAAA8AACBAAIAQCAABCDuhCDuhCDuhCDuhCAABCAABCAABCAABCAABAgAEAIAQACBAAAkAAA8AAAAAAAAAAAAAAAAPAAAgQACAEAgAAQh3YQh3YQh3YQh3YQgAAQgAAQgAAQgAAQgAAQIABACAEAAgQAAJAAAPAAAAAAAAAAAAAAAADwAAIEAAgBAIAAEIbuEIbuEIbuEIbuEIAAEIAAEIAAEIAAEIAAECAAQAgBAAIEAACQAADwAAAAAAA=="
     },
     {
       "path": "assets/sprites/pilot.spritepair.json",
       "name": "pilot.spritepair.json",
       "kind": "metadata",
-      "schema": "web64.ide.spriteOverlayPair",
       "generated": false,
-      "source": "{\n  \"schema\": \"web64.ide.spriteOverlayPair\",\n  \"version\": 1,\n  \"logicalName\": \"Pilot\",\n  \"basePath\": \"assets/sprites/pilot_mc.spr\",\n  \"overlayPath\": \"assets/sprites/pilot_ol.spr\",\n  \"baseMode\": \"multicolor\",\n  \"overlayMode\": \"mono\",\n  \"includePath\": \"assets/sprites/pilot.inc\",\n  \"descriptorPath\": \"assets/sprites/pilot.spritepair.json\",\n  \"symbolBase\": \"pilot\",\n  \"overlayOpacity\": 0.45,\n  \"overlayPreviewColor\": 1,\n  \"showGridInOverlayMode\": true\n}\n",
-      "pair": {
-        "schema": "web64.ide.spriteOverlayPair",
-        "version": 1,
-        "logicalName": "Pilot",
-        "basePath": "assets/sprites/pilot_mc.spr",
-        "overlayPath": "assets/sprites/pilot_ol.spr",
-        "baseMode": "multicolor",
-        "overlayMode": "mono",
-        "includePath": "assets/sprites/pilot.inc",
-        "descriptorPath": "assets/sprites/pilot.spritepair.json",
-        "symbolBase": "pilot",
-        "overlayOpacity": 0.45,
-        "overlayPreviewColor": 1,
-        "showGridInOverlayMode": true
-      }
+      "source": "{\n  \"schema\": \"web64.ide.spriteOverlayPair\",\n  \"version\": 1,\n  \"logicalName\": \"Pilot\",\n  \"basePath\": \"assets/sprites/pilot_mc.spr\",\n  \"overlayPath\": \"assets/sprites/pilot_ol.spr\",\n  \"baseMode\": \"multicolor\",\n  \"overlayMode\": \"mono\",\n  \"includePath\": \"assets/sprites/pilot.inc\",\n  \"descriptorPath\": \"assets/sprites/pilot.spritepair.json\",\n  \"symbolBase\": \"pilot\",\n  \"overlayOpacity\": 0.45,\n  \"overlayPreviewColor\": 1,\n  \"showGridInOverlayMode\": true\n}\n"
     },
     {
       "path": "assets/sprites/pilot.inc",
@@ -466,12 +416,6 @@
         "assets/sprites/pilot.spritepair.json"
       ],
       "source": "; Generated by Web64 IDE. Edit the sprite assets, not this file.\n; Logical sprite pair: Pilot\npilot_mc_sprites_size = $0100\n; Editor color references\npilot_mc_color_0 = 0\npilot_mc_background_color = 0\npilot_mc_color_1 = 5\npilot_mc_multicolor_1 = 5\npilot_mc_color_2 = 7\npilot_mc_sprite_color = 7\npilot_mc_color_3 = $0a\npilot_mc_multicolor_2 = $0a\npilot_mc_sprite_count = 4\npilot_mc_sprites_end = pilot_mc_sprites + pilot_mc_sprites_size\npilot_mc_frame_0 = pilot_mc_sprites + 0\npilot_mc_frame_0_color = 7\npilot_mc_frame_0_flags = 1\npilot_mc_frame_1 = pilot_mc_sprites + $40\npilot_mc_frame_1_color = 7\npilot_mc_frame_1_flags = 1\npilot_mc_frame_2 = pilot_mc_sprites + $80\npilot_mc_frame_2_color = 7\npilot_mc_frame_2_flags = 1\npilot_mc_frame_3 = pilot_mc_sprites + $c0\npilot_mc_frame_3_color = 7\npilot_mc_frame_3_flags = 1\n\npilot_ol_sprites_size = $0100\n; Editor color references\npilot_ol_color_0 = 0\npilot_ol_background_color = 0\npilot_ol_color_1 = 5\npilot_ol_multicolor_1 = 5\npilot_ol_color_2 = 1\npilot_ol_sprite_color = 1\npilot_ol_color_3 = $0a\npilot_ol_multicolor_2 = $0a\npilot_ol_sprite_count = 4\npilot_ol_sprites_end = pilot_ol_sprites + pilot_ol_sprites_size\npilot_ol_frame_0 = pilot_ol_sprites + 0\npilot_ol_frame_0_color = 1\npilot_ol_frame_0_flags = 0\npilot_ol_frame_1 = pilot_ol_sprites + $40\npilot_ol_frame_1_color = 1\npilot_ol_frame_1_flags = 0\npilot_ol_frame_2 = pilot_ol_sprites + $80\npilot_ol_frame_2_color = 1\npilot_ol_frame_2_flags = 0\npilot_ol_frame_3 = pilot_ol_sprites + $c0\npilot_ol_frame_3_color = 1\npilot_ol_frame_3_flags = 0\n\npilot_sprite_count = pilot_mc_sprite_count\npilot_mc = pilot_mc_sprites\npilot_ol = pilot_ol_sprites\n"
-    },
-    {
-      "path": "main.c",
-      "name": "main.c",
-      "kind": "source",
-      "source": "#include <stdint.h>\n#include <assets/generated.h>\n#include <web64/sprite-runtime.h>\n#include <web64/sprite-mux.h>\n\n#define POINTER_TABLE 0x07f8\n#define PILOT_BASE_POINTER 0xc0\n#define PILOT_OVERLAY_POINTER 0xc4\n#define MUX_OWNED_SLOTS 0xfc\n#define MUX_CAPACITY 24\n\nvoid example_copy_sprite_data(void);\nvoid example_install_irq(void);\n\nWEB64_SPRITE_MUX_STORAGE(sprite_mux, MUX_CAPACITY);\nWeb64SpriteRenderer direct_renderer;\nWeb64SpriteOverlayBinding pilot_binding;\n\nvolatile uint8_t frame_tick;\nvolatile uint8_t example_irq_count;\nvolatile uint8_t example_irq_entry_line;\nvolatile uint8_t example_irq_exit_line;\nuint8_t animation_frame;\nuint8_t overlay_animation_frame;\nuint8_t crowd_phase;\nuint8_t observed_tick;\nuint16_t pilot_x;\nuint8_t last_accepted_entries;\nuint8_t last_dropped_entries;\nuint8_t last_accepted_layers;\nuint8_t last_dropped_layers;\nuint16_t verification_first_x;\nuint16_t verification_second_x;\nuint8_t verification_irq_count;\nuint8_t verification_complete;\n\n/* Unsigned, 24-centered, 32-sample sine lookup: no motion runtime required. */\nuint8_t sprite_wave[32] = {\n    24, 29, 33, 37, 41, 44, 46, 47,\n    48, 47, 46, 44, 41, 37, 33, 29,\n    24, 19, 15, 11, 7, 4, 2, 1,\n    0, 1, 2, 4, 7, 11, 15, 19\n};\n\nvoid example_advance_animation(void) {\n    animation_frame = (animation_frame + 1) & 3;\n    overlay_animation_frame = (overlay_animation_frame + 3) & 3;\n    crowd_phase = (crowd_phase + 1) & 31;\n}\n\nuint8_t example_submit_frame(void) {\n    uint8_t base_frame;\n    uint8_t overlay_frame;\n    uint8_t wave_0;\n    uint8_t wave_8;\n    uint8_t wave_16;\n    uint8_t wave_24;\n    if (web64_sprite_mux_begin_frame(&sprite_mux) != WEB64_SPRITE_MUX_OK) return 0;\n\n    /* Quarter-turn phase offsets make the nine atomic pairs weave as a field. */\n    wave_0 = sprite_wave[crowd_phase];\n    wave_8 = sprite_wave[(crowd_phase + 8) & 31];\n    wave_16 = sprite_wave[(crowd_phase + 16) & 31];\n    wave_24 = sprite_wave[(crowd_phase + 24) & 31];\n    pilot_x = 126 + wave_0;\n\n    /*\n     * Every multiplexed logical sprite is a native editor pair. The runtime\n     * converts the two independent frame indices into installed VIC pointers,\n     * keeps the layers atomic, and gives the mono overlay higher precedence.\n     */\n    base_frame = animation_frame & 3;\n    overlay_frame = overlay_animation_frame & 3;\n    web64_sprite_mux_submit_asset_pair(\n        &sprite_mux, &pilot_binding, pilot_x, 48,\n        base_frame, overlay_frame, WEB64_SPRITE_VISIBLE, 250\n    );\n\n    base_frame = (animation_frame + 1) & 3;\n    overlay_frame = (overlay_animation_frame + 3) & 3;\n    web64_sprite_mux_submit_asset_pair(\n        &sprite_mux, &pilot_binding, 56 + wave_8, 49,\n        base_frame, overlay_frame, WEB64_SPRITE_VISIBLE, 249\n    );\n\n    base_frame = (animation_frame + 2) & 3;\n    overlay_frame = (overlay_animation_frame + 2) & 3;\n    web64_sprite_mux_submit_asset_pair(\n        &sprite_mux, &pilot_binding, 236 + wave_16, 50,\n        base_frame, overlay_frame, WEB64_SPRITE_VISIBLE, 248\n    );\n\n    /* Each later pair reuses two slots inside one measured eight-line window. */\n    base_frame = (animation_frame + 3) & 3;\n    overlay_frame = (overlay_animation_frame + 1) & 3;\n    web64_sprite_mux_submit_asset_pair(\n        &sprite_mux, &pilot_binding, 31 + wave_24, 84,\n        base_frame, overlay_frame, WEB64_SPRITE_VISIBLE, 247\n    );\n\n    base_frame = animation_frame & 3;\n    overlay_frame = (overlay_animation_frame + 2) & 3;\n    web64_sprite_mux_submit_asset_pair(\n        &sprite_mux, &pilot_binding, 81 + wave_16, 113,\n        base_frame, overlay_frame, WEB64_SPRITE_VISIBLE, 246\n    );\n\n    base_frame = (animation_frame + 1) & 3;\n    overlay_frame = (overlay_animation_frame + 1) & 3;\n    web64_sprite_mux_submit_asset_pair(\n        &sprite_mux, &pilot_binding, 121 + wave_8, 142,\n        base_frame, overlay_frame, WEB64_SPRITE_VISIBLE, 245\n    );\n\n    base_frame = (animation_frame + 2) & 3;\n    overlay_frame = overlay_animation_frame & 3;\n    web64_sprite_mux_submit_asset_pair(\n        &sprite_mux, &pilot_binding, 181 + wave_0, 171,\n        base_frame, overlay_frame, WEB64_SPRITE_VISIBLE, 244\n    );\n\n    base_frame = (animation_frame + 3) & 3;\n    overlay_frame = (overlay_animation_frame + 3) & 3;\n    web64_sprite_mux_submit_asset_pair(\n        &sprite_mux, &pilot_binding, 221 + wave_24, 200,\n        base_frame, overlay_frame, WEB64_SPRITE_VISIBLE, 243\n    );\n\n    base_frame = animation_frame & 3;\n    overlay_frame = (overlay_animation_frame + 1) & 3;\n    web64_sprite_mux_submit_asset_pair(\n        &sprite_mux, &pilot_binding, 251 + wave_16, 229,\n        base_frame, overlay_frame, WEB64_SPRITE_VISIBLE, 242\n    );\n\n    /*\n     * This low-priority pair deliberately duplicates the final reuse window.\n     * Admission drops both physical layers together, never half of the pair.\n     */\n    web64_sprite_mux_submit_asset_pair(\n        &sprite_mux, &pilot_binding, 16 + wave_0, 229,\n        (animation_frame + 1) & 3, (overlay_animation_frame + 2) & 3,\n        WEB64_SPRITE_VISIBLE, 0\n    );\n\n    web64_sprite_mux_commit(&sprite_mux);\n    last_accepted_entries = sprite_mux.status.accepted_entries;\n    last_dropped_entries = sprite_mux.status.dropped_entries;\n    last_accepted_layers = sprite_mux.status.accepted_layers;\n    last_dropped_layers = sprite_mux.status.dropped_layers;\n    return 1;\n}\n\nvoid main(void) {\n    example_copy_sprite_data();\n\n    pilot_binding.asset = pilot_spritepair_asset;\n    pilot_binding.base_pointer = PILOT_BASE_POINTER;\n    pilot_binding.overlay_pointer = PILOT_OVERLAY_POINTER;\n\n    pilot_x = 150;\n    overlay_animation_frame = 3;\n    crowd_phase = 0;\n\n    /* Slots 0 and 1 are an application-owned, atomically aligned HUD pair. */\n    web64_sprite_renderer_init(&direct_renderer, POINTER_TABLE);\n    web64_sprite_apply_overlay_palette(pilot_spritepair_asset);\n    web64_sprite_render_asset_pair(\n        &direct_renderer, &pilot_binding, 1, 0, 24, 24,\n        0, 0, WEB64_SPRITE_VISIBLE\n    );\n\n    web64_sprite_mux_init(\n        &sprite_mux, sprite_mux_buffer_a, sprite_mux_buffer_b,\n        MUX_CAPACITY, POINTER_TABLE, MUX_OWNED_SLOTS,\n        5, 10, WEB64_SPRITE_MUX_VIDEO_PAL\n    );\n\n    /* Authoritative lowered-import root for the assembly wrapper's fast service. */\n    web64_sprite_mux_irq_service_fast();\n\n    web64_sprite_mux_activate(&sprite_mux);\n    example_submit_frame();\n\n#ifdef WEB64_EXAMPLE_VERIFY\n    /* Synthetic verification publishes the first armed boundary explicitly. */\n    web64_sprite_mux_irq_service();\n    verification_first_x = pilot_x;\n    example_advance_animation();\n    example_submit_frame();\n    for (verification_irq_count = 0; verification_irq_count < 13; verification_irq_count++) {\n        web64_sprite_mux_irq_service();\n    }\n    verification_second_x = pilot_x;\n    verification_complete = 1;\n    return;\n#else\n    /*\n     * The application owns the vector, source acknowledgement, chaining,\n     * game tick, and final RTI. The runtime service only updates its schedule.\n     */\n    example_install_irq();\n    example_advance_animation();\n    observed_tick = frame_tick;\n    while (1) {\n        while (observed_tick == frame_tick) { }\n        observed_tick = frame_tick;\n        /* Advance only after a frame was committed; a busy pending buffer repeats. */\n        if (example_submit_frame()) example_advance_animation();\n    }\n#endif\n}\n"
     },
     {
       "path": "irq-wrapper.asm",

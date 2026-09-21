@@ -1,7 +1,7 @@
 {
   "kind": "web64.ide.project",
   "version": 4,
-  "savedAt": "2026-08-19T11:58:55.418Z",
+  "savedAt": "2026-09-21T14:58:16.359Z",
   "main": {
     "fileName": "main.asm",
     "origin": "$8000",
@@ -23,6 +23,10 @@
     "stdin": "keyboard",
     "runtimeProfile": "tiny",
     "compilerBackend": "web64-native",
+    "startup": {
+      "processorPort": null,
+      "disableInterrupts": false
+    },
     "stack": {
       "size": 512,
       "address": null
@@ -93,7 +97,13 @@
           "enabled": false
         },
         "cartridge": {},
-        "test": {}
+        "test": {},
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
+        }
       }
     ]
   },
@@ -154,6 +164,10 @@
       "stdin": "keyboard",
       "runtimeProfile": "tiny",
       "compilerBackend": "web64-native",
+      "startup": {
+        "processorPort": null,
+        "disableInterrupts": false
+      },
       "stack": {
         "size": 512,
         "address": null

@@ -1,7 +1,7 @@
 {
   "kind": "web64.ide.project",
   "version": 4,
-  "savedAt": "2026-08-29T09:12:47.106Z",
+  "savedAt": "2026-09-21T14:58:15.578Z",
   "main": {
     "fileName": "main.c",
     "origin": "$4000",
@@ -23,6 +23,10 @@
     "stdin": "none",
     "runtimeProfile": "tiny",
     "compilerBackend": "web64-native",
+    "startup": {
+      "processorPort": null,
+      "disableInterrupts": false
+    },
     "stack": {
       "size": 512,
       "address": null
@@ -30,8 +34,41 @@
     "zeroPage": {
       "reserved": []
     },
+    "ir": {
+      "schemaVersion": 1,
+      "enabled": false,
+      "verifyLegacyEquivalence": true,
+      "emitSnapshots": false
+    },
     "optimize": {
-      "mode": "speed"
+      "schemaVersion": 2,
+      "mode": "speed",
+      "enabled": true,
+      "passGates": {
+        "generatorPeephole": true,
+        "registerTemporaryStack": true,
+        "constantStrengthReduction": true,
+        "fixedPointSpecialization": true,
+        "booleanBranch": true,
+        "controlFlowLoop": true,
+        "cc65Peephole": true,
+        "zeroPagePromotion": true,
+        "deadCode": true,
+        "conditionalInlining": true,
+        "hardwareAware": true,
+        "runtimeData": true
+      },
+      "frameCriticalFunctions": [],
+      "zeroPageReserved": [],
+      "budgets": {
+        "maxBuildByteGrowth": 0,
+        "maxFunctionByteGrowth": 0,
+        "maxWorstCaseCycles": null
+      },
+      "diagnostics": {
+        "trace": "summary",
+        "missedOptimizationRemarks": false
+      }
     }
   },
   "build": {
@@ -50,13 +87,23 @@
         "entrySymbol": "",
         "origin": "$4000",
         "outputName": "bitmap-drawing.prg",
+        "artifactContribution": "",
         "defines": {},
         "compatibilityModules": [],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
         "c": {
           "enabled": true
         },
         "cartridge": {},
-        "test": {}
+        "test": {},
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
+        }
       }
     ]
   },
@@ -75,6 +122,33 @@
   },
   "settings": {
     "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "fit",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": true,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "drive9Enabled": false,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
     "compiler": {
       "enabled": true,
       "dialect": "web64-c-v0.1",
@@ -90,6 +164,10 @@
       "stdin": "none",
       "runtimeProfile": "tiny",
       "compilerBackend": "web64-native",
+      "startup": {
+        "processorPort": null,
+        "disableInterrupts": false
+      },
       "stack": {
         "size": 512,
         "address": null
@@ -97,16 +175,12 @@
       "zeroPage": {
         "reserved": []
       },
-      "optimize": {
-        "mode": "speed"
+      "ir": {
+        "schemaVersion": 1,
+        "enabled": false,
+        "verifyLegacyEquivalence": true,
+        "emitSnapshots": false
       }
-    },
-    "optimizer": {
-      "profile": "default",
-      "peephole": true,
-      "simplification": true,
-      "runtimeDependencySelection": true,
-      "unsupportedNativeFlags": "diagnostic"
     }
   },
   "workspace": {
@@ -124,12 +198,6 @@
     "diskSets": []
   },
   "files": [
-    {
-      "path": "main.c",
-      "name": "main.c",
-      "kind": "source",
-      "source": "#include <stdint.h>\n#include <web64/bitmap.h>\n\n#define BITMAP_MEMORY ((uint8_t *)0x2000)\n#define SCREEN_MEMORY ((uint8_t *)0x0400)\n#define FLOOD_SPANS 64\n\nWeb64Bitmap bitmap;\nWeb64BitmapPalette palette;\nWEB64_BITMAP_FLOOD_STORAGE(flood_workspace, FLOOD_SPANS);\nuint8_t verification_status;\nuint8_t verification_complete;\n\nvoid main(void) {\n    palette.color0 = 0;\n    palette.color1 = 6;\n    palette.color2 = 14;\n    palette.color3 = 1;\n\n    verification_status = web64_bitmap_init(\n        &bitmap,\n        BITMAP_MEMORY,\n        SCREEN_MEMORY,\n        WEB64_BITMAP_MODE_MULTICOLOR,\n        &palette\n    );\n    if (verification_status != WEB64_BITMAP_OK) return;\n\n    WEB64_BITMAP_FLOOD_WORKSPACE_INIT(flood_workspace, FLOOD_SPANS);\n    verification_status = web64_bitmap_rect(\n        &bitmap, 8, 8, 64, 48, 1, WEB64_BITMAP_OP_REPLACE\n    );\n    if (verification_status != WEB64_BITMAP_OK) return;\n\n    verification_status = web64_bitmap_flood_fill(\n        &bitmap, 10, 10, 2, &flood_workspace\n    );\n    if (verification_status != WEB64_BITMAP_OK) return;\n\n    web64_bitmap_line_fast(\n        &bitmap, 0, 199, 159, 0, 3, WEB64_BITMAP_OP_REPLACE\n    );\n    web64_bitmap_line_fast(\n        &bitmap, 0, 0, 159, 199, 1, WEB64_BITMAP_OP_REPLACE\n    );\n    web64_bitmap_ellipse(\n        &bitmap, 112, 120, 35, 24, 3, WEB64_BITMAP_OP_REPLACE\n    );\n    web64_bitmap_circle(&bitmap, 112, 120, 10, 1, WEB64_BITMAP_OP_XOR);\n    web64_bitmap_dot_fast(&bitmap, 112, 120, 3, WEB64_BITMAP_OP_REPLACE);\n    verification_complete = 1;\n}\n"
-    },
     {
       "path": "README.md",
       "name": "README.md",

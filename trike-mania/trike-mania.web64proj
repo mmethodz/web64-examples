@@ -1,7 +1,7 @@
 {
   "kind": "web64.ide.project",
   "version": 4,
-  "savedAt": "2026-08-25T06:42:51.743Z",
+  "savedAt": "2026-09-21T14:58:16.449Z",
   "main": {
     "fileName": "main.c",
     "origin": "$2d00",
@@ -112,7 +112,13 @@
           "abi": "web64-stack-v1"
         },
         "cartridge": {},
-        "test": {}
+        "test": {},
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
+        }
       },
       {
         "id": "verification",
@@ -147,6 +153,12 @@
           "kind": "runtime",
           "expectedStatusSymbol": "trike_test_status",
           "expectedStatus": 165
+        },
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
         }
       },
       {
@@ -179,6 +191,12 @@
         "cartridge": {},
         "test": {
           "kind": "visual-evidence"
+        },
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
         }
       },
       {
@@ -212,6 +230,12 @@
         "cartridge": {},
         "test": {
           "kind": "visual-evidence"
+        },
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
         }
       },
       {
@@ -244,6 +268,12 @@
         "cartridge": {},
         "test": {
           "kind": "visual-evidence"
+        },
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
         }
       },
       {
@@ -278,6 +308,12 @@
         "cartridge": {},
         "test": {
           "kind": "visual-evidence"
+        },
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
         }
       },
       {
@@ -312,6 +348,12 @@
         "cartridge": {},
         "test": {
           "kind": "visual-evidence"
+        },
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
         }
       },
       {
@@ -346,6 +388,12 @@
         "cartridge": {},
         "test": {
           "kind": "visual-evidence"
+        },
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
         }
       }
     ]
