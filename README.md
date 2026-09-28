@@ -15,6 +15,10 @@ Open a `.web64proj` in the [Web64 IDE](https://web64.nofs.ai/ide/) to inspect, b
 
 For multi-target projects, select the intended target in **Build Targets** and inspect **Build Output**. For disk applications, use **Disk/Media → Build Dependencies → Run Disk**; **Run Disk** builds missing or stale dependencies. Use the configured disk layout rather than manually combining PRGs. Supplied release binaries are convenient snapshots, not the editable project authority.
 
+## Native cartridge runtime example
+
+- [`managed-cartridge-resources/managed-cartridge-resources.web64proj`](managed-cartridge-resources/managed-cartridge-resources.web64proj) uses one mixed C/ASM resident target with four real CRT layouts: Standard 8K, Standard 16K, Magic Desk, and EasyFlash. C and the `web64/cartridge.inc` assembly macros independently read the same logical ROM palette. Choose a layout and use **Run Cartridge**; the screen displays `WEB64 ASM` when both paths succeed. Its [README](managed-cartridge-resources/README.md) explains resource placement and the cold-boot display setup.
+
 ## Native assets and compatibility examples
 
 Native character, sprite, block, map, trajectory and tracker assets belong in their corresponding IDE editors. Generated includes, asset headers and binary planes are derived outputs: edit their owning asset, then consume the generated bindings from C or assembly. Map structure, material, video-matrix and Color RAM planes describe the displayed world and its behavior; they are not interchangeable arbitrary level-data buffers.

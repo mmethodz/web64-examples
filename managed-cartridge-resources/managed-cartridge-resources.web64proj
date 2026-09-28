@@ -1,0 +1,442 @@
+{
+  "kind": "web64.ide.project",
+  "version": 4,
+  "savedAt": "2026-09-27T21:30:20.417Z",
+  "main": {
+    "fileName": "main.c",
+    "origin": "$2000",
+    "source": "#include <web64/cartridge.h>\n#include <cartridge/generated.h>\n\nweb64_cart_resource_request request;\nweb64_cart_resource_result result;\nuint8_t asm_palette_probe(void);\nvolatile uint8_t *screen;\nvolatile uint8_t *colors;\nuint16_t cell;\n\nvoid main(void) {\n    screen = (volatile uint8_t *)0x0400;\n    colors = (volatile uint8_t *)0xd800;\n    /* Cartridge autostart precedes KERNAL screen initialization. */\n    ((volatile uint8_t *)0x0001)[0] = 0x37;\n    ((volatile uint8_t *)0xd01a)[0] = 0;\n    ((volatile uint8_t *)0xd015)[0] = 0;\n    ((volatile uint8_t *)0xdd02)[0] |= 3;\n    ((volatile uint8_t *)0xdd00)[0] |= 3;\n    ((volatile uint8_t *)0xd011)[0] = 0x1b;\n    ((volatile uint8_t *)0xd016)[0] = 0x08;\n    ((volatile uint8_t *)0xd018)[0] = 0x14;\n    ((volatile uint8_t *)0xd020)[0] = 0;\n    ((volatile uint8_t *)0xd021)[0] = 0;\n    for (cell = 0; cell < 1000; ++cell) {\n        screen[cell] = 32;\n        colors[cell] = 1;\n    }\n    uint8_t status = web64_cart_resources_init();\n    request.resource = WEB64_CART_RESOURCE_PALETTE;\n    request.offset = 0UL;\n    request.destination = (uint8_t *)0x5000;\n    request.length = 4;\n    if (status == WEB64_CART_OK) status = web64_cart_resource_read(&request, &result);\n    if (status == WEB64_CART_OK && result.completed == 4) {\n        /* The border and background colors came from the logical ROM resource. */\n        screen[0] = 23; screen[1] = 5; screen[2] = 2; screen[3] = 54; screen[4] = 52;\n        ((volatile uint8_t *)0xd020)[0] = ((volatile uint8_t *)0x5000)[0];\n        ((volatile uint8_t *)0xd021)[0] = ((volatile uint8_t *)0x5000)[1];\n        /* The assembly include reads the same logical ID into a second buffer. */\n        if (asm_palette_probe() == WEB64_CART_OK &&\n            ((volatile uint8_t *)0x5004)[0] == ((volatile uint8_t *)0x5000)[0]) {\n            screen[6] = 1; screen[7] = 19; screen[8] = 13;\n        }\n    } else {\n        screen[0] = 5; screen[1] = 18; screen[2] = 18;\n        ((volatile uint8_t *)0xd020)[0] = 2;\n    }\n    for (;;) { }\n}\n",
+    "selectedEntryLabel": "auto"
+  },
+  "c": {
+    "enabled": true,
+    "dialect": "web64-c-v0.1",
+    "abi": "web64-static-v0",
+    "entry": "main.c",
+    "entrySymbol": "",
+    "predefinedDefines": {},
+    "includePaths": [
+      "include",
+      "assets"
+    ],
+    "stdout": "none",
+    "stdin": "none",
+    "runtimeProfile": "tiny",
+    "compilerBackend": "web64-native",
+    "startup": {
+      "processorPort": null,
+      "disableInterrupts": false
+    },
+    "stack": {
+      "size": 512,
+      "address": null
+    },
+    "zeroPage": {
+      "reserved": []
+    },
+    "ir": {
+      "schemaVersion": 1,
+      "enabled": false,
+      "verifyLegacyEquivalence": true,
+      "emitSnapshots": false
+    },
+    "optimize": {
+      "schemaVersion": 2,
+      "mode": "size",
+      "enabled": true,
+      "passGates": {
+        "generatorPeephole": true,
+        "registerTemporaryStack": true,
+        "constantStrengthReduction": true,
+        "fixedPointSpecialization": true,
+        "booleanBranch": true,
+        "controlFlowLoop": true,
+        "cc65Peephole": true,
+        "zeroPagePromotion": true,
+        "deadCode": true,
+        "conditionalInlining": true,
+        "hardwareAware": false,
+        "runtimeData": true
+      },
+      "frameCriticalFunctions": [],
+      "zeroPageReserved": [],
+      "budgets": {
+        "maxBuildByteGrowth": 0,
+        "maxFunctionByteGrowth": 0,
+        "maxWorstCaseCycles": null
+      },
+      "diagnostics": {
+        "trace": "summary",
+        "missedOptimizationRemarks": false
+      }
+    }
+  },
+  "build": {
+    "version": 1,
+    "activeTargetId": "main",
+    "compatibilityDefaults": [],
+    "cartridges": [
+      {
+        "version": 1,
+        "id": "managed-standard-8k",
+        "label": "Managed standard-8k",
+        "profile": "standard-8k",
+        "outputName": "managed-standard-8k.crt",
+        "fillByte": 255,
+        "placements": [
+          {
+            "id": "boot",
+            "source": {
+              "kind": "target-output",
+              "targetId": "main"
+            },
+            "representation": "wrapped-prg",
+            "window": "roml",
+            "role": "boot",
+            "alignment": 1,
+            "bank": 0,
+            "offset": 0
+          }
+        ],
+        "managed": {
+          "version": 1,
+          "residentTargetId": "main",
+          "directoryRamAddress": 16384,
+          "writableRanges": [
+            {
+              "address": 20480,
+              "length": 256
+            }
+          ],
+          "resources": [
+            {
+              "id": "palette",
+              "source": {
+                "kind": "project-file",
+                "path": "assets/palette.bin"
+              },
+              "representation": "raw",
+              "alignment": 1
+            }
+          ]
+        }
+      },
+      {
+        "version": 1,
+        "id": "managed-standard-16k",
+        "label": "Managed standard-16k",
+        "profile": "standard-16k",
+        "outputName": "managed-standard-16k.crt",
+        "fillByte": 255,
+        "placements": [
+          {
+            "id": "boot",
+            "source": {
+              "kind": "target-output",
+              "targetId": "main"
+            },
+            "representation": "wrapped-prg",
+            "window": "roml",
+            "role": "boot",
+            "alignment": 1,
+            "bank": 0,
+            "offset": 0
+          }
+        ],
+        "managed": {
+          "version": 1,
+          "residentTargetId": "main",
+          "directoryRamAddress": 16384,
+          "writableRanges": [
+            {
+              "address": 20480,
+              "length": 256
+            }
+          ],
+          "resources": [
+            {
+              "id": "palette",
+              "source": {
+                "kind": "project-file",
+                "path": "assets/palette.bin"
+              },
+              "representation": "raw",
+              "alignment": 1
+            }
+          ]
+        }
+      },
+      {
+        "version": 1,
+        "id": "managed-magic-desk",
+        "label": "Managed magic-desk",
+        "profile": "magic-desk",
+        "outputName": "managed-magic-desk.crt",
+        "fillByte": 255,
+        "placements": [
+          {
+            "id": "boot",
+            "source": {
+              "kind": "target-output",
+              "targetId": "main"
+            },
+            "representation": "wrapped-prg",
+            "window": "roml",
+            "role": "boot",
+            "alignment": 1,
+            "bank": 0,
+            "offset": 0
+          }
+        ],
+        "managed": {
+          "version": 1,
+          "residentTargetId": "main",
+          "directoryRamAddress": 16384,
+          "writableRanges": [
+            {
+              "address": 20480,
+              "length": 256
+            }
+          ],
+          "resources": [
+            {
+              "id": "palette",
+              "source": {
+                "kind": "project-file",
+                "path": "assets/palette.bin"
+              },
+              "representation": "raw",
+              "alignment": 1
+            }
+          ]
+        }
+      },
+      {
+        "version": 1,
+        "id": "managed-easyflash",
+        "label": "Managed easyflash",
+        "profile": "easyflash",
+        "outputName": "managed-easyflash.crt",
+        "fillByte": 255,
+        "placements": [
+          {
+            "id": "boot",
+            "source": {
+              "kind": "target-output",
+              "targetId": "main"
+            },
+            "representation": "wrapped-prg",
+            "window": "romh",
+            "role": "boot",
+            "alignment": 1,
+            "bank": 0,
+            "offset": 0
+          },
+          {
+            "id": "resident",
+            "source": {
+              "kind": "target-output",
+              "targetId": "main"
+            },
+            "representation": "prg-payload",
+            "window": "roml",
+            "role": "code",
+            "alignment": 1,
+            "bank": 0,
+            "offset": 1024
+          }
+        ],
+        "managed": {
+          "version": 1,
+          "residentTargetId": "main",
+          "directoryRamAddress": 16384,
+          "writableRanges": [
+            {
+              "address": 20480,
+              "length": 256
+            }
+          ],
+          "resources": [
+            {
+              "id": "palette",
+              "source": {
+                "kind": "project-file",
+                "path": "assets/palette.bin"
+              },
+              "representation": "raw",
+              "alignment": 1
+            }
+          ]
+        }
+      }
+    ],
+    "targets": [
+      {
+        "id": "main",
+        "label": "Managed resident C",
+        "kind": "prg",
+        "rootPath": "main.c",
+        "inputs": [
+          "main.c",
+          "palette-probe.asm"
+        ],
+        "entrySymbol": "",
+        "origin": "$2000",
+        "outputName": "managed-main.prg",
+        "artifactContribution": "",
+        "defines": {},
+        "compatibilityModules": [],
+        "assemblyDialect": "web64-native",
+        "kickDiagnosticsTelemetry": false,
+        "kickLibraryRoots": [],
+        "c": {
+          "enabled": true,
+          "entry": "main.c",
+          "abi": "web64-static-v0",
+          "stdout": "none",
+          "stdin": "none",
+          "optimize": {
+            "mode": "size"
+          }
+        },
+        "cartridge": {},
+        "test": {},
+        "packedData": {
+          "stagingAddress": 57344,
+          "blockSize": 0,
+          "maximumBytes": 0,
+          "independentBlocks": false
+        }
+      }
+    ]
+  },
+  "emulator": {
+    "emulatorScale": "1",
+    "livePatchEnabled": true,
+    "audioEnabled": false,
+    "audioMuted": false,
+    "audioVolume": 1,
+    "sidQuality": "fastsid",
+    "scanlinesEnabled": true,
+    "warpEnabled": false,
+    "speedMultiplier": 1,
+    "drive9Enabled": true,
+    "driveSoundEnabled": false,
+    "gamepadEnabled": false,
+    "joystickPort": 2
+  },
+  "settings": {
+    "version": 2,
+    "live": {
+      "compilationEnabled": false,
+      "compileOnSave": false,
+      "compileOnImport": false,
+      "debounceProfile": "balanced",
+      "staleResultPolicy": "mark-stale"
+    },
+    "diagnostics": {
+      "automatic": true,
+      "showInfo": true,
+      "showWarnings": true,
+      "showErrors": true,
+      "gutterDensity": "normal"
+    },
+    "emulator": {
+      "emulatorScale": "1",
+      "livePatchEnabled": true,
+      "audioEnabled": false,
+      "audioMuted": false,
+      "audioVolume": 1,
+      "sidQuality": "fastsid",
+      "scanlinesEnabled": true,
+      "warpEnabled": false,
+      "speedMultiplier": 1,
+      "drive9Enabled": true,
+      "driveSoundEnabled": false,
+      "gamepadEnabled": false,
+      "joystickPort": 2
+    },
+    "compiler": {
+      "enabled": true,
+      "dialect": "web64-c-v0.1",
+      "abi": "web64-static-v0",
+      "entry": "main.c",
+      "entrySymbol": "",
+      "predefinedDefines": {},
+      "includePaths": [
+        "include",
+        "assets"
+      ],
+      "stdout": "none",
+      "stdin": "none",
+      "runtimeProfile": "tiny",
+      "compilerBackend": "web64-native",
+      "startup": {
+        "processorPort": null,
+        "disableInterrupts": false
+      },
+      "stack": {
+        "size": 512,
+        "address": null
+      },
+      "zeroPage": {
+        "reserved": []
+      },
+      "ir": {
+        "schemaVersion": 1,
+        "enabled": false,
+        "verifyLegacyEquivalence": true,
+        "emitSnapshots": false
+      }
+    }
+  },
+  "workspace": {
+    "selectedFile": {
+      "scope": "root",
+      "path": "main.c"
+    },
+    "editor": {
+      "file": {
+        "scope": "root",
+        "path": "main.c"
+      },
+      "selectionStart": 0,
+      "selectionEnd": 0,
+      "scrollTop": 0,
+      "scrollLeft": 0
+    },
+    "emulatorCollapsed": false
+  },
+  "debugger": {
+    "version": 1,
+    "breakpoints": [],
+    "watches": []
+  },
+  "media": {
+    "version": 2,
+    "files": [],
+    "disks": [],
+    "diskSets": []
+  },
+  "files": [
+    {
+      "path": "assets/palette.bin",
+      "name": "palette.bin",
+      "kind": "binary",
+      "encoding": "base64",
+      "bytes": "BgACBQ=="
+    },
+    {
+      "path": "palette-probe.asm",
+      "name": "palette-probe.asm",
+      "kind": "source",
+      "source": ".include \"web64/cartridge.inc\"\n.include \"cartridge/generated.inc\"\n\n; The C entry has already initialized the managed directory. These generated\n; handles are build-local; the application never hard-codes a physical bank.\nasm_palette_probe:\n_asm_palette_probe:\n    web64_rt_call_cart_resource_read asm_request, asm_result\n    rts\n\nasm_request:\n    .byte WEB64_CART_RESOURCE_PALETTE, 0, 0, 0, 0\n    .word $5004\n    .word 4\nasm_result:\n    .word 0\n"
+    },
+    {
+      "path": "README.md",
+      "name": "README.md",
+      "kind": "source",
+      "source": "# Native managed cartridge runtime\n\nThis IDE-saved project has one resident C Build Target and four native cartridge layouts.\nChoose a layout in Disk/Media → Cartridge Layouts, then Run Cartridge. The program\nreads the logical palette resource and changes the C64 border/background. The\napplication source names no bank, window or hardware profile. Build Cartridge\ncreates cartridge/generated.h and cartridge/generated.inc as inspectable\nprojections; they are not files to edit or carry outside this project.\n\nCartridge autostart runs before KERNAL screen setup. The C entry therefore\nselects VIC bank 0 and the default text screen/charset, enables the display,\nclears Screen and Color RAM, and then reads the palette. A blue border without\nvisible text means the display initialization did not run; inspecting screen\nRAM alone is not enough to verify the demo.\n\nThe palette occupies four stored ROM bytes. To exercise multiple extents,\nimport a larger binary file into the project and select it as a logical\nresource; Standard 8K and Standard 16K have much lower capacity than Magic\nDesk and EasyFlash. Transfer buffers are explicitly reserved at $5000-$50ff.\nThe resource directory is copied to $4000. The resident program loads at\n$2000. Every profile starts from an actual CRT boot, including EasyFlash's\nROMH reset trampoline and pinned ROML payload.\n\nmain.c calls the C resource API and then palette-probe.asm calls the same\nlogical API through web64/cartridge.inc. The successful screen displays\nWEB64 ASM. The assembly routine owns its packed request/result storage,\ncopies into the second reserved buffer at $5004 and returns status in A.\n\nDo not use F5 to launch the resident target as an ordinary PRG. Use Run\nCartridge (Ctrl+Alt+F5) so the cartridge mapping and directory exist. Interrupt\nhandlers must preserve $fb-$fe, stay valid during mapping transitions and must\nnot call the cartridge API. Managed banking does not intercept raw writes to\n$de00/$de02 or bank arbitrary executable code.\n"
+    }
+  ]
+}
