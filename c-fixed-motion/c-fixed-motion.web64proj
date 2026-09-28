@@ -1,11 +1,11 @@
 {
   "kind": "web64.ide.project",
   "version": 4,
-  "savedAt": "2026-09-21T14:58:15.610Z",
+  "savedAt": "2026-09-28T12:14:43.740Z",
   "main": {
     "fileName": "c-fixed-motion.asm",
     "origin": "$c000",
-    "source": "; Web64 IDE Example\n; Name: C Fixed Motion\n; Description: Web64Motion2D integration helper closure; main.c is the entry source.\n",
+    "source": "; Native UFO sprite asset; the C startup copies its 64 bytes to sprite RAM.\n.incbin ufo_sprites, \"assets/sprites/ufo.w64spr\"\n.include \"assets/sprites/ufo.inc\"\n",
     "selectedEntryLabel": "auto"
   },
   "c": {
@@ -117,7 +117,9 @@
     "sidQuality": "fastsid",
     "scanlinesEnabled": true,
     "warpEnabled": false,
+    "speedMultiplier": 1,
     "drive9Enabled": true,
+    "driveSoundEnabled": false,
     "gamepadEnabled": false,
     "joystickPort": 2
   },
@@ -146,7 +148,9 @@
       "sidQuality": "fastsid",
       "scanlinesEnabled": true,
       "warpEnabled": false,
+      "speedMultiplier": 1,
       "drive9Enabled": true,
+      "driveSoundEnabled": false,
       "gamepadEnabled": false,
       "joystickPort": 2
     },
@@ -185,8 +189,20 @@
     }
   },
   "workspace": {
-    "selectedFile": null,
-    "editor": null,
+    "selectedFile": {
+      "scope": "root",
+      "path": "c-fixed-motion.asm"
+    },
+    "editor": {
+      "file": {
+        "scope": "root",
+        "path": "c-fixed-motion.asm"
+      },
+      "selectionStart": 0,
+      "selectionEnd": 0,
+      "scrollTop": 0,
+      "scrollLeft": 0
+    },
     "emulatorCollapsed": false
   },
   "media": {
@@ -200,7 +216,82 @@
       "path": "main.c",
       "name": "main.c",
       "kind": "source",
-      "source": "/*\n * Web64 IDE Example\n * Name: C Fixed Motion\n * Description: Uses Web64Motion2D and the fixed vector runtime helper.\n */\n\n#include <stdint.h>\n#include <web64/fixed.h>\n\nWeb64Motion2D motion;\n\nvoid main(void) {\n    *(uint8_t*)0xd015 = 1;\n    *(uint8_t*)0xd000 = 160;\n    *(uint8_t*)0xd001 = 100;\n    *(uint8_t*)0xd027 = 5;\n    while (1) {\n        web64_motion2d_integrate(&motion);\n        *(uint8_t*)0xd020 = 5;\n    }\n}\n"
+      "dirty": true,
+      "source": "/*\n * C Fixed Motion\n *\n * Joystick 2 changes acceleration. Release it to coast to a stop;\n * hold FIRE to brake immediately. The UFO position comes only from\n * the integrated 8.8 Web64Motion2D state.\n */\n#include <stdint.h>\n#include <string.h>\n#include <web64.h>\n#include <web64/fixed.h>\n#include \"assets/generated.h\"\n\n#define SCREEN 0x0400\n#define COLOR 0xd800\n#define SPRITE_DATA 0x3000\n#define THRUST 0x0020\n#define DRAG 0x0010\n#define TOP_SPEED 0x0280\n#define X_MIN WEB64_FIX8_FROM_INT(-110)\n#define X_MAX WEB64_FIX8_FROM_INT(100)\n#define Y_MIN WEB64_FIX8_FROM_INT(-70)\n#define Y_MAX WEB64_FIX8_FROM_INT(65)\n\n#pragma charset(\"screencode_mixed\")\nconst char title[] = \"fixed motion 8.8\";\nconst char guide[] = \"joy 2: thrust    release: coast\";\nconst char brake[] = \"fire: brake\";\nconst char pos_label[] = \"position x:$\";\nconst char pos_y_label[] = \" y:$\";\nconst char vel_label[] = \"velocity x:$\";\nconst char vel_y_label[] = \" y:$\";\nconst char thrust_text[] = \"thrust\";\nconst char coast_text[] = \"coast \";\nconst char brake_text[] = \"brake \";\n#pragma charset(\"ascii\")\n\nWeb64Motion2D motion;\nuint8_t joy;\nuint8_t cell;\nuint16_t screen_offset;\n\nvoid put_text(uint16_t offset, const char *text) {\n    uint8_t index = 0;\n    while (text[index] != 0) {\n        *(uint8_t*)(SCREEN + offset + index) = text[index];\n        index++;\n    }\n}\n\nvoid put_hex_digit(uint8_t digit, uint16_t offset) {\n    if (digit < 10) {\n        *(uint8_t*)(SCREEN + offset) = 48 + digit;\n    } else {\n        *(uint8_t*)(SCREEN + offset) = 1 + digit - 10;\n    }\n}\n\nvoid put_hex16(uint16_t value, uint16_t offset) {\n    put_hex_digit((uint8_t)((value >> 12) & 15), offset);\n    put_hex_digit((uint8_t)((value >> 8) & 15), offset + 1);\n    put_hex_digit((uint8_t)((value >> 4) & 15), offset + 2);\n    put_hex_digit((uint8_t)(value & 15), offset + 3);\n}\n\nvoid clear_screen(void) {\n    for (screen_offset = 0; screen_offset < 1000; screen_offset++) {\n        *(uint8_t*)(SCREEN + screen_offset) = 32;\n        *(uint8_t*)(COLOR + screen_offset) = 1;\n    }\n}\n\nvoid wait_frame(void) {\n    while (*(uint8_t*)0xd012 == 250) {}\n    while (*(uint8_t*)0xd012 != 250) {}\n}\n\nvoid slow_x(void) {\n    if (motion.velocity.x > DRAG) motion.velocity.x -= DRAG;\n    else if (motion.velocity.x < -DRAG) motion.velocity.x += DRAG;\n    else motion.velocity.x = 0;\n}\n\nvoid slow_y(void) {\n    if (motion.velocity.y > DRAG) motion.velocity.y -= DRAG;\n    else if (motion.velocity.y < -DRAG) motion.velocity.y += DRAG;\n    else motion.velocity.y = 0;\n}\n\nvoid read_controls(void) {\n    joy = *(uint8_t*)0xdc00;\n    motion.acceleration.x = 0;\n    motion.acceleration.y = 0;\n    if (!(joy & 16)) {\n        motion.velocity.x = 0;\n        motion.velocity.y = 0;\n        put_text(40 * 23 + 1, brake_text);\n        *(uint8_t*)0xd020 = 2;\n        return;\n    }\n    if (!(joy & 4) && (joy & 8)) motion.acceleration.x = -THRUST;\n    if (!(joy & 8) && (joy & 4)) motion.acceleration.x = THRUST;\n    if (!(joy & 1) && (joy & 2)) motion.acceleration.y = -THRUST;\n    if (!(joy & 2) && (joy & 1)) motion.acceleration.y = THRUST;\n    if (motion.acceleration.x == 0) slow_x();\n    if (motion.acceleration.y == 0) slow_y();\n    if (motion.acceleration.x || motion.acceleration.y) {\n        put_text(40 * 23 + 1, thrust_text);\n        *(uint8_t*)0xd020 = 6;\n    } else {\n        put_text(40 * 23 + 1, coast_text);\n        *(uint8_t*)0xd020 = 11;\n    }\n}\n\nvoid bound_motion(void) {\n    if (motion.velocity.x > TOP_SPEED) motion.velocity.x = TOP_SPEED;\n    if (motion.velocity.x < -TOP_SPEED) motion.velocity.x = -TOP_SPEED;\n    if (motion.velocity.y > TOP_SPEED) motion.velocity.y = TOP_SPEED;\n    if (motion.velocity.y < -TOP_SPEED) motion.velocity.y = -TOP_SPEED;\n\n    if (motion.position.x < X_MIN) {\n        motion.position.x = X_MIN;\n        motion.velocity.x = 0;\n    }\n    if (motion.position.x > X_MAX) {\n        motion.position.x = X_MAX;\n        motion.velocity.x = 0;\n    }\n    if (motion.position.y < Y_MIN) {\n        motion.position.y = Y_MIN;\n        motion.velocity.y = 0;\n    }\n    if (motion.position.y > Y_MAX) {\n        motion.position.y = Y_MAX;\n        motion.velocity.y = 0;\n    }\n}\n\nvoid render_motion(void) {\n    *(uint8_t*)0xd000 = 144 + WEB64_FIX8_TO_INT(motion.position.x);\n    *(uint8_t*)0xd001 = 130 + WEB64_FIX8_TO_INT(motion.position.y);\n    put_hex16((uint16_t)motion.position.x, 40 * 20 + 13);\n    put_hex16((uint16_t)motion.position.y, 40 * 20 + 22);\n    put_hex16((uint16_t)motion.velocity.x, 40 * 21 + 13);\n    put_hex16((uint16_t)motion.velocity.y, 40 * 21 + 22);\n}\n\nvoid main(void) {\n    *(uint8_t*)0xdc02 = 0;\n    *(uint8_t*)0xdc03 = 0;\n    *(uint8_t*)0xd020 = 11;\n    *(uint8_t*)0xd021 = 0;\n    CURSOFF();\n    motion.position.x = 0;\n    motion.position.y = 0;\n    motion.velocity.x = 0;\n    motion.velocity.y = 0;\n    motion.acceleration.x = 0;\n    motion.acceleration.y = 0;\n    clear_screen();\n    put_text(40 + 11, title);\n    put_text(80 + 4, guide);\n    put_text(120 + 4, brake);\n    put_text(40 * 20 + 1, pos_label);\n    put_text(40 * 20 + 18, pos_y_label);\n    put_text(40 * 21 + 1, vel_label);\n    put_text(40 * 21 + 18, vel_y_label);\n    memcpy((void*)SPRITE_DATA, ufo_sprites, ufo_sprites_size);\n    *(uint8_t*)0x07f8 = SPRITE_DATA / 64;\n    *(uint8_t*)0xd010 = 0;\n    *(uint8_t*)0xd01c = 0;\n    *(uint8_t*)0xd017 = 0;\n    *(uint8_t*)0xd01d = 0;\n    *(uint8_t*)0xd027 = 1;\n    *(uint8_t*)0xd015 = 1;\n    render_motion();\n    while (1) {\n        wait_frame();\n        read_controls();\n        web64_motion2d_integrate(&motion);\n        bound_motion();\n        render_motion();\n    }\n}\n"
+    },
+    {
+      "path": "assets/sprites/ufo.w64spr",
+      "name": "ufo.w64spr",
+      "kind": "spritebank",
+      "mode": "mono",
+      "width": 24,
+      "height": 21,
+      "count": 1,
+      "colors": {
+        "background": 0,
+        "multicolor1": 6,
+        "foreground": 1,
+        "multicolor2": 14,
+        "mode": "mono"
+      },
+      "includePath": "assets/sprites/ufo.inc",
+      "dirty": true,
+      "lastCompiledHash": null,
+      "lastPatchedHash": null,
+      "asset": {
+        "schema": "web64.ide.graphicsAsset",
+        "version": 3,
+        "kind": "spritebank",
+        "assetId": "w64-a1f4c2d3",
+        "mode": "mono",
+        "displayMode": "text-hires",
+        "coloringMethod": "per-project",
+        "displayProfile": null,
+        "width": 24,
+        "height": 21,
+        "count": 1,
+        "colors": {
+          "background": 0,
+          "multicolor1": 6,
+          "foreground": 1,
+          "multicolor2": 14,
+          "mode": "mono"
+        },
+        "characterColors": [],
+        "screenColors": [],
+        "materials": [],
+        "characterNames": [],
+        "characterTags": [],
+        "frames": [
+          {
+            "id": "ufo-frame-0",
+            "name": "UFO",
+            "tags": [],
+            "mode": "mono",
+            "foreground": 1,
+            "expandedX": false,
+            "expandedY": false,
+            "overlayFrameId": null
+          }
+        ],
+        "animations": [],
+        "tiles": [],
+        "paletteProfile": null,
+        "nextFrameSerial": 1,
+        "includePath": "assets/sprites/ufo.inc"
+      },
+      "assetId": "w64-a1f4c2d3",
+      "encoding": "base64",
+      "bytes": "ABgAADwAAH4AAMMAAYGAA//AH//4f//+/////2b/////f//+H//4A//AAYGAAAAAAEIAACQAABgAAAAAAAAAAA=="
+    },
+    {
+      "path": "assets/sprites/ufo.inc",
+      "name": "ufo.inc",
+      "kind": "source",
+      "generated": true,
+      "generatedFrom": "assets/sprites/ufo.w64spr",
+      "dirty": true,
+      "source": "; Generated by Web64 IDE. Edit the graphics asset, not this file.\nufo_sprites_size = $40\n; Editor color references\nufo_color_0 = 0\nufo_background_color = 0\nufo_color_1 = 6\nufo_multicolor_1 = 6\nufo_color_2 = 1\nufo_sprite_color = 1\nufo_color_3 = $0e\nufo_multicolor_2 = $0e\nufo_sprite_count = 1\nufo_sprites_end = ufo_sprites + ufo_sprites_size\nufo_frame_0 = ufo_sprites + 0\nufo_frame_0_color = 1\nufo_frame_0_flags = 0\n"
     }
   ]
 }
